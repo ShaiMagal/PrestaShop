@@ -34,6 +34,7 @@ use PrestaShop\PrestaShop\Core\Context\ApiClient;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Command\AddApiClientCommand;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Command\DeleteApiClientCommand;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Command\EditApiClientCommand;
+use PrestaShop\PrestaShop\Core\Domain\ApiClient\Command\ForceApiClientSecretCommand;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Command\GenerateApiClientSecretCommand;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Exception\ApiClientConstraintException;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Exception\ApiClientException;
@@ -79,6 +80,25 @@ class ApiClientManagementFeatureContext extends AbstractDomainFeatureContext
         $command = new GenerateApiClientSecretCommand($this->getSharedStorage()->get($apiClientReference));
         $newSecret = $commandBus->handle($command);
         $this->getSharedStorage()->set($secretReference, $newSecret);
+    }
+
+    /**
+     * @When I force secret :newSecret for api client :apiClientReference
+     */
+    public function forceSecretApiClientUsingCommand(string $newSecret, string $apiClientReference)
+    {
+        $this->getSharedStorage()->exists($apiClientReference);
+
+        try {
+            $command = new ForceApiClientSecretCommand(
+                $this->getSharedStorage()->get($apiClientReference),
+                $newSecret,
+            );
+
+            $this->getCommandBus()->handle($command);
+        } catch (ApiClientConstraintException $e) {
+            $this->setLastException($e);
+        }
     }
 
     /**
@@ -284,32 +304,47 @@ class ApiClientManagementFeatureContext extends AbstractDomainFeatureContext
     /**
      * @Then secret :secretReference is valid for api client :apiClientReference
      */
-    public function assertSecretIsValid(string $secretReference, string $apiClientReference): void
+    public function assertSecretIsValidByReference(string $secretReference, string $apiClientReference): void
     {
-        $this->assertSecret($secretReference, $apiClientReference, true);
+        $this->assertSecret($this->getSharedStorage()->get($secretReference), $apiClientReference, true);
     }
 
     /**
      * @Then secret :secretReference is invalid for api client :apiClientReference
      */
-    public function assertSecretIsInvalid(string $secretReference, string $apiClientReference): void
+    public function assertSecretIsInvalidByReference(string $secretReference, string $apiClientReference): void
     {
-        $this->assertSecret($secretReference, $apiClientReference, false);
+        $this->assertSecret($this->getSharedStorage()->get($secretReference), $apiClientReference, false);
     }
 
-    private function assertSecret(string $secretReference, string $apiClientReference, bool $expected): void
+    /**
+     * @Then secret value :secretValue is valid for api client :apiClientReference
+     */
+    public function assertSecretIsValidByValue(string $secretValue, string $apiClientReference): void
+    {
+        $this->assertSecret($secretValue, $apiClientReference, true);
+    }
+
+    /**
+     * @Then secret value :secretValue is invalid for api client :apiClientReference
+     */
+    public function assertSecretIsInvalidByValue(string $secretValue, string $apiClientReference): void
+    {
+        $this->assertSecret($secretValue, $apiClientReference, false);
+    }
+
+    private function assertSecret(string $plainSecret, string $apiClientReference, bool $expected): void
     {
         // Manually get the entity because secret is not part of the CQRS query
         $apiClientRepository = $this->getContainer()->get(ApiClientRepository::class);
         $apiClient = $apiClientRepository->getById($this->getSharedStorage()->get($apiClientReference));
         $hashedSecret = $apiClient->getClientSecret();
 
-        $plainSecret = $this->getSharedStorage()->get($secretReference);
         $passwordHasher = $this->getContainer()->get(PasswordHasherInterface::class);
         if ($expected !== $passwordHasher->verify($hashedSecret, $plainSecret)) {
             throw new RuntimeException(sprintf(
                 'Secret %s was expected to be %s',
-                $secretReference,
+                $plainSecret,
                 $expected ? 'valid' : 'invalid'
             ));
         }
@@ -424,6 +459,7 @@ class ApiClientManagementFeatureContext extends AbstractDomainFeatureContext
             'description' => ApiClientConstraintException::INVALID_DESCRIPTION,
             'scopes' => ApiClientConstraintException::NON_INSTALLED_SCOPES,
             'lifetime' => ApiClientConstraintException::NOT_POSITIVE_LIFETIME,
+            'secret' => ApiClientConstraintException::INVALID_SECRET,
         ];
 
         if (!array_key_exists($fieldName, $constraintErrorFieldMap)) {

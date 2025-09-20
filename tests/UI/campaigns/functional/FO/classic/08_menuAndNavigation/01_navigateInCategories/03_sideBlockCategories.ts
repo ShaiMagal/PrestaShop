@@ -1,13 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  type BrowserContext,
   dataCategories,
   FakerCategory,
   foClassicCategoryPage,
   foClassicHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -17,7 +17,6 @@ describe('FO - Menu and Navigation : Side block categories', async () => {
   let browserContext: BrowserContext;
   let page: Page;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -64,15 +63,15 @@ describe('FO - Menu and Navigation : Side block categories', async () => {
       const hasBlockCategories = await foClassicCategoryPage.hasBlockCategories(page);
       expect(hasBlockCategories).to.be.equal(true);
 
-      const numBlockCategories = await foClassicCategoryPage.getNumBlockCategories(page);
-      expect(numBlockCategories).to.be.equal(arg.parent.children.length);
+      const numBlockCategories = await foClassicCategoryPage.getNumBlockCategories(page, 0);
+      expect(numBlockCategories).to.be.equal(dataCategories.home.children.length);
     });
 
     if (arg.child) {
       it(`should click on category '${arg.child.name}' in sideBlock`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToSideBlock${index}`, baseContext);
 
-        await foClassicCategoryPage.clickBlockCategory(page, arg.child!.name);
+        await foClassicCategoryPage.clickBlockCategory(page, arg.child!.name, arg.parent.name);
 
         const pageTitle = await foClassicHomePage.getPageTitle(page);
         expect(pageTitle).to.equal(arg.child!.name);
@@ -84,8 +83,8 @@ describe('FO - Menu and Navigation : Side block categories', async () => {
         const hasBlockCategories = await foClassicCategoryPage.hasBlockCategories(page);
         expect(hasBlockCategories).to.be.equal(true);
 
-        const numBlockCategories = await foClassicCategoryPage.getNumBlockCategories(page);
-        expect(numBlockCategories).to.be.equal(0);
+        const numBlockCategories = await foClassicCategoryPage.getNumBlockCategories(page, 0);
+        expect(numBlockCategories).to.be.equal(dataCategories.home.children.length);
       });
     }
   });

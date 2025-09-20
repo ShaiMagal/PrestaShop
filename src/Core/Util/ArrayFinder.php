@@ -92,7 +92,7 @@ class ArrayFinder implements ArrayAccess, Countable
 
         try {
             $value = $this->propertyAccessor->getValue($this->array, $path);
-        } catch (UnexpectedTypeException $e) {
+        } catch (UnexpectedTypeException) {
             // If a value within the path is neither object nor array
             return null;
         }

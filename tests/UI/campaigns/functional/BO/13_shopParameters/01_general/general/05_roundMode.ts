@@ -1,24 +1,20 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
 import {createProductTest, deleteProductTest} from '@commonTests/BO/catalog/product';
-
-// Import BO pages
-import pricingTab from '@pages/BO/catalog/products/add/pricingTab';
-import createProductsPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabPricingPage,
   boShopParametersPage,
+  type BrowserContext,
   FakerProduct,
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -56,7 +52,13 @@ describe('BO - Shop Parameters - General : Round mode', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   let tests = [
@@ -173,17 +175,17 @@ describe('BO - Shop Parameters - General : Round mode', async () => {
 
         await boProductsPage.goToProductPage(page, 1);
 
-        const pageTitle = await createProductsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(createProductsPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should edit the product price', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'editProductPrice1', baseContext);
 
-        await pricingTab.setProductPricing(page, pricingData);
+        await boProductsCreateTabPricingPage.setProductPricing(page, pricingData);
 
-        const updateProductMessage = await createProductsPage.saveProduct(page);
-        expect(updateProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+        const updateProductMessage = await boProductsCreatePage.saveProduct(page);
+        expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
       });
     });
 
@@ -292,17 +294,17 @@ describe('BO - Shop Parameters - General : Round mode', async () => {
 
         await boProductsPage.goToProductPage(page, 1);
 
-        const pageTitle = await createProductsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(createProductsPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should edit the product price', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'editProductPrice2', baseContext);
 
-        await pricingTab.setProductPricing(page, pricingData);
+        await boProductsCreateTabPricingPage.setProductPricing(page, pricingData);
 
-        const updateProductMessage = await createProductsPage.saveProduct(page);
-        expect(updateProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+        const updateProductMessage = await boProductsCreatePage.saveProduct(page);
+        expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
       });
     });
 

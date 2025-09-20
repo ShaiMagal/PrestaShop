@@ -1,25 +1,21 @@
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// Import test context
 import testContext from '@utils/testContext';
 
 // Import BO commons tests
 import {createEmployeeTest, deleteEmployeeTest} from '@commonTests/BO/advancedParameters/employee';
 import setPermissions from '@commonTests/BO/advancedParameters/setPermissions';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import creditSlipsPage from '@pages/BO/orders/creditSlips';
-import employeesPage from '@pages/BO/advancedParameters/team';
 
 import {
+  boCreditSlipsPage,
   boDashboardPage,
+  boEmployeesPage,
   boLoginPage,
   boMyProfilePage,
   boProductsPage,
+  type BrowserContext,
   type EmployeePermission,
   FakerEmployee,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -210,7 +206,12 @@ describe('BO - Header : My profile', async () => {
     });
 
     it('should logout from BO', async function () {
-      await loginCommon.logoutBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'logoutBO', baseContext);
+
+      await boDashboardPage.logoutBO(page);
+
+      const pageTitle = await boLoginPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLoginPage.pageTitle);
     });
 
     it('should check the password and the default page', async function () {
@@ -219,8 +220,8 @@ describe('BO - Header : My profile', async () => {
       await boLoginPage.goTo(page, global.BO.URL);
       await boLoginPage.successLogin(page, employeeData.email, employeeData.password);
 
-      const pageTitle = await creditSlipsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(creditSlipsPage.pageTitle);
+      const pageTitle = await boCreditSlipsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCreditSlipsPage.pageTitle);
     });
 
     it('should reset the language', async function () {
@@ -247,24 +248,24 @@ describe('BO - Header : My profile', async () => {
         boDashboardPage.teamLink,
       );
 
-      const pageTitle = await employeesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(employeesPage.pageTitle);
+      const pageTitle = await boEmployeesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmployeesPage.pageTitle);
     });
 
     it('should filter list by email', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterEmployeesToDelete', baseContext);
 
-      await employeesPage.filterEmployees(page, 'input', 'email', employeeData.email);
+      await boEmployeesPage.filterEmployees(page, 'input', 'email', employeeData.email);
 
-      const textEmail = await employeesPage.getTextColumnFromTable(page, 1, 'email');
+      const textEmail = await boEmployeesPage.getTextColumnFromTable(page, 1, 'email');
       expect(textEmail).to.contains(employeeData.email);
     });
 
     it('should delete employee and check error message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteEmployee', baseContext);
 
-      const textResult = await employeesPage.deleteEmployeeAndFail(page, 1);
-      expect(textResult).to.equal(employeesPage.errorDeleteOwnAccountMessage);
+      const textResult = await boEmployeesPage.deleteEmployeeAndFail(page, 1);
+      expect(textResult).to.equal(boEmployeesPage.errorDeleteOwnAccountMessage);
     });
   });
 

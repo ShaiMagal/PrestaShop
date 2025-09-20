@@ -31,6 +31,7 @@ namespace PrestaShopBundle\EventListener\API\Context;
 use PrestaShop\PrestaShop\Adapter\Feature\MultistoreFeature;
 use PrestaShop\PrestaShop\Core\Context\ShopContextBuilder;
 use PrestaShop\PrestaShop\Core\Domain\Configuration\ShopConfigurationInterface;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopCollection;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShopBundle\Controller\Api\OAuth2\AccessTokenController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -73,6 +74,8 @@ class ShopContextListener
             $this->shopContextBuilder->setShopConstraint($shopConstraint);
             if ($shopConstraint->getShopId()) {
                 $this->shopContextBuilder->setShopId($shopConstraint->getShopId()->getValue());
+            } elseif ($shopConstraint instanceof ShopCollection && $shopConstraint->hasShopIds()) {
+                $this->shopContextBuilder->setShopId($shopConstraint->getShopIds()[0]->getValue());
             } else {
                 $this->shopContextBuilder->setShopId($this->getConfiguredDefaultShopId());
             }
@@ -97,13 +100,22 @@ class ShopContextListener
             return ShopConstraint::shopGroup((int) $request->get('shopGroupId'));
         }
 
+        if ($request->get('shopIds')) {
+            $shopIds = $request->get('shopIds');
+            if (is_string($shopIds)) {
+                $shopIds = explode(',', $shopIds);
+            }
+
+            return ShopCollection::shops(array_map(fn (string $shopId) => (int) $shopId, $shopIds));
+        }
+
         // Parameter allShops indicate the all shops context regardless of its value, it can be empty it's enough
         if ($request->query->has('allShops') || $request->request->has('allShops') || $request->attributes->has('allShops')) {
             return ShopConstraint::allShops();
         }
 
         // Special use case when calling the access token controller, we don't want to block the endpoint even if no
-        // context parameters as specified, so we use the default shop as a fallback
+        // context parameters was specified, so we use the default shop as a fallback
         if ($request->attributes->get('_controller') === AccessTokenController::class) {
             return ShopConstraint::shop($this->getConfiguredDefaultShopId());
         }

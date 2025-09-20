@@ -1,6 +1,5 @@
 import {
   utilsCore,
-  utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -17,15 +16,6 @@ let screenshotNumber: number = 1;
  */
 before(async function () {
   this.browser = await utilsPlaywright.createBrowser();
-
-  // Create object for browser errors
-  if (global.BROWSER.interceptErrors) {
-    global.browserErrors = {
-      responses: [],
-      js: [],
-      console: [],
-    };
-  }
 });
 
 /**
@@ -34,18 +24,6 @@ before(async function () {
  */
 after(async function () {
   await utilsPlaywright.closeBrowser(this.browser);
-
-  if (global.BROWSER.interceptErrors) {
-    // Delete duplicated errors and create json report
-    const browserErrors = {
-      responses: [...new Set(global.browserErrors.responses)],
-      js: [...new Set(global.browserErrors.js)],
-      console: [...new Set(global.browserErrors.console)],
-    };
-
-    const reportName = await utilsFile.generateReportFilename();
-    await utilsFile.createFile('.', `${reportName}.json`, JSON.stringify(browserErrors));
-  }
 });
 
 const takeScreenShotAfterStep = async (browser: any, screenshotPath: string) => {

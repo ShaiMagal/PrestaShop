@@ -63,7 +63,7 @@ class ImageGenerator
             foreach ($imageTypes as $imageType) {
                 $resized &= $this->resize($imagePath, $imageType, $imageId);
             }
-        } catch (PrestaShopException $e) {
+        } catch (PrestaShopException) {
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 

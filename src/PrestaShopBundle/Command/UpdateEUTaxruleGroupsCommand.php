@@ -86,7 +86,7 @@ class UpdateEUTaxruleGroupsCommand extends Command
             ->setDescription('Update EU Tax rule groups');
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         /* Tweak */
         $this->output = $output;

@@ -92,7 +92,7 @@ class TranslationsExtension extends AbstractExtension
         $viewProperties['is_search_results'] = true;
         $this->theme = $themeName;
 
-        foreach ($translationsTree as $topLevelDomain => $tree) {
+        foreach ($translationsTree as $tree) {
             $output .= $this->concatenateEditTranslationForm($tree, $viewProperties);
         }
 

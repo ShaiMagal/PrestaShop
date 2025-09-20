@@ -1,19 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import addCartRulePage from '@pages/BO/catalog/discounts/add';
-import zonesPage from '@pages/BO/international/locations';
 
 import {
+  boCartRulesPage,
+  boCartRulesCreatePage,
   boCountriesPage,
   boDashboardPage,
+  boLoginPage,
+  boZonesPage,
+  type BrowserContext,
   dataCarriers,
   dataCountries,
   dataCustomers,
@@ -23,11 +20,9 @@ import {
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_catalog_discounts_cartRules_CRUDCartRule_conditions_countrySelection';
 
@@ -73,7 +68,13 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe(`BO : Enable the country '${dataCountries.unitedStates.name}'`, async () => {
@@ -85,16 +86,16 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
         boDashboardPage.internationalParentLink,
         boDashboardPage.locationsLink,
       );
-      await zonesPage.closeSfToolBar(page);
+      await boZonesPage.closeSfToolBar(page);
 
-      const pageTitle = await zonesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(zonesPage.pageTitle);
+      const pageTitle = await boZonesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boZonesPage.pageTitle);
     });
 
     it('should go to \'Countries\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToCountriesPage', baseContext);
 
-      await zonesPage.goToSubTabCountries(page);
+      await boZonesPage.goToSubTabCountries(page);
 
       const pageTitle = await boCountriesPage.getPageTitle(page);
       expect(pageTitle).to.contains(boCountriesPage.pageTitle);
@@ -148,24 +149,24 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
         boDashboardPage.discountsLink,
       );
 
-      const pageTitle = await cartRulesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+      const pageTitle = await boCartRulesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
     });
 
     it('should go to new cart rule page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage', baseContext);
 
-      await cartRulesPage.goToAddNewCartRulesPage(page);
+      await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-      const pageTitle = await addCartRulePage.getPageTitle(page);
-      expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+      const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
     });
 
     it('should create cart rule', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCartRule', baseContext);
 
-      const validationMessage = await addCartRulePage.createEditCartRules(page, cartRule);
-      expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+      const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, cartRule);
+      expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
     });
   });
 
@@ -173,7 +174,7 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
     it('should view my shop', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'viewMyShop1', baseContext);
 
-      page = await addCartRulePage.viewMyShop(page);
+      page = await boCartRulesCreatePage.viewMyShop(page);
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
@@ -248,7 +249,9 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount', baseContext);
 
       const totalAfterDiscount = await foClassicCheckoutPage.getATIPrice(page);
-      expect(totalAfterDiscount).to.eq(dataProducts.demo_6.price - cartRule.discountAmount!.value + dataCarriers.myCarrier.price);
+      expect(totalAfterDiscount).to.eq(
+        dataProducts.demo_6.price - parseFloat(cartRule.discountAmount!.value.toString()) + dataCarriers.myCarrier.price,
+      );
     });
 
     it('should remove the discount', async function () {

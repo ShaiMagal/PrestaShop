@@ -123,7 +123,7 @@ class LangRepositoryTest extends TestCase
         ;
 
         $partialMock = $this->getMockBuilder(LangRepository::class)
-            ->setMethods(['findOneBy'])
+            ->onlyMethods(['findOneBy'])
             ->setConstructorArgs([$entityManagerMock, $classMetadataMock])
             ->getMock()
         ;
@@ -171,7 +171,7 @@ class LangRepositoryTest extends TestCase
         ;
 
         $partialMock = $this->getMockBuilder(LangRepository::class)
-            ->setMethods(['findOneBy'])
+            ->onlyMethods(['findOneBy'])
             ->setConstructorArgs([$entityManagerMock, $classMetadataMock])
             ->getMock()
         ;

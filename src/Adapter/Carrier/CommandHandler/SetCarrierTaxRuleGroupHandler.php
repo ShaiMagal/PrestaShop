@@ -44,7 +44,9 @@ class SetCarrierTaxRuleGroupHandler implements SetCarrierTaxRuleGroupHandlerInte
 
     public function handle(SetCarrierTaxRuleGroupCommand $command): CarrierId
     {
-        $this->taxRulesGroupRepository->assertTaxRulesGroupExists($command->getCarrierTaxRuleGroupId());
+        if ($command->getCarrierTaxRuleGroupId()->getValue() !== 0) {
+            $this->taxRulesGroupRepository->assertTaxRulesGroupExists($command->getCarrierTaxRuleGroupId());
+        }
 
         $newCarrier = $this->carrierRepository->getEditableOrNewVersion($command->getCarrierId());
         $newCarrierId = new CarrierId($newCarrier->id);

@@ -1,18 +1,19 @@
 import testContext from '@utils/testContext';
 
-import loginCommon from '@commonTests/BO/loginBO';
 import {deleteAPIClientTest} from '@commonTests/BO/advancedParameters/authServer';
 import {installModule, uninstallModule} from '@commonTests/BO/modules/moduleManager';
 
 import {expect} from 'chai';
 import {
-  APIRequestContext, APIResponse, BrowserContext, Page,
-} from 'playwright';
-import {
+  type APIRequestContext,
+  type APIResponse,
   boDashboardPage,
+  boLoginPage,
   boModuleManagerPage,
+  type BrowserContext,
   dataModules,
   modKeycloakConnectorDemoBoMain,
+  type Page,
   utilsAPI,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -27,7 +28,8 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
   let apiContext: APIRequestContext;
   let accessTokenKeycloak: string;
   let accessTokenExpiredKeycloak: string;
-  let dynamicApiClientId: number;
+  // Contains the DB dynamic integer ID
+  let databaseDynamicID: number;
   const allowedIssuers = [
     `${global.keycloakConfig.keycloakExternalUrl}/realms/prestashop`,
     `${global.keycloakConfig.keycloakInternalUrl}/realms/prestashop`,
@@ -58,7 +60,10 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
       expect(jsonResponse).to.have.property('token_type');
       expect(jsonResponse.token_type).to.be.eq('Bearer');
       expect(jsonResponse).to.have.property('expires_in');
-      expect(jsonResponse.expires_in).to.be.eq(300);
+      expect(jsonResponse.expires_in).to.be.a('number');
+      // Value should be 300 but if the call took a bit longer it may be 299
+      // We don't need check the exact value anyway
+      expect(jsonResponse.expires_in).to.be.greaterThan(200);
       expect(jsonResponse).to.have.property('scope');
       expect(jsonResponse.scope).to.be.eq('api_client_read profile email');
 
@@ -71,7 +76,13 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
 
   describe('Resource Endpoint', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Modules > Module Manager\' page', async function () {
@@ -166,7 +177,8 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
       expect(jsonResponse).to.have.property('totalItems');
       expect(jsonResponse.totalItems).to.be.a('number');
       expect(jsonResponse.items).to.be.a('array');
-      const apiClient = jsonResponse.items[0];
+      // Get the last element (the first one is the initial API client)
+      const apiClient = jsonResponse.items[jsonResponse.items.length - 1];
       expect(apiClient).to.have.property('apiClientId');
       expect(apiClient.apiClientId).to.be.a('number');
       expect(apiClient).to.have.property('clientId');
@@ -188,13 +200,13 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
       expect(allowedIssuers).to.include(apiClient.externalIssuer);
 
       // Use dynamic ID because some other data may have been created before and the ID incremented already
-      dynamicApiClientId = apiClient.apiClientId;
+      databaseDynamicID = apiClient.apiClientId;
     });
 
     it('should request the endpoint /api-client/{apiClientId} with valid access token', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestSingleEndpointWithValidAccessToken', baseContext);
 
-      const apiResponse = await apiContext.get(`api-client/${dynamicApiClientId}`, {
+      const apiResponse = await apiContext.get(`api-client/${databaseDynamicID}`, {
         headers: {
           Authorization: `Bearer ${accessTokenKeycloak}`,
         },
@@ -207,7 +219,7 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
       const jsonResponse = await apiResponse.json();
       expect(jsonResponse).to.have.property('apiClientId');
       expect(jsonResponse.apiClientId).to.be.a('number');
-      expect(jsonResponse.apiClientId).to.eq(dynamicApiClientId);
+      expect(jsonResponse.apiClientId).to.eq(databaseDynamicID);
       expect(jsonResponse).to.have.property('clientId');
       expect(jsonResponse.clientId).to.be.a('string');
       expect(jsonResponse.clientId).to.eq('prestashop-keycloak');
@@ -232,6 +244,6 @@ describe('API : External Auth Server - Resource Endpoint', async () => {
     });
   });
 
-  deleteAPIClientTest(`${baseContext}_postTest_0`);
+  deleteAPIClientTest(`${baseContext}_postTest_0`, global.keycloakConfig.keycloakClientId);
   uninstallModule(dataModules.keycloak, `${baseContext}_postTest_1`);
 });

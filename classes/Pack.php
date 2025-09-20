@@ -528,8 +528,6 @@ class PackCore extends Product
     /**
      * This method is allow to know if a feature is used or active.
      *
-     * @since 1.5.0.1
-     *
      * @return bool
      */
     public static function isFeatureActive()
@@ -539,8 +537,6 @@ class PackCore extends Product
 
     /**
      * This method is allow to know if a Pack entity is currently used.
-     *
-     * @since 1.5.0
      *
      * @param string|null $table Name of table linked to entity
      * @param bool $has_active_column True if the table has an active column
@@ -595,10 +591,10 @@ class PackCore extends Product
     }
 
     /**
-     * Returns Packs that contains the given product in the right declinaison.
+     * Returns Packs that contains the given product in the right combination.
      *
      * @param int $id_item Product item id that could be contained in a|many pack(s)
-     * @param int $id_attribute_item The declinaison of the product
+     * @param int $id_attribute_item The combination of the product
      * @param int $id_lang
      *
      * @return array[Product] Packs that contains the given product

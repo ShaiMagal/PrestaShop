@@ -5,11 +5,12 @@ import testContext from '@utils/testContext';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataCategories,
   foHummingbirdCategoryPage,
   foHummingbirdHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -93,7 +94,7 @@ describe('FO - Menu and Navigation : Breadcrumb', async () => {
     it('should click on Home link from the breadcrumb', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnHomeLink', baseContext);
 
-      await foHummingbirdCategoryPage.clickOnBreadCrumbLink(page, 'en');
+      await foHummingbirdCategoryPage.clickOnBreadCrumbLink(page, '/');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
       expect(isHomePage).to.equal(true);
@@ -134,7 +135,7 @@ describe('FO - Menu and Navigation : Breadcrumb', async () => {
     it('should click on Home link from the breadcrumb', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnHomeLink2', baseContext);
 
-      await foHummingbirdCategoryPage.clickOnBreadCrumbLink(page, 'en');
+      await foHummingbirdCategoryPage.clickOnBreadCrumbLink(page, '/');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
       expect(isHomePage).to.equal(true);

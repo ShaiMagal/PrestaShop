@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import brandsPage from '@pages/BO/catalog/brands';
-import {siteMapPage} from '@pages/FO/classic/siteMap';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boBrandsPage,
   boDashboardPage,
+  boLoginPage,
   boShopParametersPage,
+  type BrowserContext,
   foClassicHomePage,
+  foClassicSitemapPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -39,7 +35,13 @@ describe('BO - Shop Parameters - General : Enable/Disable display brands', async
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   const tests = [
@@ -80,14 +82,14 @@ describe('BO - Shop Parameters - General : Enable/Disable display brands', async
             boShopParametersPage.brandsAndSuppliersLink,
           );
 
-          const pageTitle = await brandsPage.getPageTitle(page);
-          expect(pageTitle).to.contains(brandsPage.pageTitle);
+          const pageTitle = await boBrandsPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boBrandsPage.pageTitle);
         });
 
         it(`should check that the message alert contains '${test.args.action}'`, async function () {
           await testContext.addContextItem(this, 'testIdentifier', `checkAlertContains_${test.args.action}`, baseContext);
 
-          const text = await brandsPage.getAlertInfoBlockParagraphContent(page);
+          const text = await boBrandsPage.getAlertInfoBlockParagraphContent(page);
           expect(text).to.contains(test.args.action.toLowerCase());
         });
       }
@@ -96,7 +98,7 @@ describe('BO - Shop Parameters - General : Enable/Disable display brands', async
         await testContext.addContextItem(this, 'testIdentifier', `goToFO_${test.args.action}`, baseContext);
 
         // View shop
-        page = await brandsPage.viewMyShop(page);
+        page = await boBrandsPage.viewMyShop(page);
 
         // Change FO language
         await foClassicHomePage.changeLanguage(page, 'en');
@@ -110,10 +112,10 @@ describe('BO - Shop Parameters - General : Enable/Disable display brands', async
 
         await foClassicHomePage.goToFooterLink(page, 'Sitemap');
 
-        const pageTitle = await siteMapPage.getPageTitle(page);
-        expect(pageTitle).to.equal(siteMapPage.pageTitle);
+        const pageTitle = await foClassicSitemapPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicSitemapPage.pageTitle);
 
-        const exist = await siteMapPage.isBrandsLinkVisible(page);
+        const exist = await foClassicSitemapPage.isBrandsLinkVisible(page);
         expect(exist).to.be.equal(test.args.exist);
       });
 
@@ -121,10 +123,10 @@ describe('BO - Shop Parameters - General : Enable/Disable display brands', async
         it('should go back to BO', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `goBackToBo_${test.args.action}`, baseContext);
 
-          page = await siteMapPage.closePage(browserContext, page, 0);
+          page = await foClassicSitemapPage.closePage(browserContext, page, 0);
 
-          const pageTitle = await brandsPage.getPageTitle(page);
-          expect(pageTitle).to.contains(brandsPage.pageTitle);
+          const pageTitle = await boBrandsPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boBrandsPage.pageTitle);
         });
       }
     });

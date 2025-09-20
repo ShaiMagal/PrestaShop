@@ -1,29 +1,22 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import zonesPage from '@pages/BO/international/locations';
-// Import FO pages
-import {addressesPage} from '@pages/FO/classic/myAccount/addresses';
-import {addAddressPage} from '@pages/FO/classic/myAccount/addAddress';
+import {expect} from 'chai';
 
 import {
   boCountriesPage,
   boDashboardPage,
+  boLoginPage,
+  boZonesPage,
+  type BrowserContext,
   dataCountries,
   dataCustomers,
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
+  foClassicMyAddressesPage,
+  foClassicMyAddressesCreatePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_international_locations_countries_countriesRestrictions';
 
@@ -51,7 +44,13 @@ describe('BO - International - Countries : Restrict country selections in front 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'International > Locations\' page', async function () {
@@ -62,16 +61,16 @@ describe('BO - International - Countries : Restrict country selections in front 
       boDashboardPage.internationalParentLink,
       boDashboardPage.locationsLink,
     );
-    await zonesPage.closeSfToolBar(page);
+    await boZonesPage.closeSfToolBar(page);
 
-    const pageTitle = await zonesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(zonesPage.pageTitle);
+    const pageTitle = await boZonesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boZonesPage.pageTitle);
   });
 
   it('should go to \'Countries\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToCountriesPage', baseContext);
 
-    await zonesPage.goToSubTabCountries(page);
+    await boZonesPage.goToSubTabCountries(page);
 
     const pageTitle = await boCountriesPage.getPageTitle(page);
     expect(pageTitle).to.contains(boCountriesPage.pageTitle);
@@ -148,25 +147,25 @@ describe('BO - International - Countries : Restrict country selections in front 
 
       await foClassicMyAccountPage.goToAddressesPage(page);
 
-      const pageTitle = await addressesPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open addresses page').to.contains(addressesPage.pageTitle);
+      const pageTitle = await foClassicMyAddressesPage.getPageTitle(page);
+      expect(pageTitle, 'Fail to open addresses page').to.contains(foClassicMyAddressesPage.pageTitle);
     });
 
     it(`should check if the country '${dataCountries.afghanistan.name}' exist`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `checkIsNewCountryExist${index}`, baseContext);
 
-      await addressesPage.openNewAddressForm(page);
+      await foClassicMyAddressesPage.openNewAddressForm(page);
 
-      const countryExist = await addAddressPage.countryExist(page, dataCountries.afghanistan.name);
+      const countryExist = await foClassicMyAddressesCreatePage.countryExist(page, dataCountries.afghanistan.name);
       expect(countryExist).to.equal(status.args.isCountryVisible);
     });
 
     it('should sign out from FO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `sighOutFO${index}`, baseContext);
 
-      await addressesPage.logout(page);
+      await foClassicMyAddressesPage.logout(page);
 
-      const isCustomerConnected = await addressesPage.isCustomerConnected(page);
+      const isCustomerConnected = await foClassicMyAddressesPage.isCustomerConnected(page);
       expect(isCustomerConnected, 'Customer is connected').to.eq(false);
     });
 

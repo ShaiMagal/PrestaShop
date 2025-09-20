@@ -1,16 +1,13 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import sqlManagerPage from '@pages/BO/advancedParameters/database/sqlManager';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
+  boSqlManagerPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -32,7 +29,13 @@ describe('BO - Advanced Parameters - Database : Help card in SQL Manager page', 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Advanced Parameters > Database\' page', async function () {
@@ -43,26 +46,26 @@ describe('BO - Advanced Parameters - Database : Help card in SQL Manager page', 
       boDashboardPage.advancedParametersLink,
       boDashboardPage.databaseLink,
     );
-    await sqlManagerPage.closeSfToolBar(page);
+    await boSqlManagerPage.closeSfToolBar(page);
 
-    const pageTitle = await sqlManagerPage.getPageTitle(page);
-    expect(pageTitle).to.contains(sqlManagerPage.pageTitle);
+    const pageTitle = await boSqlManagerPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boSqlManagerPage.pageTitle);
   });
 
   it('should open the help side bar and check the document language', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'openHelpSidebar', baseContext);
 
-    const isHelpSidebarVisible = await sqlManagerPage.openHelpSideBar(page);
+    const isHelpSidebarVisible = await boSqlManagerPage.openHelpSideBar(page);
     expect(isHelpSidebarVisible).to.eq(true);
 
-    const documentURL = await sqlManagerPage.getHelpDocumentURL(page);
+    const documentURL = await boSqlManagerPage.getHelpDocumentURL(page);
     expect(documentURL).to.contains('country=en');
   });
 
   it('should close the help side bar', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'closeHelpSidebar', baseContext);
 
-    const isHelpSidebarVisible = await sqlManagerPage.closeHelpSideBar(page);
+    const isHelpSidebarVisible = await boSqlManagerPage.closeHelpSideBar(page);
     expect(isHelpSidebarVisible).to.eq(true);
   });
 });

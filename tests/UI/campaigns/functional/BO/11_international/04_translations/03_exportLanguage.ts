@@ -1,18 +1,15 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import translationsPage from '@pages/BO/international/translations';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
+  boTranslationsPage,
+  type BrowserContext,
   dataLanguages,
   dataModules,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -34,7 +31,13 @@ describe('BO - International - Translation : Export languages', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'International > Translations\' page', async function () {
@@ -46,8 +49,8 @@ describe('BO - International - Translation : Export languages', async () => {
       boDashboardPage.translationsLink,
     );
 
-    const pageTitle = await translationsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(translationsPage.pageTitle);
+    const pageTitle = await boTranslationsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boTranslationsPage.pageTitle);
   });
 
   const tests = [
@@ -79,7 +82,7 @@ describe('BO - International - Translation : Export languages', async () => {
       it(`should export language '${test.args.language}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `exportLanguage${index}`, baseContext);
 
-        const filePath = await translationsPage.exportPrestashopTranslations(page, test.args.language, test.args.types);
+        const filePath = await boTranslationsPage.exportPrestashopTranslations(page, test.args.language, test.args.types);
 
         const doesFileExist = await utilsFile.doesFileExist(filePath);
         expect(doesFileExist, `File '${filePath}' was not downloaded`).to.eq(true);
@@ -88,7 +91,7 @@ describe('BO - International - Translation : Export languages', async () => {
       it('should uncheck options in PrestaShop translations section', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `uncheckOptions${index}`, baseContext);
 
-        await translationsPage.uncheckSelectedOptions(page, test.args.types);
+        await boTranslationsPage.uncheckSelectedOptions(page, test.args.types);
       });
     } else {
       it(
@@ -96,7 +99,11 @@ describe('BO - International - Translation : Export languages', async () => {
         async function () {
           await testContext.addContextItem(this, 'testIdentifier', `exportLanguage${index}`, baseContext);
 
-          const filePath = await translationsPage.exportInstalledModuleTranslations(page, test.args.language, test.args.module!);
+          const filePath = await boTranslationsPage.exportInstalledModuleTranslations(
+            page,
+            test.args.language,
+            test.args.module!,
+          );
 
           const doesFileExist = await utilsFile.doesFileExist(filePath);
           expect(doesFileExist, `File '${filePath}' was not downloaded`).to.eq(true);

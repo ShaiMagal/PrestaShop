@@ -55,7 +55,7 @@ class FormListenerTestCase extends KernelTestCase
     {
         $eventMock = $this->getMockBuilder(FormEvent::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getData', 'getForm'])
+            ->onlyMethods(['getData', 'getForm'])
             ->getMock()
         ;
 

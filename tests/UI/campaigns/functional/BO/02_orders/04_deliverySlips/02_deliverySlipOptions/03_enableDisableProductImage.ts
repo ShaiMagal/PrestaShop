@@ -1,16 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import deliverySlipsPage from '@pages/BO/orders/deliverySlips';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boDeliverySlipsPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
@@ -20,12 +17,10 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_deliverySlips_deliverySlipOptions_enableDisableProductImage';
 
@@ -55,7 +50,13 @@ describe('BO - Orders - Delivery slips : Enable/Disable product image', async ()
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   const tests = [
@@ -87,19 +88,19 @@ describe('BO - Orders - Delivery slips : Enable/Disable product image', async ()
           boDashboardPage.ordersParentLink,
           boDashboardPage.deliverySlipslink,
         );
-        await deliverySlipsPage.closeSfToolBar(page);
+        await boDeliverySlipsPage.closeSfToolBar(page);
 
-        const pageTitle = await deliverySlipsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(deliverySlipsPage.pageTitle);
+        const pageTitle = await boDeliverySlipsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boDeliverySlipsPage.pageTitle);
       });
 
       it(`should ${test.args.action} product image`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}ProductImage`, baseContext);
 
-        await deliverySlipsPage.setEnableProductImage(page, test.args.enable);
+        await boDeliverySlipsPage.setEnableProductImage(page, test.args.enable);
 
-        const textMessage = await deliverySlipsPage.saveDeliverySlipOptions(page);
-        expect(textMessage).to.contains(deliverySlipsPage.successfulUpdateMessage);
+        const textMessage = await boDeliverySlipsPage.saveDeliverySlipOptions(page);
+        expect(textMessage).to.contains(boDeliverySlipsPage.successfulUpdateMessage);
       });
 
       describe('Create new order in FO', async () => {
@@ -107,7 +108,7 @@ describe('BO - Orders - Delivery slips : Enable/Disable product image', async ()
           await testContext.addContextItem(this, 'testIdentifier', `goToFO${index}`, baseContext);
 
           // Click on view my shop
-          page = await deliverySlipsPage.viewMyShop(page);
+          page = await boDeliverySlipsPage.viewMyShop(page);
           // Change FO language
           await foClassicHomePage.changeLanguage(page, 'en');
 
@@ -192,8 +193,8 @@ describe('BO - Orders - Delivery slips : Enable/Disable product image', async ()
           // Close tab and init other page objects with new current tab
           page = await foClassicCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
 
-          const pageTitle = await deliverySlipsPage.getPageTitle(page);
-          expect(pageTitle).to.contains(deliverySlipsPage.pageTitle);
+          const pageTitle = await boDeliverySlipsPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boDeliverySlipsPage.pageTitle);
         });
       });
 
@@ -201,10 +202,10 @@ describe('BO - Orders - Delivery slips : Enable/Disable product image', async ()
         it('should go to \'Orders > Orders\' page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `goToOrderPage${index}`, baseContext);
 
-          await deliverySlipsPage.goToSubMenu(
+          await boDeliverySlipsPage.goToSubMenu(
             page,
-            deliverySlipsPage.ordersParentLink,
-            deliverySlipsPage.ordersLink,
+            boDashboardPage.ordersParentLink,
+            boDashboardPage.ordersLink,
           );
 
           const pageTitle = await boOrdersPage.getPageTitle(page);

@@ -19,8 +19,15 @@ services:
       package: PrestaShop\PrestaShop
       version: 9.0
 
-  prestashop.bundle.grid.controller_response_builder:
-    class: PrestaShopBundle\Service\Grid\ControllerResponseBuilder
+  PrestaShopBundle\Service\Grid\ControllerResponseBuilder:
+    public: false
     arguments:
       - '@prestashop.core.grid.filter.form_factory'
       - '@router'
+
+  prestashop.bundle.grid.controller_response_builder:
+    alias: PrestaShopBundle\Service\Grid\ControllerResponseBuilder
+    public: true
+    deprecated:
+      package: PrestaShop\PrestaShop
+      version: 9.0

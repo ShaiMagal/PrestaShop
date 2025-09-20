@@ -27,6 +27,7 @@
 namespace PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider;
 
 use PrestaShop\PrestaShop\Adapter\Form\ChoiceProvider\ZoneByIdChoiceProvider;
+use PrestaShop\PrestaShop\Adapter\Group\GroupDataProvider;
 use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
 use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
@@ -45,7 +46,8 @@ class CarrierFormDataProvider implements FormDataProviderInterface
         private readonly ShopContext $shopContext,
         private readonly CurrencyDataProviderInterface $currencyDataProvider,
         private readonly ConfigurationInterface $configuration,
-        private readonly ZoneByIdChoiceProvider $zonesChoiceProvider
+        private readonly ZoneByIdChoiceProvider $zonesChoiceProvider,
+        private readonly GroupDataProvider $groupDataProvider,
     ) {
     }
 
@@ -91,6 +93,7 @@ class CarrierFormDataProvider implements FormDataProviderInterface
             'general_settings' => [
                 'grade' => 0,
                 'associated_shops' => $this->shopContext->getAssociatedShopIds(),
+                'group_access' => $this->groupDataProvider->getAllGroupIds(),
             ],
         ];
     }

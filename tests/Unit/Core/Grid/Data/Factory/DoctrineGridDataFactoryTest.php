@@ -63,7 +63,15 @@ class DoctrineGridDataFactoryTest extends TestCase
 
         $this->assertEquals(4, $data->getRecordsTotal());
         $this->assertCount(2, $data->getRecords());
-        $this->assertEquals('SELECT * FROM ps_test WHERE id = 1', $data->getQuery());
+        $this->assertEquals(
+            'SELECT' . PHP_EOL
+            . '  *' . PHP_EOL
+            . 'FROM' . PHP_EOL
+            . '  ps_test' . PHP_EOL
+            . 'WHERE' . PHP_EOL
+            . '  id = 1',
+            $data->getQuery()
+        );
     }
 
     /**
@@ -125,7 +133,7 @@ class DoctrineGridDataFactoryTest extends TestCase
     private function createQueryParserMock(): QueryParserInterface
     {
         $queryParser = $this->getMockBuilder(QueryParserInterface::class)
-            ->setMethods(['parse'])
+            ->onlyMethods(['parse'])
             ->getMockForAbstractClass();
 
         $queryParser->method('parse')->willReturn('SELECT * FROM ps_test WHERE id = 1');

@@ -194,11 +194,9 @@ class Processor
             $this->processPaths = array_merge($this->processPaths, $this->defaultModulesToProcess);
         }
 
-        if (!empty($this->processPaths)) {
-            foreach ($this->processPaths as $path) {
-                if (!empty($path) && is_dir($path)) {
-                    $generator->generateInDirectory($path);
-                }
+        foreach ($this->processPaths as $path) {
+            if (!empty($path) && is_dir($path)) {
+                $generator->generateInDirectory($path);
             }
         }
     }

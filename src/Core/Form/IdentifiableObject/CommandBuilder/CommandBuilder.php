@@ -187,7 +187,7 @@ class CommandBuilder
     {
         try {
             $setterArguments = $this->fetchDataValues($commandField, $data);
-        } catch (NoSuchIndexException $exception) {
+        } catch (NoSuchIndexException) {
             // Data has no value for this field, this is acceptable since partial data can be submitted
             return false;
         }
@@ -240,7 +240,7 @@ class CommandBuilder
                 if ($this->propertyAccessor->getValue($data, $stringPath)) {
                     return $allShopsCommand;
                 }
-            } catch (NoSuchIndexException $exception) {
+            } catch (NoSuchIndexException) {
                 // No checkbox value found in data
             }
         }

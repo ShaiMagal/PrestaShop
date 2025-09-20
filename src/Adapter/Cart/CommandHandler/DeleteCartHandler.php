@@ -65,7 +65,7 @@ class DeleteCartHandler extends AbstractCartHandler implements DeleteCartHandler
         try {
             $this->orderRepository->getByCartId($command->getCartId());
             throw new CannotDeleteOrderedCartException(sprintf('Cart "%s" with order cannot be deleted.', $command->getCartId()->getValue()));
-        } catch (OrderNotFoundException $e) {
+        } catch (OrderNotFoundException) {
             // Cart is not linked to any order, we can safely delete it
             $this->cartRepository->delete($command->getCartId());
         }

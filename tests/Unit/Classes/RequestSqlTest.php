@@ -143,7 +143,7 @@ namespace Tests\Unit\Classes {
         private function createRequestSqlMock()
         {
             $requestSql = $this->getMockBuilder(RequestSql::class)
-                ->setMethods(['getTables'])
+                ->onlyMethods(['getTables'])
                 ->getMock()
             ;
 

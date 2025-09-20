@@ -2,27 +2,26 @@
 import testContext from '@utils/testContext';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
 
-// Import BO pages
-import deliverySlipsPage from '@pages/BO/orders/deliverySlips';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boDeliverySlipsPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
   FakerOrderDeliverySlipOptions,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_deliverySlips_deliverySlipOptions_deliverySlipNumber';
 
@@ -66,7 +65,13 @@ describe('BO - Orders - Delivery slips : Update \'Delivery slip number\'', async
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('Update the Delivery slip number', async () => {
@@ -78,19 +83,19 @@ describe('BO - Orders - Delivery slips : Update \'Delivery slip number\'', async
         boDashboardPage.ordersParentLink,
         boDashboardPage.deliverySlipslink,
       );
-      await deliverySlipsPage.closeSfToolBar(page);
+      await boDeliverySlipsPage.closeSfToolBar(page);
 
-      const pageTitle = await deliverySlipsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(deliverySlipsPage.pageTitle);
+      const pageTitle = await boDeliverySlipsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDeliverySlipsPage.pageTitle);
     });
 
     it('should change the Delivery slip number', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateDeliverySlipsNumber', baseContext);
 
-      await deliverySlipsPage.changeNumber(page, deliverySlipData.number);
+      await boDeliverySlipsPage.changeNumber(page, deliverySlipData.number);
 
-      const textMessage = await deliverySlipsPage.saveDeliverySlipOptions(page);
-      expect(textMessage).to.contains(deliverySlipsPage.successfulUpdateMessage);
+      const textMessage = await boDeliverySlipsPage.saveDeliverySlipOptions(page);
+      expect(textMessage).to.contains(boDeliverySlipsPage.successfulUpdateMessage);
     });
   });
 
@@ -98,10 +103,10 @@ describe('BO - Orders - Delivery slips : Update \'Delivery slip number\'', async
     it('should go to the \'Orders > Orders\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToOrdersPage', baseContext);
 
-      await deliverySlipsPage.goToSubMenu(
+      await boDeliverySlipsPage.goToSubMenu(
         page,
-        deliverySlipsPage.ordersParentLink,
-        deliverySlipsPage.ordersLink,
+        boDeliverySlipsPage.ordersParentLink,
+        boDeliverySlipsPage.ordersLink,
       );
 
       const pageTitle = await boOrdersPage.getPageTitle(page);

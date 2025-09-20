@@ -1,16 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataPaymentMethods,
@@ -19,15 +16,13 @@ import {
   foHummingbirdCheckoutPage,
   foHummingbirdCheckoutOrderConfirmationPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   foHummingbirdSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_hummingbird_orderConfirmation_recapPaymentMethod';
 
 /*
@@ -85,7 +80,7 @@ describe('FO - Order confirmation : Order details and totals - Recap of payment 
       await foHummingbirdSearchResultsPage.quickViewProduct(page, 1);
 
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);
@@ -142,7 +137,13 @@ describe('FO - Order confirmation : Order details and totals - Recap of payment 
   describe('Get the order reference from the BO', async () => {
     it('should login in BO', async function () {
       page = await utilsPlaywright.newTab(browserContext);
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Orders > Orders\' page', async function () {

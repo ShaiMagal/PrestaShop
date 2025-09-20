@@ -1,21 +1,18 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import addCustomerPage from '@pages/BO/customers/add';
-
 import {
   boCustomersPage,
+  boCustomersCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   FakerCustomer,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 let browserContext: BrowserContext;
 let page: Page;
@@ -39,7 +36,13 @@ function createCustomerTest(customerData: FakerCustomer, baseContext: string = '
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go \'Customers > Customers\' page', async function () {
@@ -58,14 +61,14 @@ function createCustomerTest(customerData: FakerCustomer, baseContext: string = '
 
       await boCustomersPage.goToAddNewCustomerPage(page);
 
-      const pageTitle = await addCustomerPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addCustomerPage.pageTitleCreate);
+      const pageTitle = await boCustomersCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomersCreatePage.pageTitleCreate);
     });
 
     it('should create customer and check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCustomer', baseContext);
 
-      const textResult = await addCustomerPage.createEditCustomer(page, customerData);
+      const textResult = await boCustomersCreatePage.createEditCustomer(page, customerData);
       expect(textResult).to.equal(boCustomersPage.successfulCreationMessage);
     });
   });
@@ -89,7 +92,13 @@ function createCustomerB2BTest(customerData: FakerCustomer, baseContext: string 
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Customers > Customers\' page', async function () {
@@ -108,14 +117,14 @@ function createCustomerB2BTest(customerData: FakerCustomer, baseContext: string 
 
       await boCustomersPage.goToAddNewCustomerPage(page);
 
-      const pageTitle = await addCustomerPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addCustomerPage.pageTitleCreate);
+      const pageTitle = await boCustomersCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomersCreatePage.pageTitleCreate);
     });
 
     it('should create B2B customer and check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCustomer', baseContext);
 
-      const textResult = await addCustomerPage.createEditB2BCustomer(page, customerData);
+      const textResult = await boCustomersCreatePage.createEditB2BCustomer(page, customerData);
       expect(textResult).to.equal(boCustomersPage.successfulCreationMessage);
     });
   });
@@ -139,7 +148,13 @@ function deleteCustomerTest(customerData: FakerCustomer, baseContext: string = '
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go \'Customers > Customers\' page', async function () {
@@ -208,7 +223,13 @@ function bulkDeleteCustomersTest(
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go \'Customers > Customers\' page', async function () {

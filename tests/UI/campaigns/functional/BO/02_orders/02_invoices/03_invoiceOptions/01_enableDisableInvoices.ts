@@ -1,27 +1,22 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
-
-// Import BO pages
-import invoicesPage from '@pages/BO/orders/invoices';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boInvoicesPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_invoices_invoiceOptions_enableDisableInvoices';
 
@@ -80,7 +75,13 @@ describe('BO - Orders - Invoices : Enable/Disable invoices', async () => {
     describe(`${test.args.action} invoices then check that there is ${test.args.isInvoiceCreated}`, async () => {
       if (index === 0) {
         it('should login in BO', async function () {
-          await loginCommon.loginBO(this, page);
+          await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+          await boLoginPage.goTo(page, global.BO.URL);
+          await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+          const pageTitle = await boDashboardPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boDashboardPage.pageTitle);
         });
       }
 
@@ -92,28 +93,28 @@ describe('BO - Orders - Invoices : Enable/Disable invoices', async () => {
           boDashboardPage.ordersParentLink,
           boDashboardPage.invoicesLink,
         );
-        await invoicesPage.closeSfToolBar(page);
+        await boInvoicesPage.closeSfToolBar(page);
 
-        const pageTitle = await invoicesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(invoicesPage.pageTitle);
+        const pageTitle = await boInvoicesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boInvoicesPage.pageTitle);
       });
 
       it(`should ${test.args.action} invoices`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}Invoices`, baseContext);
 
-        await invoicesPage.enableInvoices(page, test.args.status);
+        await boInvoicesPage.enableInvoices(page, test.args.status);
 
-        const textMessage = await invoicesPage.saveInvoiceOptions(page);
-        expect(textMessage).to.contains(invoicesPage.successfulUpdateMessage);
+        const textMessage = await boInvoicesPage.saveInvoiceOptions(page);
+        expect(textMessage).to.contains(boInvoicesPage.successfulUpdateMessage);
       });
 
       it('should go to \'Orders > Orders\' page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToOrdersPage${index}`, baseContext);
 
-        await invoicesPage.goToSubMenu(
+        await boInvoicesPage.goToSubMenu(
           page,
-          invoicesPage.ordersParentLink,
-          invoicesPage.ordersLink,
+          boInvoicesPage.ordersParentLink,
+          boInvoicesPage.ordersLink,
         );
 
         const pageTitle = await boOrdersPage.getPageTitle(page);

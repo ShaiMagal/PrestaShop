@@ -4,26 +4,25 @@ import testContext from '@utils/testContext';
 // Import commonTests
 import {createProductTest, deleteProductTest} from '@commonTests/BO/catalog/product';
 import {createOrderSpecificProductTest} from '@commonTests/FO/classic/order';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import creditSlipsPage from '@pages/BO/orders/creditSlips';
 
 import {
+  boCreditSlipsPage,
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockProductsPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
   FakerOrder,
   FakerProduct,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_creditSlips_creditSlipOptions';
 
@@ -82,7 +81,13 @@ describe('BO - Orders - Credit slips: Credit slip options', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe(`Change the credit slip prefix to '${prefixToEdit}'`, async () => {
@@ -94,19 +99,19 @@ describe('BO - Orders - Credit slips: Credit slip options', async () => {
         boDashboardPage.ordersParentLink,
         boDashboardPage.creditSlipsLink,
       );
-      await creditSlipsPage.closeSfToolBar(page);
+      await boCreditSlipsPage.closeSfToolBar(page);
 
-      const pageTitle = await creditSlipsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(creditSlipsPage.pageTitle);
+      const pageTitle = await boCreditSlipsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCreditSlipsPage.pageTitle);
     });
 
     it(`should change the credit slip prefix to ${prefixToEdit}`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changePrefix', baseContext);
 
-      await creditSlipsPage.changePrefix(page, prefixToEdit);
+      await boCreditSlipsPage.changePrefix(page, prefixToEdit);
 
-      const textMessage = await creditSlipsPage.saveCreditSlipOptions(page);
-      expect(textMessage).to.contains(creditSlipsPage.successfulUpdateMessage);
+      const textMessage = await boCreditSlipsPage.saveCreditSlipOptions(page);
+      expect(textMessage).to.contains(boCreditSlipsPage.successfulUpdateMessage);
     });
   });
 
@@ -114,10 +119,10 @@ describe('BO - Orders - Credit slips: Credit slip options', async () => {
     it('should go to \'Orders > Orders\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToOrdersPage', baseContext);
 
-      await creditSlipsPage.goToSubMenu(
+      await boCreditSlipsPage.goToSubMenu(
         page,
-        creditSlipsPage.ordersParentLink,
-        creditSlipsPage.ordersLink,
+        boCreditSlipsPage.ordersParentLink,
+        boCreditSlipsPage.ordersLink,
       );
 
       const pageTitle = await boOrdersPage.getPageTitle(page);
@@ -176,17 +181,17 @@ describe('BO - Orders - Credit slips: Credit slip options', async () => {
         boOrdersViewBlockTabListPage.creditSlipsLink,
       );
 
-      const pageTitle = await creditSlipsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(creditSlipsPage.pageTitle);
+      const pageTitle = await boCreditSlipsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCreditSlipsPage.pageTitle);
     });
 
     it('should delete the credit slip prefix', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deletePrefix', baseContext);
 
-      await creditSlipsPage.deletePrefix(page);
+      await boCreditSlipsPage.deletePrefix(page);
 
-      const textMessage = await creditSlipsPage.saveCreditSlipOptions(page);
-      expect(textMessage).to.contains(creditSlipsPage.successfulUpdateMessage);
+      const textMessage = await boCreditSlipsPage.saveCreditSlipOptions(page);
+      expect(textMessage).to.contains(boCreditSlipsPage.successfulUpdateMessage);
     });
   });
 
@@ -194,10 +199,10 @@ describe('BO - Orders - Credit slips: Credit slip options', async () => {
     it('should go to \'Orders > Orders\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToOrdersPageToCheckDeletedPrefix', baseContext);
 
-      await creditSlipsPage.goToSubMenu(
+      await boCreditSlipsPage.goToSubMenu(
         page,
-        creditSlipsPage.ordersParentLink,
-        creditSlipsPage.ordersLink,
+        boCreditSlipsPage.ordersParentLink,
+        boCreditSlipsPage.ordersLink,
       );
 
       const pageTitle = await boOrdersPage.getPageTitle(page);

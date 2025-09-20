@@ -58,7 +58,7 @@ class DeleteCarrierHandler implements DeleteCarrierHandlerInterface
             if (!$carrier->delete()) {
                 throw new CannotDeleteCarrierException(sprintf('Cannot delete carrier object with id "%d"', $command->getCarrierId()->getValue()), CannotDeleteCarrierException::SINGLE_DELETE);
             }
-        } catch (PrestaShopException $e) {
+        } catch (PrestaShopException) {
             throw new CarrierException(sprintf('An error occurred when deleting carrier with id "%d"', $command->getCarrierId()->getValue()));
         }
     }

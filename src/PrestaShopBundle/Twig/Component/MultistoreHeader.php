@@ -29,65 +29,62 @@ declare(strict_types=1);
 namespace PrestaShopBundle\Twig\Component;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Link;
-use PrestaShop\PrestaShop\Adapter\Feature\MultistoreFeature;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
+use PrestaShop\PrestaShop\Core\Context\EmployeeContext;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\Util\ColorBrightnessCalculator;
-use PrestaShopBundle\Entity\Shop;
 use PrestaShopBundle\Entity\ShopGroup;
 use PrestaShopBundle\Twig\Layout\MenuBuilder;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 #[AsTwigComponent(template: '@PrestaShop/Admin/Component/Layout/multistore_header.html.twig')]
-class MultistoreHeader
+class MultistoreHeader extends AbstractMultistoreHeader
 {
-    protected bool $isMultistoreUsed;
-    protected string $contextColor = '';
-    protected string $contextName = '';
-    protected array $groupList = [];
-    protected Link $link;
-
     public function __construct(
-        protected readonly MultistoreFeature $multistoreFeature, // todo removed internal using ?
-        protected readonly ColorBrightnessCalculator $colorBrightnessCalculator,
-        protected readonly EntityManagerInterface $entityManager,
-        protected readonly LegacyContext $legacyContext,
-        protected readonly TranslatorInterface $translator,
         protected readonly MenuBuilder $menuBuilder,
-        protected readonly ShopContext $shopContext,
-        protected readonly array $controllersLockedToAllShopContext
+        protected readonly array $controllersLockedToAllShopContext,
+        ShopContext $shopContext,
+        EntityManagerInterface $entityManager,
+        TranslatorInterface $translator,
+        ColorBrightnessCalculator $colorBrightnessCalculator,
+        LegacyContext $legacyContext,
+        EmployeeContext $employeeContext,
     ) {
+        parent::__construct(
+            $shopContext,
+            $entityManager,
+            $translator,
+            $colorBrightnessCalculator,
+            $legacyContext,
+            $employeeContext,
+        );
     }
 
     public function mount(): void
     {
-        $this->isMultistoreUsed = $this->multistoreFeature->isUsed();
-
-        if (!$this->isMultistoreUsed) {
+        if (!$this->isMultistoreUsed()) {
             return;
         }
 
-        if ($this->shopContext->getShopConstraint()->getShopId()) {
-            $shop = $this->entityManager->getRepository(Shop::class)->findOneBy(['id' => $this->shopContext->getShopConstraint()->getShopId()->getValue()]);
-            $this->contextColor = $shop->getColor();
-            $this->contextName = $shop->getName();
-        } elseif ($this->shopContext->getShopConstraint()->getShopGroupId()) {
-            $shopGroup = $this->entityManager->getRepository(ShopGroup::class)->findOneBy(['id' => $this->shopContext->getShopConstraint()->getShopGroupId()->getValue()]);
-            $this->contextColor = $shopGroup->getColor();
-            $this->contextName = $shopGroup->getName();
-        } else {
-            $this->contextName = $this->translator->trans('All stores', domain: 'Admin.Global');
-        }
-
+        parent::doMount();
         if (!$this->isLockedToAllShopContext()) {
             $this->groupList = array_filter(
                 $this->entityManager->getRepository(ShopGroup::class)->findBy(['active' => true]),
-                static fn (ShopGroup $shopGroup) => !$shopGroup->getShops()->isEmpty()
+                function (ShopGroup $shopGroup) {
+                    return !$shopGroup->getShops()->isEmpty() && $this->employeeContext->hasAuthorizationOnShopGroup($shopGroup->getId());
+                },
             );
+
+            // Filter not allowed shops
+            foreach ($this->groupList as $group) {
+                foreach ($group->getShops() as $shop) {
+                    if (!$this->employeeContext->hasAuthorizationOnShop($shop->getId())) {
+                        $group->getshops()->removeElement($shop);
+                    }
+                }
+            }
         }
-        $this->link = $this->legacyContext->getContext()->link;
     }
 
     public function isLockedToAllShopContext(): bool
@@ -95,61 +92,5 @@ class MultistoreHeader
         $controllerName = $this->menuBuilder->getLegacyControllerClassName();
 
         return in_array($controllerName, $this->controllersLockedToAllShopContext);
-    }
-
-    public function isMultistoreUsed(): bool
-    {
-        return $this->isMultistoreUsed;
-    }
-
-    public function isAllShopContext(): bool
-    {
-        return $this->shopContext->getShopConstraint()->forAllShops();
-    }
-
-    public function getContextShopId(): ?int
-    {
-        return $this->shopContext->getShopConstraint()->getShopId()?->getValue();
-    }
-
-    public function getContextShopGroupId(): ?int
-    {
-        return $this->shopContext->getShopConstraint()->getShopGroupId()?->getValue();
-    }
-
-    public function getContextName(): string
-    {
-        return $this->contextName;
-    }
-
-    public function getContextColor(): string
-    {
-        return $this->contextColor;
-    }
-
-    public function isTitleDark(): bool
-    {
-        return empty($this->contextColor) || $this->colorBrightnessCalculator->isBright($this->contextColor);
-    }
-
-    public function getColorConfigLink(): string
-    {
-        if ($this->shopContext->getShopConstraint()->getShopId()) {
-            $this->legacyContext->getAdminLink('AdminShop', extraParams: ['shop_id' => $this->shopContext->getShopConstraint()->getShopId()->getValue(), 'updateshop' => true]);
-        } elseif ($this->shopContext->getShopConstraint()->getShopGroupId()) {
-            return $this->legacyContext->getAdminLink('AdminShopGroup', extraParams: ['id_shop_group' => $this->shopContext->getShopConstraint()->getShopGroupId()->getValue(), 'updateshop_group' => true]);
-        }
-
-        return '';
-    }
-
-    public function getLink(): Link
-    {
-        return $this->link;
-    }
-
-    public function getGroupList(): array
-    {
-        return $this->groupList;
     }
 }

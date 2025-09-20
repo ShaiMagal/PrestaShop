@@ -1338,8 +1338,18 @@ $product-page-padding-bottom: 80px !default;
 
   &.product-shops-form {
     width: 100%;
-    padding: 0 var(--#{$cdk}size-16);
+    padding: var(--#{$cdk}size-2) var(--#{$cdk}size-16);
     background-color: var(--#{$cdk}white);
+
+    > .form-group:last-of-type {
+      margin-bottom: 0;
+    }
+
+    #product_shops {
+      > .form-group:last-of-type {
+        margin-bottom: 0;
+      }
+    }
   }
 
   .maxLength {
@@ -1663,7 +1673,7 @@ $product-page-padding-bottom: 80px !default;
 .create-product-form,
 .product-shops-form {
   width: 100%;
-  padding: 0 var(--#{$cdk}size-16) var(--#{$cdk}size-2);
+  padding: var(--#{$cdk}size-10) var(--#{$cdk}size-16) var(--#{$cdk}size-2);
   background-color: $white;
 }
 

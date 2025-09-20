@@ -271,3 +271,12 @@
     font-weight: 400;
   }
 }
+
+/* Useful mostly in ToggleChildrenChoice to highlight one of the children contains errors */
+.form-check-radio.has-error {
+  color: var(--#{$cdk}red-300);
+}
+
+.pstaggerClosingCross  {
+  cursor: pointer;
+}

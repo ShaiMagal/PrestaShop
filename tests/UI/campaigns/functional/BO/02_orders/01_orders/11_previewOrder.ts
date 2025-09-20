@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
+import {expect} from 'chai';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import orderPageCustomerBlock from '@pages/BO/orders/view/customerBlock';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  boOrdersViewBlockCustomersPage,
   boOrdersViewBlockProductsPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCarriers,
   dataPaymentMethods,
   dataProducts,
@@ -26,11 +22,9 @@ import {
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_orders_previewOrder';
 
@@ -168,7 +162,13 @@ describe('BO - Orders : Preview order', async () => {
 
   describe('Preview the created order', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     describe('Check the created order details', async () => {
@@ -248,7 +248,7 @@ describe('BO - Orders : Preview order', async () => {
         {args: {product: dataProducts.demo_8, productPrice: dataProducts.demo_8.price}},
         {args: {product: dataProducts.demo_11, productPrice: dataProducts.demo_11.finalPrice}},
         {args: {product: dataProducts.demo_12, productPrice: dataProducts.demo_12.price}},
-        {args: {product: dataProducts.demo_13, productPrice: dataProducts.demo_13.price}},
+        {args: {product: dataProducts.demo_13, productPrice: dataProducts.demo_13.finalPrice}},
         {args: {product: dataProducts.demo_14, productPrice: dataProducts.demo_14.price}},
       ].forEach((test, index: number) => {
         it(`should check the product '${test.args.product.name}'`, async function () {
@@ -325,7 +325,7 @@ describe('BO - Orders : Preview order', async () => {
       it('should edit the shipping address', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'editShippingAddress', baseContext);
 
-        const shippingAddress = await orderPageCustomerBlock.editExistingShippingAddress(page, editShippingAddressData);
+        const shippingAddress = await boOrdersViewBlockCustomersPage.editExistingShippingAddress(page, editShippingAddressData);
         expect(shippingAddress, 'Shipping address is not correct!')
           .to.contain(editShippingAddressData.firstName)
           .and.to.contain(editShippingAddressData.lastName)
@@ -338,7 +338,7 @@ describe('BO - Orders : Preview order', async () => {
       it('should edit the delivery address', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'editDeliveryAddress', baseContext);
 
-        const invoiceAddress = await orderPageCustomerBlock.editExistingInvoiceAddress(page, editInvoiceAddressData);
+        const invoiceAddress = await boOrdersViewBlockCustomersPage.editExistingInvoiceAddress(page, editInvoiceAddressData);
         expect(invoiceAddress, 'Invoice address is not correct!')
           .to.contain(editInvoiceAddressData.firstName)
           .and.to.contain(editInvoiceAddressData.lastName)
@@ -405,7 +405,7 @@ describe('BO - Orders : Preview order', async () => {
           {args: {product: dataProducts.demo_8, productPrice: dataProducts.demo_8.price}},
           {args: {product: dataProducts.demo_11, productPrice: dataProducts.demo_11.finalPrice}},
           {args: {product: dataProducts.demo_12, productPrice: dataProducts.demo_12.price}},
-          {args: {product: dataProducts.demo_13, productPrice: dataProducts.demo_13.price}},
+          {args: {product: dataProducts.demo_13, productPrice: dataProducts.demo_13.finalPrice}},
           {args: {product: dataProducts.demo_14, productPrice: dataProducts.demo_14.price}},
         ].forEach((test, index: number) => {
           it(`should check the product '${test.args.product.name}'`, async function () {

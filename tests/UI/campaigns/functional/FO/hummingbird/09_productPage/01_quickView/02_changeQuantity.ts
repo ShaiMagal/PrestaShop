@@ -1,17 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import common tests
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -87,14 +84,14 @@ describe('FO - Product page - Quick view : Change quantity', async () => {
 
       await foHummingbirdModalQuickViewPage.setQuantityAndAddToCart(page, 12);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foHummingbirdModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.eq(true);
     });
 
     it('should click on continue shopping and check that the modal is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.eq(true);
     });
 
@@ -121,14 +118,14 @@ describe('FO - Product page - Quick view : Change quantity', async () => {
       await foHummingbirdModalQuickViewPage.setQuantity(page, '-24');
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foHummingbirdModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.eq(true);
     });
 
     it.skip('should click on continue shopping and check that the modal is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping2', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.eq(true);
     });
 

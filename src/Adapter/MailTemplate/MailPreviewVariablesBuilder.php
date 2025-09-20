@@ -261,7 +261,6 @@ final class MailPreviewVariablesBuilder
 
         $products = $order->getProducts();
         $customizedDatas = Product::getAllCustomizedDatas($order->id_cart);
-        Product::addCustomizationPrice($products, $customizedDatas);
         foreach ($products as $key => $product) {
             $unitPrice = $product['product_price_wt'];
 

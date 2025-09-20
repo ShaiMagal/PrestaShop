@@ -1,23 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
+import {expect} from 'chai';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import viewCustomerPage from '@pages/BO/customers/view';
-import customerServicePage from '@pages/BO/customerService/customerService';
-// Import FO pages
-import {contactUsPage} from '@pages/FO/classic/contactUs';
-import {createAccountPage} from '@pages/FO/classic/myAccount/add';
-import {gdprPersonalDataPage} from '@pages/FO/classic/myAccount/gdprPersonalData';
 
 import {
   boCustomersPage,
+  boCustomersViewPage,
+  boCustomerServicePage,
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
   boShoppingCartsPage,
+  type BrowserContext,
   dataPaymentMethods,
   dataProducts,
   FakerAddress,
@@ -26,18 +19,19 @@ import {
   foClassicCartPage,
   foClassicCheckoutPage,
   foClassicCheckoutOrderConfirmationPage,
+  foClassicContactUsPage,
+  foClassicCreateAccountPage,
+  foClassicMyGDPRPersonalDataPage,
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
   foClassicProductPage,
+  type Page,
   utilsCore,
   utilsDate,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_classic_userAccount_getGDPRDataInPDF';
 
@@ -126,14 +120,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
         await foClassicHomePage.goToLoginPage(page);
         await foClassicLoginPage.goToCreateAccountPage(page);
 
-        const pageHeaderTitle = await createAccountPage.getHeaderTitle(page);
-        expect(pageHeaderTitle).to.equal(createAccountPage.formTitle);
+        const pageHeaderTitle = await foClassicCreateAccountPage.getHeaderTitle(page);
+        expect(pageHeaderTitle).to.equal(foClassicCreateAccountPage.formTitle);
       });
 
       it('should create new account', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'createAccount', baseContext);
 
-        await createAccountPage.createAccount(page, customerData);
+        await foClassicCreateAccountPage.createAccount(page, customerData);
 
         const isCustomerConnected = await foClassicHomePage.isCustomerConnected(page);
         expect(isCustomerConnected).to.eq(true);
@@ -153,14 +147,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await foClassicMyAccountPage.goToMyGDPRPersonalDataPage(page);
 
-        const pageTitle = await gdprPersonalDataPage.getPageTitle(page);
-        expect(pageTitle).to.equal(gdprPersonalDataPage.pageTitle);
+        const pageTitle = await foClassicMyGDPRPersonalDataPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicMyGDPRPersonalDataPage.pageTitle);
       });
 
       it('should click on \'Get my data to PDF file\'', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'clickOnGetMyDataToPDF1', baseContext);
 
-        filePath = await gdprPersonalDataPage.exportDataToPDF(page);
+        filePath = await foClassicMyGDPRPersonalDataPage.exportDataToPDF(page);
 
         const found = await utilsFile.doesFileExist(filePath);
         expect(found, 'PDF file was not downloaded').to.eq(true);
@@ -169,7 +163,13 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
     describe('Get personal information from BO', async () => {
       it('should login in BO', async function () {
-        await loginCommon.loginBO(this, page);
+        await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+        await boLoginPage.goTo(page, global.BO.URL);
+        await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+        const pageTitle = await boDashboardPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boDashboardPage.pageTitle);
       });
 
       it('should go to \'Customers > Customers\' page', async function () {
@@ -218,14 +218,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await boCustomersPage.goToViewCustomerPage(page, 1);
 
-        const pageTitle = await viewCustomerPage.getPageTitle(page);
-        expect(pageTitle).to.contains(viewCustomerPage.pageTitle(createCustomerName));
+        const pageTitle = await boCustomersViewPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCustomersViewPage.pageTitle(createCustomerName));
       });
 
       it('should get last connections ip address', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkLAstConnections', baseContext);
 
-        ipAddress = await viewCustomerPage.getTextColumnFromTableLastConnections(page, 'ip-address');
+        ipAddress = await boCustomersViewPage.getTextColumnFromTableLastConnections(page, 'ip-address');
         expect(ipAddress).to.not.eq(null);
       });
     });
@@ -365,14 +365,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await foClassicMyAccountPage.goToMyGDPRPersonalDataPage(page);
 
-        const pageTitle = await gdprPersonalDataPage.getPageTitle(page);
-        expect(pageTitle).to.equal(gdprPersonalDataPage.pageTitle);
+        const pageTitle = await foClassicMyGDPRPersonalDataPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicMyGDPRPersonalDataPage.pageTitle);
       });
 
       it('should click on \'Get my data to PDF file\'', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'clickOnGetMyDataToPDF2', baseContext);
 
-        filePath = await gdprPersonalDataPage.exportDataToPDF(page);
+        filePath = await foClassicMyGDPRPersonalDataPage.exportDataToPDF(page);
 
         const found = await utilsFile.doesFileExist(filePath);
         expect(found, 'PDF file was not downloaded').to.eq(true);
@@ -509,14 +509,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await foClassicMyAccountPage.goToMyGDPRPersonalDataPage(page);
 
-        const pageTitle = await gdprPersonalDataPage.getPageTitle(page);
-        expect(pageTitle).to.equal(gdprPersonalDataPage.pageTitle);
+        const pageTitle = await foClassicMyGDPRPersonalDataPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicMyGDPRPersonalDataPage.pageTitle);
       });
 
       it('should click on \'Get my data to PDF file\'', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'clickOnGetMyDataToPDF3', baseContext);
 
-        filePath = await gdprPersonalDataPage.exportDataToPDF(page);
+        filePath = await foClassicMyGDPRPersonalDataPage.exportDataToPDF(page);
 
         const found = await utilsFile.doesFileExist(filePath);
         expect(found, 'PDF file was not downloaded').to.eq(true);
@@ -625,17 +625,17 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
         // Go to contact us page
         await foClassicLoginPage.goToFooterLink(page, 'Contact us');
 
-        const pageTitle = await contactUsPage.getPageTitle(page);
-        expect(pageTitle).to.equal(contactUsPage.pageTitle);
+        const pageTitle = await foClassicContactUsPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicContactUsPage.pageTitle);
       });
 
       it('should send message to customer service', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'sendMessage', baseContext);
 
-        await contactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.txt`);
+        await foClassicContactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.txt`);
 
-        const validationMessage = await contactUsPage.getAlertSuccess(page);
-        expect(validationMessage).to.equal(contactUsPage.validationMessage);
+        const validationMessage = await foClassicContactUsPage.getAlertSuccess(page);
+        expect(validationMessage).to.equal(foClassicContactUsPage.validationMessage);
       });
 
       it('should go to my account page', async function () {
@@ -652,14 +652,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await foClassicMyAccountPage.goToMyGDPRPersonalDataPage(page);
 
-        const pageTitle = await gdprPersonalDataPage.getPageTitle(page);
-        expect(pageTitle).to.equal(gdprPersonalDataPage.pageTitle);
+        const pageTitle = await foClassicMyGDPRPersonalDataPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicMyGDPRPersonalDataPage.pageTitle);
       });
 
       it('should click on \'Get my data to PDF file\'', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'clickOnGetMyDataToPDF4', baseContext);
 
-        filePath = await gdprPersonalDataPage.exportDataToPDF(page);
+        filePath = await foClassicMyGDPRPersonalDataPage.exportDataToPDF(page);
 
         const found = await utilsFile.doesFileExist(filePath);
         expect(found, 'PDF file was not downloaded').to.eq(true);
@@ -685,21 +685,21 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
           boDashboardPage.customerServiceLink,
         );
 
-        const pageTitle = await customerServicePage.getPageTitle(page);
-        expect(pageTitle).to.contains(customerServicePage.pageTitle);
+        const pageTitle = await boCustomerServicePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
       });
 
       it('should check customer name', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkCustomerName', baseContext);
 
-        const email = await customerServicePage.getTextColumn(page, 1, 'customer');
+        const email = await boCustomerServicePage.getTextColumn(page, 1, 'customer');
         expect(email).to.contain(`${contactUsData.firstName} ${contactUsData.lastName}`);
       });
 
       it('should get last message date', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkCustomerEmail', baseContext);
 
-        messageDate = await customerServicePage.getTextColumn(page, 1, 'date');
+        messageDate = await boCustomerServicePage.getTextColumn(page, 1, 'date');
         expect(messageDate).to.not.eq(null);
       });
     });
@@ -791,14 +791,14 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await foClassicMyAccountPage.goToMyGDPRPersonalDataPage(page);
 
-        const pageTitle = await gdprPersonalDataPage.getPageTitle(page);
-        expect(pageTitle).to.equal(gdprPersonalDataPage.pageTitle);
+        const pageTitle = await foClassicMyGDPRPersonalDataPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicMyGDPRPersonalDataPage.pageTitle);
       });
 
       it('should click on \'Get my data to PDF file\'', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'clickOnGetMyDataToPDF5', baseContext);
 
-        filePath = await gdprPersonalDataPage.exportDataToPDF(page);
+        filePath = await foClassicMyGDPRPersonalDataPage.exportDataToPDF(page);
 
         const found = await utilsFile.doesFileExist(filePath);
         expect(found, 'PDF file was not downloaded').to.eq(true);
@@ -852,18 +852,18 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
 
         await boCustomersPage.goToViewCustomerPage(page, 1);
 
-        const pageTitle = await viewCustomerPage.getPageTitle(page);
-        expect(pageTitle).to.contains(viewCustomerPage.pageTitle(createCustomerName));
+        const pageTitle = await boCustomersViewPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCustomersViewPage.pageTitle(createCustomerName));
       });
 
       it('should get last connections origin', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkLastConnectionsOrigin', baseContext);
 
-        connectionOrigin = await viewCustomerPage.getTextColumnFromTableLastConnections(page, 'origin', 1);
+        connectionOrigin = await boCustomersViewPage.getTextColumnFromTableLastConnections(page, 'origin', 1);
         if (connectionOrigin === 'Direct link') {
           connectionOrigin = '';
         } else if (connectionOrigin === 'localhost') {
-          connectionOrigin = `${global.INSTALL.ENABLE_SSL ? 'https://localhost:8002' : 'http://localhost:8001'},/en/,`;
+          connectionOrigin = global.INSTALL.ENABLE_SSL ? 'https://localhost:8002/' : 'http://localhost:8001/';
         }
         expect(connectionOrigin).to.not.eq(null);
       });
@@ -914,7 +914,7 @@ describe('FO - Account : Get GDPR data in PDF', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'checkLastConnectionsTable2', baseContext);
 
         const isVisible = await utilsFile.isTextInPDF(filePath, 'Last connections Origin request Page viewed '
-          + `Time on the page IP address Date ${connectionOrigin.split(',').join('')} 0 ${ipAddress} ${secondLastVisitDate} 0 `
+          + `Time on the page IP address Date ${connectionOrigin} 0 ${ipAddress} ${secondLastVisitDate} 0 `
           + `${ipAddress} ${lastVisitDate}`, true);
         expect(isVisible, 'The data in Last connections table is not correct!').to.eq(true);
       });

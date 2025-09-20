@@ -1,31 +1,25 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-// Import BO pages
-import customerServicePage from '@pages/BO/customerService/customerService';
-import viewPage from '@pages/BO/customerService/customerService/view';
-
-// Import FO pages
-import contactUsPage from '@pages/FO/hummingbird/contactUs';
-
 import {
+  boCustomerServicePage,
+  boCustomerServiceViewPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCustomers,
   dataOrders,
   FakerContactMessage,
+  foHummingbirdContactUsPage,
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_hummingbird_contactUs_addAttachment';
 
@@ -108,30 +102,36 @@ describe('FO - Contact us : Add attachment', async () => {
       // Go to contact us page
       await foHummingbirdLoginPage.goToFooterLink(page, 'Contact us');
 
-      const pageTitle = await contactUsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(contactUsPage.pageTitle);
+      const pageTitle = await foHummingbirdContactUsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foHummingbirdContactUsPage.pageTitle);
     });
 
     it('should try to send message with csv file to customer service and check error message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sendCSVFile', baseContext);
 
-      await contactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.csv`);
+      await foHummingbirdContactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.csv`);
 
-      const validationMessage = await contactUsPage.getAlertError(page);
-      expect(validationMessage).to.equal(contactUsPage.badFileExtensionErrorMessage);
+      const validationMessage = await foHummingbirdContactUsPage.getAlertError(page);
+      expect(validationMessage).to.equal(foHummingbirdContactUsPage.badFileExtensionErrorMessage);
     });
 
     it('should send message with PNG file to customer service and check validation message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sendPNGFile', baseContext);
 
-      await contactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.png`);
+      await foHummingbirdContactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.png`);
 
-      const validationMessage = await contactUsPage.getAlertSuccess(page);
-      expect(validationMessage).to.equal(contactUsPage.validationMessage);
+      const validationMessage = await foHummingbirdContactUsPage.getAlertSuccess(page);
+      expect(validationMessage).to.equal(foHummingbirdContactUsPage.validationMessage);
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to customer service page', async function () {
@@ -143,46 +143,46 @@ describe('FO - Contact us : Add attachment', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServicePage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServicePage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should check customer name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkCustomerName', baseContext);
 
-      const email = await customerServicePage.getTextColumn(page, 1, 'customer');
+      const email = await boCustomerServicePage.getTextColumn(page, 1, 'customer');
       expect(email).to.contain(`${contactUsData.firstName} ${contactUsData.lastName}`);
     });
 
     it('should check customer email', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkCustomerEmail', baseContext);
 
-      const email = await customerServicePage.getTextColumn(page, 1, 'a!email');
+      const email = await boCustomerServicePage.getTextColumn(page, 1, 'a!email');
       expect(email).to.contain(contactUsData.emailAddress);
     });
 
     it('should get the customer service id and the date', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'getMessageID', baseContext);
 
-      idCustomer = await customerServicePage.getTextColumn(page, 1, 'id_customer_thread');
+      idCustomer = await boCustomerServicePage.getTextColumn(page, 1, 'id_customer_thread');
       expect(parseInt(idCustomer, 10)).to.be.at.least(0);
 
-      messageDateTime = await customerServicePage.getTextColumn(page, 1, 'date');
+      messageDateTime = await boCustomerServicePage.getTextColumn(page, 1, 'date');
     });
 
     it('should go to view message page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToViewMessagePage', baseContext);
 
-      await customerServicePage.goToViewMessagePage(page);
+      await boCustomerServicePage.goToViewMessagePage(page);
 
-      const pageTitle = await viewPage.getPageTitle(page);
-      expect(pageTitle).to.contains(viewPage.pageTitle);
+      const pageTitle = await boCustomerServiceViewPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServiceViewPage.pageTitle);
     });
 
     it('should check the thread form', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkThreadForm', baseContext);
 
-      const text = await viewPage.getCustomerMessage(page);
+      const text = await boCustomerServiceViewPage.getCustomerMessage(page);
       expect(text)
         .to.contains(contactUsData.emailAddress)
         .and.to.contains(contactUsData.subject)
@@ -194,7 +194,7 @@ describe('FO - Contact us : Add attachment', async () => {
     it('should check the file attached', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkFileAttached', baseContext);
 
-      const fileExtension = await viewPage.getAttachedFileHref(page);
+      const fileExtension = await boCustomerServiceViewPage.getAttachedFileHref(page);
       expect(fileExtension).to.contains('.png');
     });
 
@@ -207,15 +207,15 @@ describe('FO - Contact us : Add attachment', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServicePage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServicePage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should delete the message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteMessage', baseContext);
 
-      const textResult = await customerServicePage.deleteMessage(page, 1);
-      expect(textResult).to.contains(customerServicePage.successfulDeleteMessage);
+      const textResult = await boCustomerServicePage.deleteMessage(page, 1);
+      expect(textResult).to.contains(boCustomerServicePage.successfulDeleteMessage);
     });
   });
 

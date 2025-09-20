@@ -39,6 +39,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Range;
+use Symfony\Component\Validator\Constraints\Url;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class GeneralSettings extends TranslatorAwareType
@@ -77,7 +79,7 @@ class GeneralSettings extends TranslatorAwareType
             ])
             ->add('active', SwitchType::class, [
                 'label' => $this->trans('Active', 'Admin.Global'),
-                'required' => true,
+                'required' => false,
             ])
             ->add('grade', NumberType::class, [
                 'label' => $this->trans('Speed grade', 'Admin.Shipping.Feature'),
@@ -88,9 +90,17 @@ class GeneralSettings extends TranslatorAwareType
                     'min' => 0,
                     'max' => 9,
                 ],
+                'constraints' => [
+                    new Range([
+                        'min' => 0,
+                        'max' => 9,
+                        'notInRangeMessage' => $this->trans('The grade must be between 0 and 9.', 'Admin.Shipping.Notification'),
+                    ]),
+                ],
             ])
             ->add('logo_preview', ImagePreviewType::class, [
                 'label' => $this->trans('Logo', 'Admin.Global'),
+                'image_class' => 'img-fluid carrier__logo',
             ])
             ->add('logo', FileType::class, [
                 'label' => null,
@@ -101,8 +111,8 @@ class GeneralSettings extends TranslatorAwareType
                         'mimeTypes' => [
                             'image/jpeg',
                         ],
-                        'mimeTypesMessage' => $this->trans('Please upload a valid jpeg file', 'Admin.Carriers.Form.LogoUpload'),
-                        'maxSizeMessage' => $this->trans('The file is too large. Allowed maximum size is 8MB.', 'Admin.Carriers.Form.LogoUpload'),
+                        'mimeTypesMessage' => $this->trans('Please upload a valid jpeg file', 'Admin.Shipping.Feature'),
+                        'maxSizeMessage' => $this->trans('The file is too large. Allowed maximum size is 8MB.', 'Admin.Shipping.Feature'),
                     ]),
                 ],
             ])
@@ -111,6 +121,11 @@ class GeneralSettings extends TranslatorAwareType
                 'label' => $this->trans('Tracking URL', 'Admin.Shipping.Feature'),
                 'label_help_box' => $this->trans('Delivery tracking URL: Type \'@\' where the tracking number should appear. It will be automatically replaced by the tracking number.', 'Admin.Shipping.Help'),
                 'help' => $this->trans('For example: \'http://example.com/track.php?num=@\' with \'@\' where the tracking number should appear.', 'Admin.Shipping.Help'),
+                'constraints' => [
+                    new Url([
+                        'message' => $this->trans('Please enter a valid URL.', 'Admin.Notifications.Error'),
+                    ]),
+                ],
             ])
             ->add('group_access', MaterialChoiceTableType::class, [
                 'label' => $this->trans('Group access', 'Admin.Shipping.Feature'),

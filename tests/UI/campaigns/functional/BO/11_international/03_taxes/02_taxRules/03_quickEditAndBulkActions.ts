@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import taxesPage from '@pages/BO/international/taxes';
-import taxRulesPage from '@pages/BO/international/taxes/taxRules';
-import addTaxRulesPage from '@pages/BO/international/taxes/taxRules/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boTaxesPage,
+  boTaxRulesPage,
+  boTaxRulesCreatePage,
+  type BrowserContext,
   FakerTaxRulesGroup,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -43,7 +39,13 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'International > Taxes\' page', async function () {
@@ -55,23 +57,23 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
       boDashboardPage.taxesLink,
     );
 
-    const pageTitle = await taxesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(taxesPage.pageTitle);
+    const pageTitle = await boTaxesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boTaxesPage.pageTitle);
   });
 
   it('should go to \'Tax Rules\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToTaxRulesPage', baseContext);
 
-    await taxesPage.goToTaxRulesPage(page);
+    await boTaxesPage.goToTaxRulesPage(page);
 
-    const pageTitle = await taxRulesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(taxRulesPage.pageTitle);
+    const pageTitle = await boTaxRulesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boTaxRulesPage.pageTitle);
   });
 
   it('should reset all filters and get number of Tax rules in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfTaxRules = await taxRulesPage.resetAndGetNumberOfLines(page);
+    numberOfTaxRules = await boTaxRulesPage.resetAndGetNumberOfLines(page);
     expect(numberOfTaxRules).to.be.above(0);
   });
 
@@ -84,29 +86,29 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
       it('should go to add new tax rule page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToNewTaxRulePage${index + 1}`, baseContext);
 
-        await taxRulesPage.goToAddNewTaxRulesGroupPage(page);
+        await boTaxRulesPage.goToAddNewTaxRulesGroupPage(page);
 
-        const pageTitle = await addTaxRulesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addTaxRulesPage.pageTitleCreate);
+        const pageTitle = await boTaxRulesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boTaxRulesCreatePage.pageTitleCreate);
       });
 
       it('should create tax rule and check result', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `CreateTax${index + 1}`, baseContext);
 
-        const textResult = await addTaxRulesPage.createEditTaxRulesGroup(page, test.args.taxRuleToCreate);
-        expect(textResult).to.contains(addTaxRulesPage.successfulCreationMessage);
+        const textResult = await boTaxRulesCreatePage.createEditTaxRulesGroup(page, test.args.taxRuleToCreate);
+        expect(textResult).to.contains(boTaxRulesCreatePage.successfulCreationMessage);
       });
 
       it('should go to Tax Rules page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToTaxRulesPage${index}`, baseContext);
 
-        await taxesPage.goToTaxRulesPage(page);
+        await boTaxesPage.goToTaxRulesPage(page);
 
-        const numberOfLineAfterCreation = await taxRulesPage.getNumberOfElementInGrid(page);
+        const numberOfLineAfterCreation = await boTaxRulesPage.getNumberOfElementInGrid(page);
         expect(numberOfLineAfterCreation).to.be.equal(numberOfTaxRules + index + 1);
 
-        const pageTitle = await taxRulesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(taxRulesPage.pageTitle);
+        const pageTitle = await boTaxRulesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boTaxRulesPage.pageTitle);
       });
     });
   });
@@ -116,9 +118,9 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterTaxesToQuickEdit', baseContext);
 
-      await taxRulesPage.filterTable(page, 'input', 'name', firstTaxRuleData.name);
+      await boTaxRulesPage.filterTable(page, 'input', 'name', firstTaxRuleData.name);
 
-      const textResult = await taxRulesPage.getTextColumnFromTable(page, 1, 'name');
+      const textResult = await boTaxRulesPage.getTextColumnFromTable(page, 1, 'name');
       expect(textResult).to.contains(firstTaxRuleData.name);
     });
 
@@ -129,14 +131,14 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
       it(`should ${test.args.action} tax rule`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}Category`, baseContext);
 
-        const isActionPerformed = await taxRulesPage.setStatus(page, 1, test.args.enabledValue);
+        const isActionPerformed = await boTaxRulesPage.setStatus(page, 1, test.args.enabledValue);
 
         if (isActionPerformed) {
-          const resultMessage = await taxRulesPage.getAlertSuccessBlockContent(page);
-          expect(resultMessage).to.contains(taxRulesPage.successfulUpdateStatusMessage);
+          const resultMessage = await boTaxRulesPage.getAlertSuccessBlockContent(page);
+          expect(resultMessage).to.contains(boTaxRulesPage.successfulUpdateStatusMessage);
         }
 
-        const status = await taxRulesPage.getStatus(page, 1);
+        const status = await boTaxRulesPage.getStatus(page, 1);
         expect(status).to.be.equal(test.args.enabledValue);
       });
     });
@@ -144,7 +146,7 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
     it('should reset all filters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetAfterQuickEdit', baseContext);
 
-      const numberOfLinesAfterReset = await taxRulesPage.resetAndGetNumberOfLines(page);
+      const numberOfLinesAfterReset = await boTaxRulesPage.resetAndGetNumberOfLines(page);
       expect(numberOfLinesAfterReset).to.be.equal(numberOfTaxRules + 2);
     });
   });
@@ -158,27 +160,27 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
       it('should filter list by name', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `filterTaxesToChangeStatus${index}`, baseContext);
 
-        await taxRulesPage.filterTable(
+        await boTaxRulesPage.filterTable(
           page,
           'input',
           'name',
           test.args.taxRule,
         );
 
-        const textResult = await taxRulesPage.getTextColumnFromTable(page, 1, 'name');
+        const textResult = await boTaxRulesPage.getTextColumnFromTable(page, 1, 'name');
         expect(textResult).to.contains(test.args.taxRule);
       });
 
       it(`should ${test.args.action} tax rules with bulk actions and check Result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `bulk${test.args.action}`, baseContext);
 
-        const textResult = await taxRulesPage.bulkSetStatus(page, test.args.enabledValue);
-        expect(textResult).to.contains(taxRulesPage.successfulUpdateStatusMessage);
+        const textResult = await boTaxRulesPage.bulkSetStatus(page, test.args.enabledValue);
+        expect(textResult).to.contains(boTaxRulesPage.successfulUpdateStatusMessage);
 
-        const numberOfElementInGrid = await taxRulesPage.getNumberOfElementInGrid(page);
+        const numberOfElementInGrid = await boTaxRulesPage.getNumberOfElementInGrid(page);
 
         for (let i = 1; i <= numberOfElementInGrid; i++) {
-          const textColumn = await taxRulesPage.getStatus(page, i);
+          const textColumn = await boTaxRulesPage.getStatus(page, i);
           expect(textColumn).to.equal(test.args.enabledValue);
         }
       });
@@ -187,7 +189,7 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
     it('should reset all filters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetAfterBulkEdit', baseContext);
 
-      const numberOfLinesAfterReset = await taxRulesPage.resetAndGetNumberOfLines(page);
+      const numberOfLinesAfterReset = await boTaxRulesPage.resetAndGetNumberOfLines(page);
       expect(numberOfLinesAfterReset).to.be.equal(numberOfTaxRules + 2);
     });
   });
@@ -197,24 +199,24 @@ describe('BO - International - Tax rules : Bulk actions', async () => {
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterToBulkDelete', baseContext);
 
-      await taxRulesPage.filterTable(
+      await boTaxRulesPage.filterTable(
         page,
         'input',
         'name',
         'toDelete',
       );
 
-      const textResult = await taxRulesPage.getTextColumnFromTable(page, 1, 'name');
+      const textResult = await boTaxRulesPage.getTextColumnFromTable(page, 1, 'name');
       expect(textResult).to.contains('toDelete');
     });
 
     it('should delete Taxes with Bulk Actions and check Result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'bulkDelete', baseContext);
 
-      const deleteTextResult = await taxRulesPage.bulkDeleteTaxRules(page);
-      expect(deleteTextResult).to.contains(taxRulesPage.successfulMultiDeleteMessage);
+      const deleteTextResult = await boTaxRulesPage.bulkDeleteTaxRules(page);
+      expect(deleteTextResult).to.contains(boTaxRulesPage.successfulMultiDeleteMessage);
 
-      const numberOfTaxesAfterReset = await taxRulesPage.resetAndGetNumberOfLines(page);
+      const numberOfTaxesAfterReset = await boTaxRulesPage.resetAndGetNumberOfLines(page);
       expect(numberOfTaxesAfterReset).to.be.equal(numberOfTaxRules);
     });
   });

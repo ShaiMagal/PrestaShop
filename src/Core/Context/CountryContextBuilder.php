@@ -36,6 +36,8 @@ use PrestaShop\PrestaShop\Core\Exception\InvalidArgumentException;
 
 class CountryContextBuilder implements LegacyContextBuilderInterface
 {
+    use LegacyObjectCheckerTrait;
+
     private ?int $countryId = null;
 
     private ?LegacyCountry $legacyCountry = null;
@@ -53,11 +55,11 @@ class CountryContextBuilder implements LegacyContextBuilderInterface
         $legacyCountry = $this->getLegacyCountry();
 
         return new CountryContext(
-            id: $legacyCountry->id,
-            zoneId: $legacyCountry->id_zone,
-            currencyId: $legacyCountry->id_currency,
+            id: (int) $legacyCountry->id,
+            zoneId: (int) $legacyCountry->id_zone,
+            currencyId: (int) $legacyCountry->id_currency,
             isoCode: $legacyCountry->iso_code,
-            callPrefix: $legacyCountry->call_prefix,
+            callPrefix: (int) $legacyCountry->call_prefix,
             name: $legacyCountry->name[$this->languageContext->getId()] ?? reset($legacyCountry->name),
             containsStates: (bool) $legacyCountry->contains_states,
             identificationNumberNeeded: (bool) $legacyCountry->need_identification_number,
@@ -70,7 +72,11 @@ class CountryContextBuilder implements LegacyContextBuilderInterface
     public function buildLegacyContext(): void
     {
         $this->assertArguments();
-        $this->contextStateManager->setCountry($this->getLegacyCountry());
+
+        // Only update the legacy context when the country is not the expected one, if not leave the context unchanged
+        if ($this->legacyObjectNeedsUpdate($this->contextStateManager->getContext()->country, (int) $this->getLegacyCountry()->id)) {
+            $this->contextStateManager->setCountry($this->getLegacyCountry());
+        }
     }
 
     public function setCountryId(?int $countryId): self
@@ -92,7 +98,7 @@ class CountryContextBuilder implements LegacyContextBuilderInterface
 
     private function getLegacyCountry(): LegacyCountry
     {
-        if (!$this->legacyCountry) {
+        if ($this->legacyObjectNeedsUpdate($this->legacyCountry, $this->countryId)) {
             $this->legacyCountry = $this->countryRepository->get(new CountryId($this->countryId));
         }
 

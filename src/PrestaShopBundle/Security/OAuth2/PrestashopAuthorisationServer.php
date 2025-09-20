@@ -62,7 +62,7 @@ class PrestashopAuthorisationServer implements AuthorisationServerInterface
         try {
             $serverRequest = $this->httpMessageFactory->createRequest($request);
             $this->resourceServer->validateAuthenticatedRequest($serverRequest);
-        } catch (OAuthServerException $e) {
+        } catch (OAuthServerException) {
             return false;
         }
 

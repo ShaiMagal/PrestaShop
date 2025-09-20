@@ -90,6 +90,7 @@ tests/Resources/download/*
 tests/UI/tsconfig.tsbuildinfo
 tests/Unit/.phpunit.result.cache
 .phpunit.result.cache
+.twig-cs-fixer.cache
 tests/Integration/.phpunit.result.cache
 tests-legacy/.phpunit.result.cache
 
@@ -107,6 +108,8 @@ tests-legacy/.phpunit.result.cache
 /admin-dev/export/*
 !/admin-dev/export/.htaccess
 !/admin-dev/export/index.php
+
+/admin-dev/bundles/*
 
 # Downloaded RTL files
 /admin-dev/themes/default/css/bundle/default_rtl.css

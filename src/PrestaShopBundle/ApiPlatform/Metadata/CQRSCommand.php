@@ -28,8 +28,13 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\ApiPlatform\Metadata;
 
+use ApiPlatform\Metadata\Parameters;
+use ApiPlatform\OpenApi\Attributes\Webhook;
+use ApiPlatform\OpenApi\Model\Operation as OpenApiOperation;
+use ApiPlatform\State\OptionsInterface;
 use Attribute;
 use PrestaShopBundle\ApiPlatform\Processor\CommandProcessor;
+use Stringable;
 
 /**
  * Class CQRSCommand handles parameters to ease the configuration of an operation relying on CommandProcessor
@@ -60,12 +65,16 @@ class CQRSCommand extends AbstractCQRSOperation
         ?array $schemes = null,
         ?string $condition = null,
         ?string $controller = null,
+        ?array $headers = null,
         ?array $cacheHeaders = null,
+        ?array $paginationViaCursor = null,
         ?array $hydraContext = null,
         ?array $openapiContext = null,
-        ?bool $openapi = null,
+        bool|OpenApiOperation|Webhook|null $openapi = null,
         ?array $exceptionToStatus = null,
-        ?bool $queryParameterValidationEnabled = null,
+        ?array $links = null,
+        ?array $errors = null,
+
         ?string $shortName = null,
         ?string $class = null,
         ?bool $paginationEnabled = null,
@@ -78,16 +87,16 @@ class CQRSCommand extends AbstractCQRSOperation
         ?bool $paginationClientPartial = null,
         ?bool $paginationFetchJoinCollection = null,
         ?bool $paginationUseOutputWalkers = null,
-        ?array $paginationViaCursor = null,
         ?array $order = null,
         ?string $description = null,
         ?array $normalizationContext = null,
         ?array $denormalizationContext = null,
-        ?string $security = null,
+        ?bool $collectDenormalizationErrors = null,
+        string|Stringable|null $security = null,
         ?string $securityMessage = null,
-        ?string $securityPostDenormalize = null,
+        string|Stringable|null $securityPostDenormalize = null,
         ?string $securityPostDenormalizeMessage = null,
-        ?string $securityPostValidation = null,
+        string|Stringable|null $securityPostValidation = null,
         ?string $securityPostValidationMessage = null,
         ?string $deprecationReason = null,
         ?array $filters = null,
@@ -109,6 +118,9 @@ class CQRSCommand extends AbstractCQRSOperation
         ?string $name = null,
         $provider = null,
         $processor = null,
+        ?OptionsInterface $stateOptions = null,
+        array|Parameters|null $parameters = null,
+        ?bool $queryParameterValidationEnabled = null,
         array $extraProperties = [],
         ?string $CQRSCommand = null,
         ?string $CQRSQuery = null,
@@ -117,6 +129,7 @@ class CQRSCommand extends AbstractCQRSOperation
         ?array $ApiResourceMapping = null,
         ?array $CQRSCommandMapping = null,
         ?bool $experimentalOperation = null,
+        ?bool $allowEmptyBody = null,
     ) {
         $passedArguments = \get_defined_vars();
 
@@ -132,9 +145,21 @@ class CQRSCommand extends AbstractCQRSOperation
             $passedArguments['extraProperties']['CQRSCommandMapping'] = $CQRSCommandMapping;
         }
 
+        if ($allowEmptyBody !== null) {
+            $this->checkArgumentAndExtraParameterValidity('allowEmptyBody', $allowEmptyBody, $passedArguments['extraProperties']);
+            $passedArguments['extraProperties']['allowEmptyBody'] = $allowEmptyBody;
+        }
+
         // Remove custom arguments
         unset($passedArguments['CQRSCommand']);
         unset($passedArguments['CQRSCommandMapping']);
+        unset($passedArguments['allowEmptyBody']);
+
+        // By default, the CQRS command is used as the input base class as it contains the exact available parameters for this operation
+        // Exception in case the class doesn't exist we don't force the input because InputOutputResourceMetadataCollectionFactory will raise an exception when the resources are parsed
+        if (empty($passedArguments['input']) && !empty($passedArguments['extraProperties']['CQRSCommand']) && class_exists($passedArguments['extraProperties']['CQRSCommand'])) {
+            $passedArguments['input'] = $passedArguments['extraProperties']['CQRSCommand'];
+        }
 
         parent::__construct(...$passedArguments);
     }
@@ -148,6 +173,10 @@ class CQRSCommand extends AbstractCQRSOperation
     {
         $self = clone $this;
         $self->extraProperties['CQRSCommand'] = $CQRSCommand;
+        // Test if the input was a copy of the CQRSCommand extra property, set in the constructor (if none was set then we can copy it as well)
+        if (empty($this->input) || empty($this->extraProperties['CQRSCommand']) || $this->input === $this->extraProperties['CQRSCommand']) {
+            $self->input = $CQRSCommand;
+        }
 
         return $self;
     }
@@ -165,10 +194,23 @@ class CQRSCommand extends AbstractCQRSOperation
         return $this->extraProperties['CQRSCommandMapping'] ?? null;
     }
 
-    public function withCQRSCommandMapping(array $CQRSQuery): static
+    public function withCQRSCommandMapping(array $CQRSCommandMapping): static
     {
         $self = clone $this;
-        $self->extraProperties['CQRSCommandMapping'] = $CQRSQuery;
+        $self->extraProperties['CQRSCommandMapping'] = $CQRSCommandMapping;
+
+        return $self;
+    }
+
+    public function getAllowEmptyBody(): ?bool
+    {
+        return $this->extraProperties['allowEmptyBody'] ?? null;
+    }
+
+    public function withAllowEmptyBody(bool $allowEmptyBody): static
+    {
+        $self = clone $this;
+        $self->extraProperties['allowEmptyBody'] = $allowEmptyBody;
 
         return $self;
     }

@@ -4,14 +4,15 @@ import testContext from '@utils/testContext';
 // Import commonTests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 import {createProductTest, bulkDeleteProductsTest} from '@commonTests/BO/catalog/product';
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderSpecificProductTest} from '@commonTests/FO/classic/order';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockProductsPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataOrderStatuses,
@@ -19,12 +20,12 @@ import {
   FakerOrder,
   FakerOrderShipping,
   FakerProduct,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_orders_viewAndEditOrder_checkMultiInvoice';
 
@@ -105,7 +106,13 @@ describe('BO - Orders - View and edit order: Check multi invoice', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   // 1 - Go to view order page
@@ -276,14 +283,14 @@ describe('BO - Orders - View and edit order: Check multi invoice', async () => {
 
       let result = await boOrdersViewBlockProductsPage.getProductDetails(page, 1);
       await Promise.all([
-        expect(result.basePrice, 'Base price was not updated').to.equal(secondNewProductPrice),
-        expect(result.total, 'Total price was not updated').to.equal(secondNewProductPrice),
+        expect(result.basePrice, 'Base price was not updated on first product').to.equal(secondNewProductPrice),
+        expect(result.total, 'Total price was not updated on first product').to.equal(secondNewProductPrice),
       ]);
 
       result = await boOrdersViewBlockProductsPage.getProductDetails(page, 2);
       await Promise.all([
-        expect(result.basePrice, 'Base price was not updated').to.equal(secondNewProductPrice),
-        expect(result.total, 'Total price was not updated').to.equal(secondNewProductPrice * 2),
+        expect(result.basePrice, 'Base price was not updated on second product').to.equal(secondNewProductPrice),
+        expect(result.total, 'Total price was not updated on second product').to.equal(secondNewProductPrice * 2),
       ]);
     });
   });

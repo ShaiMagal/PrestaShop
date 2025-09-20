@@ -1,22 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
-// Import data
 import {
   boCarriersCreatePage,
   boCarriersPage,
   boDashboardPage,
+  boLoginPage,
+  boProductsCreatePage,
   boProductsCreateTabShippingPage,
   boProductsPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataProducts,
@@ -28,6 +21,7 @@ import {
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -113,6 +107,18 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
     // Shipping locations and cost
     handlingCosts: false,
     freeShipping: true,
+    ranges: [
+      {
+        zones: [
+          {
+            zone: dataZones.europe,
+          },
+          {
+            zone: dataZones.northAmerica,
+          },
+        ],
+      },
+    ],
     billing: 'According to total weight',
     taxRule: 'No tax',
     outOfRangeBehavior: 'Apply the cost of the highest defined range',
@@ -430,7 +436,13 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shipping > Carriers\' page', async function () {
@@ -467,6 +479,19 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierData);
     expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriers', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
 
     const numberCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
     expect(numberCarriersAfterCreation).to.be.equal(numberOfCarriers + 1);
@@ -599,6 +624,22 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataFreeShipping);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierFreeShipping', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -639,6 +680,22 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataHandlingCosts);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierHandlingCosts', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -680,6 +737,22 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataTax);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierTax', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -740,8 +813,8 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     await boProductsPage.goToProductPage(page, 1);
 
-    const pageTitle: string = await createProductsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(createProductsPage.pageTitle);
+    const pageTitle: string = await boProductsCreatePage.getPageTitle(page);
+    expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
   });
 
   it('should go to shipping tab and edit package dimension', async function () {
@@ -749,14 +822,14 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     await boProductsCreateTabShippingPage.setPackageDimension(page, editProductData);
 
-    const message = await createProductsPage.saveProduct(page);
-    expect(message).to.eq(createProductsPage.successfulUpdateMessage);
+    const message = await boProductsCreatePage.saveProduct(page);
+    expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
   });
 
   it('should check the carriers', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'checkCarriersProductWeight', baseContext);
 
-    page = await createProductsPage.changePage(browserContext, 1);
+    page = await boProductsCreatePage.changePage(browserContext, 1);
     await foClassicCheckoutPage.reloadPage(page);
 
     const carriers = await foClassicCheckoutPage.getAllCarriersNames(page);
@@ -821,6 +894,22 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataRanges);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierRanges', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -828,7 +917,7 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
   it('should check the carriers', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'checkCarriersRanges', baseContext);
 
-    page = await createProductsPage.changePage(browserContext, 1);
+    page = await boProductsCreatePage.changePage(browserContext, 1);
     await foClassicCheckoutPage.reloadPage(page);
 
     const carriers = await foClassicCheckoutPage.getAllCarriersNames(page);
@@ -950,6 +1039,22 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataBilling);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierBilling', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -988,6 +1093,22 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataRemoveRanges);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierWORanges', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -1047,8 +1168,8 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     await boProductsPage.goToProductPage(page, 1);
 
-    const pageTitle: string = await createProductsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(createProductsPage.pageTitle);
+    const pageTitle: string = await boProductsCreatePage.getPageTitle(page);
+    expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
   });
 
   it('should go to shipping tab and edit package dimension', async function () {
@@ -1056,7 +1177,7 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
 
     await boProductsCreateTabShippingPage.setPackageDimension(page, dataProducts.demo_11);
 
-    const message = await createProductsPage.saveProduct(page);
-    expect(message).to.eq(createProductsPage.successfulUpdateMessage);
+    const message = await boProductsCreatePage.saveProduct(page);
+    expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
   });
 });

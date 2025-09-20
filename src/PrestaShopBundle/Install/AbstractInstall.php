@@ -70,6 +70,11 @@ abstract class AbstractInstall
         return $this->errors;
     }
 
+    public function resetErrors(): void
+    {
+        $this->errors = [];
+    }
+
     public function setTranslator($translator)
     {
         $this->translator = $translator;

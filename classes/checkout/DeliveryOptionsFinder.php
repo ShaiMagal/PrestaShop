@@ -25,9 +25,10 @@
  */
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
+use PrestaShop\PrestaShop\Adapter\Shipment\DeliveryOptionsInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class DeliveryOptionsFinderCore
+class DeliveryOptionsFinderCore implements DeliveryOptionsInterface
 {
     private $context;
     private $objectPresenter;
@@ -74,7 +75,7 @@ class DeliveryOptionsFinderCore
     {
         $delivery_option_list = $this->context->cart->getDeliveryOptionList();
         $include_taxes = !Product::getTaxCalculationMethod((int) $this->context->cart->id_customer) && (int) Configuration::get('PS_TAX');
-        $display_taxes_label = (Configuration::get('PS_TAX') && $this->context->country->display_tax_label && !Configuration::get('AEUC_LABEL_TAX_INC_EXC'));
+        $display_taxes_label = (Configuration::get('PS_TAX') && $this->context->country->display_tax_label);
 
         $carriers_available = [];
 

@@ -207,7 +207,7 @@ class Module implements ModuleInterface
             // We try to instantiate the legacy class if not done yet
             try {
                 $this->instanciateLegacyModule();
-            } catch (Exception $e) {
+            } catch (Exception) {
                 $this->disk->set('is_valid', false);
 
                 return false;

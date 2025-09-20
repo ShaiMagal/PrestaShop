@@ -1,20 +1,17 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import emailPage from '@pages/BO/advancedParameters/email';
-
 import {
   boDashboardPage,
+  boEmailPage,
+  boLoginPage,
+  type BrowserContext,
   dataCustomers,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 let browserContext: BrowserContext;
 let page: Page;
@@ -38,7 +35,13 @@ function setupSmtpConfigTest(baseContext: string = 'commonTests-configSMTP'): vo
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > E-mail\' page', async function () {
@@ -49,23 +52,23 @@ function setupSmtpConfigTest(baseContext: string = 'commonTests-configSMTP'): vo
         boDashboardPage.advancedParametersLink,
         boDashboardPage.emailLink,
       );
-      await emailPage.closeSfToolBar(page);
+      await boEmailPage.closeSfToolBar(page);
 
-      const pageTitle = await emailPage.getPageTitle(page);
-      expect(pageTitle).to.contains(emailPage.pageTitle);
+      const pageTitle = await boEmailPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmailPage.pageTitle);
     });
 
     it('should fill the smtp parameters form fields', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'fillSmtpParametersFormField', baseContext);
 
-      const alertSuccessMessage = await emailPage.setupSmtpParameters(
+      const alertSuccessMessage = await boEmailPage.setupSmtpParameters(
         page,
         smtpServer,
         dataCustomers.johnDoe.email,
         dataCustomers.johnDoe.password,
         smtpPort.toString(),
       );
-      expect(alertSuccessMessage).to.contains(emailPage.successfulUpdateMessage);
+      expect(alertSuccessMessage).to.contains(boEmailPage.successfulUpdateMessage);
     });
   });
 }
@@ -87,7 +90,13 @@ function resetSmtpConfigTest(baseContext: string = 'commonTests-configSMTP'): vo
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > E-mail\' page', async function () {
@@ -98,17 +107,17 @@ function resetSmtpConfigTest(baseContext: string = 'commonTests-configSMTP'): vo
         boDashboardPage.advancedParametersLink,
         boDashboardPage.emailLink,
       );
-      await emailPage.closeSfToolBar(page);
+      await boEmailPage.closeSfToolBar(page);
 
-      const pageTitle = await emailPage.getPageTitle(page);
-      expect(pageTitle).to.contains(emailPage.pageTitle);
+      const pageTitle = await boEmailPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmailPage.pageTitle);
     });
 
     it('should reset parameters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetMailParameters', baseContext);
 
-      const successParametersReset = await emailPage.resetDefaultParameters(page);
-      expect(successParametersReset).to.contains(emailPage.successfulUpdateMessage);
+      const successParametersReset = await boEmailPage.resetDefaultParameters(page);
+      expect(successParametersReset).to.contains(boEmailPage.successfulUpdateMessage);
     });
   });
 }

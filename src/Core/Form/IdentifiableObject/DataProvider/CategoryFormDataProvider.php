@@ -76,8 +76,14 @@ final class CategoryFormDataProvider implements FormDataProviderInterface
         if ($thumbnailImage) {
             $thumbnailImages[] =
                 [
-                    'image_path' => $thumbnailImage['path'],
                     'size' => $thumbnailImage['size'],
+                    'image_path' => $thumbnailImage['path'],
+                    'delete_path' => $this->router->generate(
+                        'admin_categories_delete_thumbnail_image',
+                        [
+                            'categoryId' => $categoryId,
+                        ]
+                    ),
                 ];
         }
 
@@ -89,7 +95,6 @@ final class CategoryFormDataProvider implements FormDataProviderInterface
             'additional_description' => $editableCategory->getAdditionalDescription(),
             'meta_title' => $editableCategory->getMetaTitle(),
             'meta_description' => $editableCategory->getMetaDescription(),
-            'meta_keyword' => $editableCategory->getMetaKeywords(),
             'link_rewrite' => $editableCategory->getLinkRewrite(),
             'group_association' => $editableCategory->getGroupAssociationIds(),
             'shop_association' => $editableCategory->getShopAssociationIds(),

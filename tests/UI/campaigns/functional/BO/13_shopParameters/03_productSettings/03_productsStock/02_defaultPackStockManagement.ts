@@ -1,16 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import addProductPage from '@pages/BO/catalog/products/add';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductSettingsPage,
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   FakerProduct,
@@ -21,11 +18,9 @@ import {
   foClassicLoginPage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_productSettings_productsStock_defaultPackStockManagement';
 
@@ -61,7 +56,13 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('Create 3 products', async () => {
@@ -99,15 +100,15 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
 
         await boProductsPage.clickOnAddNewProduct(page);
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should go to create product page and create a product', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `createProduct${index}`, baseContext);
 
-        const validationMessage = await addProductPage.setProduct(page, test.args.productToCreate);
-        expect(validationMessage).to.equal(addProductPage.successfulUpdateMessage);
+        const validationMessage = await boProductsCreatePage.setProduct(page, test.args.productToCreate);
+        expect(validationMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
       });
     });
   });
@@ -144,10 +145,10 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
         it('should go to \'Shop parameters > Product Settings\' page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `goToProductSettingsPage${index}`, baseContext);
 
-          await addProductPage.goToSubMenu(
+          await boProductsCreatePage.goToSubMenu(
             page,
-            addProductPage.shopParametersParentLink,
-            addProductPage.productSettingsLink,
+            boProductsCreatePage.shopParametersParentLink,
+            boProductsCreatePage.productSettingsLink,
           );
 
           const pageTitle = await boProductSettingsPage.getPageTitle(page);

@@ -308,6 +308,20 @@ class OrderFeatureContext extends AbstractPrestaShopFeatureContext
     }
 
     /**
+     * @Then I reference order :orderReference delivery address as :addressReference
+     *
+     * @param string $orderReference
+     * @param string $addressReference
+     */
+    public function saveAddressIdFromOrder(string $orderReference, string $addressReference)
+    {
+        $orderId = SharedStorage::getStorage()->get($orderReference);
+        $order = new Order($orderId);
+
+        SharedStorage::getStorage()->set($addressReference, $order->id_address_delivery);
+    }
+
+    /**
      * @Then order :reference should have :paymentModuleName payment method
      *
      * @param string $reference

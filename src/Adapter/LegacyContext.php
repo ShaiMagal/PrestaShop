@@ -70,7 +70,7 @@ class LegacyContext
      * To be used only in Adapters. Should not been called by Core classes. Prefer to use Core\context class,
      * that will contains all you need in the Core architecture.
      *
-     * @return Context the Legacy context, for Adapter use only
+     * @return Context|null the Legacy context, for Adapter use only
      *
      * @throws LogicException If legacy context is not set properly
      */

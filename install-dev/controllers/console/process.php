@@ -26,6 +26,8 @@
 
 use PrestaShopBundle\Install\Database;
 use PrestaShopBundle\Install\Install;
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use PrestaShop\PrestaShop\Core\Context\ContextBuilderPreparer;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -47,7 +49,7 @@ class InstallControllerConsoleProcess extends InstallControllerConsole implement
     public function init()
     {
         $output = new ConsoleOutput();
-        $logger = new SymfonyConsoleLogger($output, PrestaShopLoggerInterface::DEBUG);
+        $logger = new SymfonyConsoleLogger($output, SymfonyConsoleLogger::INFO);
 
         $this->model_install = new Install(null, null, $logger);
         $this->model_install->setTranslator($this->translator);
@@ -111,6 +113,11 @@ class InstallControllerConsoleProcess extends InstallControllerConsole implement
         require_once _PS_ROOT_DIR_ . '/config/smarty.config.inc.php';
 
         Context::getContext()->smarty = $smarty;
+
+        $container = SymfonyContainer::getInstance();
+        /** @var ContextBuilderPreparer $preparer */
+        $preparer = $container->get(ContextBuilderPreparer::class);
+        $preparer->prepareFromLegacyContext(Context::getContext());
     }
 
     public function process()
@@ -128,7 +135,7 @@ class InstallControllerConsoleProcess extends InstallControllerConsole implement
 
         if (in_array('database', $steps)) {
             if (!$this->processGenerateSettingsFile()) {
-                $this->printErrors();
+                $this->printErrors('processGenerateSettingsFile');
             }
 
             if ($this->datas->database_create) {
@@ -143,55 +150,55 @@ class InstallControllerConsoleProcess extends InstallControllerConsole implement
                 $this->datas->database_prefix,
                 $this->datas->database_clear
             )) {
-                $this->printErrors();
+                $this->printErrors('testDatabaseSettings');
             }
 
             // Deferred Kernel Init
             $this->initKernel();
 
             if (!$this->processInstallDatabase()) {
-                $this->printErrors();
+                $this->printErrors('processInstallDatabase');
             }
 
             if (!$this->processInstallDefaultData()) {
-                $this->printErrors();
+                $this->printErrors('processInstallDefaultData');
             }
             if (!$this->processPopulateDatabase()) {
-                $this->printErrors();
+                $this->printErrors('processPopulateDatabase');
             }
 
             if (!$this->processConfigureShop()) {
-                $this->printErrors();
+                $this->printErrors('processConfigureShop');
             }
         }
 
         if (in_array('theme', $steps)) {
             if (!$this->processInstallTheme()) {
-                $this->printErrors();
+                $this->printErrors('processInstallTheme');
             }
         }
 
         if (in_array('modules', $steps)) {
             if (!$this->processInstallModules()) {
-                $this->printErrors();
+                $this->printErrors('processInstallModules');
             }
         }
 
         if (in_array('fixtures', $steps) && $this->datas->fixtures) {
             if (!$this->processInstallFixtures()) {
-                $this->printErrors();
+                $this->printErrors('processInstallFixtures');
             }
         }
 
         if (in_array('postInstall', $steps)) {
             if (!$this->processPostInstall()) {
-                $this->printErrors();
+                $this->printErrors('processPostInstall');
             }
         }
 
         if (in_array('finalize', $steps)) {
             if (!$this->processFinalize()) {
-                $this->printErrors();
+                $this->printErrors('processFinalize');
             }
         }
 
@@ -331,11 +338,6 @@ class InstallControllerConsoleProcess extends InstallControllerConsole implement
     public function processFinalize(): bool
     {
         $this->initializeContext();
-
-        // if admin folder doesn't exist, then there's nothing to do here
-        if (!file_exists(_PS_ROOT_DIR_ . '/admin/')) {
-            return true;
-        }
 
         $result = $this->model_install->finalize();
 

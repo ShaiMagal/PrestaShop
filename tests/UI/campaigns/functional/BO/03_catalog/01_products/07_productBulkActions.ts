@@ -1,18 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  type BrowserContext,
   FakerProduct,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -49,7 +45,13 @@ describe('BO - Catalog - Products : Enable, disable, duplicate and Delete produc
 
   describe('Create first product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -86,8 +88,8 @@ describe('BO - Catalog - Products : Enable, disable, duplicate and Delete produc
 
       await boProductsPage.selectProductType(page, firstProductData.type);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to new product page', async function () {
@@ -95,17 +97,17 @@ describe('BO - Catalog - Products : Enable, disable, duplicate and Delete produc
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      await createProductsPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductsPage.setProduct(page, firstProductData);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, firstProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -113,26 +115,26 @@ describe('BO - Catalog - Products : Enable, disable, duplicate and Delete produc
     it('should click on \'New product\' button and check new product modal', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNewProductButton2', baseContext);
 
-      const isModalVisible = await createProductsPage.clickOnNewProductButton(page);
+      const isModalVisible = await boProductsCreatePage.clickOnNewProductButton(page);
       expect(isModalVisible).to.eq(true);
     });
 
     it('should choose \'Standard product\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseStandardProduct2', baseContext);
 
-      await createProductsPage.chooseProductType(page, secondProductData.type);
+      await boProductsCreatePage.chooseProductType(page, secondProductData.type);
 
-      const isIframeVisible = await createProductsPage.isChooseProductIframeVisible(page);
+      const isIframeVisible = await boProductsCreatePage.isChooseProductIframeVisible(page);
       expect(isIframeVisible).to.eq(false);
     });
 
     it('should create product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createSecondProduct', baseContext);
 
-      await createProductsPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductsPage.setProduct(page, secondProductData);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, secondProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -140,7 +142,7 @@ describe('BO - Catalog - Products : Enable, disable, duplicate and Delete produc
     it('should click on \'Go to catalog\' button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToCatalogPage', baseContext);
 
-      await createProductsPage.goToCatalogPage(page);
+      await boProductsCreatePage.goToCatalogPage(page);
 
       const pageTitle = await boProductsPage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductsPage.pageTitle);

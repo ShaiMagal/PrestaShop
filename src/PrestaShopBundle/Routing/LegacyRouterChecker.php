@@ -28,13 +28,15 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\Routing;
 
+use AdminController;
 use Dispatcher;
-use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Core\Hook\HookDispatcherInterface;
 use PrestaShop\PrestaShop\Core\Security\Permission;
 use PrestaShopBundle\Entity\Repository\TabRepository;
 use PrestaShopBundle\Routing\Converter\LegacyParametersConverter;
 use PrestaShopBundle\Security\Admin\RequestAttributes;
+use Shop as LegacyShop;
 use Symfony\Bundle\FrameworkBundle\Routing\Attribute\AsRoutingConditionService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -50,6 +52,7 @@ class LegacyRouterChecker
         protected readonly TabRepository $tabRepository,
         protected readonly HookDispatcherInterface $hookDispatcher,
         protected readonly LegacyParametersConverter $legacyParametersConverter,
+        protected readonly LegacyContext $legacyContext,
     ) {
     }
 
@@ -74,7 +77,11 @@ class LegacyRouterChecker
             $moduleName = $tab->getModule();
             $controllers = Dispatcher::getControllers(_PS_MODULE_DIR_ . $moduleName . '/controllers/admin/');
             if (!isset($controllers[strtolower($queryController)])) {
-                throw new NotFoundHttpException(sprintf('Unknown controller %s', $queryController));
+                throw new NotFoundHttpException(sprintf(
+                    'Controller %s was not found. It belonged to module %s, make sure it is still installed.',
+                    $queryController,
+                    $moduleName
+                ));
             } else {
                 $controllerName = $controllers[strtolower($queryController)];
                 // Controllers in modules can be named AdminXXX.php or AdminXXXController.php
@@ -110,17 +117,25 @@ class LegacyRouterChecker
             }
             $controllerName = $queryController;
         }
+
+        // Init shop context from legacy cookie because the ShopContextSubscriber cannot rely on the session attribute yet
+        // since the router listener is executed before the FirewallListener This way we ensure retro compatibility and legacy
+        // controllers that are executed early and have multi-shop logic in their init, initProcess, preProcess, ... methods are
+        // up-to-date
+        $this->initLegacyShopContextFromCookie();
+
         // We load the controller early in the process (during router matching actually), because the controller
         // configuration has many impacts on the contexts, the security listeners, ... And the relevant data can
         // only be retrieved once the legacy class is instantiated to access its public configuration
         // But for performance issues we only instantiate (and init) the controller here once and then store it (along
         // with other related attributes) in the request attributes so they can be retrieved easily by the code depending on them
+        /** @var AdminController $adminController */
         $adminController = new $controllerClass();
         $adminController->init();
 
         $request->attributes->set(LegacyControllerConstants::INSTANCE_ATTRIBUTE, $adminController);
         $request->attributes->set(RequestAttributes::ANONYMOUS_CONTROLLER_ATTRIBUTE, $adminController->isAnonymousAllowed());
-        $request->attributes->set(LegacyControllerConstants::IS_ALL_SHOP_CONTEXT_ATTRIBUTE, $adminController->multishop_context === ShopConstraint::ALL_SHOPS);
+        $request->attributes->set(LegacyControllerConstants::MULTISHOP_CONTEXT_ATTRIBUTE, $adminController->multishop_context);
         $request->attributes->set(LegacyControllerConstants::CONTROLLER_CLASS_ATTRIBUTE, $controllerClass);
         $request->attributes->set(LegacyControllerConstants::IS_MODULE_ATTRIBUTE, $isModule);
 
@@ -150,8 +165,7 @@ class LegacyRouterChecker
                 return Permission::UPDATE;
             case str_starts_with($action, 'delete'):
                 return Permission::DELETE;
-            case null === $action: // In legacy empty action is usually the listing which a specific case for the view
-            case $action === '':
+            case $action === '': // In legacy empty action is usually the listing which a specific case for the view
             case str_starts_with($action, 'export'):
             case str_starts_with($action, 'details'):
             case str_starts_with($action, 'view'):
@@ -161,7 +175,7 @@ class LegacyRouterChecker
         }
     }
 
-    private function getLegacyAction(Request $request, string $table): ?string
+    private function getLegacyAction(Request $request, string $table): string
     {
         // Get action from legacy parameters set on the route when we are in a Symfony page
         $legacyParameters = $this->legacyParametersConverter->getParameters(
@@ -187,5 +201,30 @@ class LegacyRouterChecker
             $request->query->has('action') && !empty($request->query->get('action')) => $request->query->get('action'),
             default => 'view',
         };
+    }
+
+    private function initLegacyShopContextFromCookie(): void
+    {
+        $context = $this->legacyContext->getContext();
+        $cookie = $context->cookie;
+        if ($cookie->shopContext && $context->employee->isLoggedBack()) {
+            $split = explode('-', $cookie->shopContext);
+            if (count($split) == 2) {
+                if ($split[0] == 'g') {
+                    if ($context->employee->hasAuthOnShopGroup((int) $split[1])) {
+                        LegacyShop::setContext(LegacyShop::CONTEXT_GROUP, (int) $split[1]);
+                    } else {
+                        $shop_id = (int) $context->employee->getDefaultShopID();
+                        LegacyShop::setContext(LegacyShop::CONTEXT_SHOP, $shop_id);
+                    }
+                } elseif (LegacyShop::getShop((int) $split[1]) && $context->employee->hasAuthOnShop((int) $split[1])) {
+                    $shop_id = (int) $split[1];
+                    LegacyShop::setContext(LegacyShop::CONTEXT_SHOP, $shop_id);
+                } else {
+                    $shop_id = (int) $context->employee->getDefaultShopID();
+                    LegacyShop::setContext(LegacyShop::CONTEXT_SHOP, $shop_id);
+                }
+            }
+        }
     }
 }

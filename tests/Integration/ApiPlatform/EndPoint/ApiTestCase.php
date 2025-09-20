@@ -32,18 +32,19 @@ use AdminAPIKernel;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase as ApiPlatformTestCase;
 use ApiPlatform\Symfony\Bundle\Test\Client;
 use Configuration;
-use EmptyIterator;
 use PrestaShop\PrestaShop\Core\Domain\ApiClient\Command\AddApiClientCommand;
 use PrestaShop\PrestaShop\Core\Domain\Configuration\ShopConfigurationInterface;
-use PrestaShop\PrestaShop\Core\Domain\Language\Command\AddLanguageCommand;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use RuntimeException;
 use Shop;
 use ShopGroup;
+use Tests\Integration\Utility\LanguageTrait;
 use Tests\Resources\Resetter\ApiClientResetter;
 
 abstract class ApiTestCase extends ApiPlatformTestCase
 {
+    use LanguageTrait;
+
     protected const CLIENT_ID = 'test_client_id';
     protected const CLIENT_NAME = 'test_client_name';
 
@@ -107,7 +108,14 @@ abstract class ApiTestCase extends ApiPlatformTestCase
      */
     public function getProtectedEndpoints(): iterable
     {
-        return new EmptyIterator();
+        // Before we could return a EmptyIterator but now PHPUnit forces at least one element in the iterable
+        yield 'infos endpoint' => [
+            'GET',
+            '/api-client/infos',
+            'application/json',
+            // The endpoint is protected when you have no token, however it doesn't require any particular scope
+            false,
+        ];
     }
 
     /**
@@ -172,40 +180,6 @@ abstract class ApiTestCase extends ApiPlatformTestCase
         $createdApiClient = $commandBus->handle($command);
 
         self::$clientSecret = $createdApiClient->getSecret();
-    }
-
-    protected static function addLanguageByLocale(string $locale): int
-    {
-        $isoCode = substr($locale, 0, strpos($locale, '-'));
-
-        // Copy resource assets into tmp folder to mimic an upload file path
-        $flagImage = __DIR__ . '/../../../Resources/assets/lang/' . $isoCode . '.jpg';
-        if (!file_exists($flagImage)) {
-            $flagImage = __DIR__ . '/../../../Resources/assets/lang/en.jpg';
-        }
-
-        $tmpFlagImage = sys_get_temp_dir() . '/' . $isoCode . '.jpg';
-        $tmpNoPictureImage = sys_get_temp_dir() . '/' . $isoCode . '-no-picture.jpg';
-        copy($flagImage, $tmpFlagImage);
-        copy($flagImage, $tmpNoPictureImage);
-
-        $command = new AddLanguageCommand(
-            $locale,
-            $isoCode,
-            $locale,
-            'd/m/Y',
-            'd/m/Y H:i:s',
-            $tmpFlagImage,
-            $tmpNoPictureImage,
-            false,
-            true,
-            [1]
-        );
-
-        $container = static::createClient()->getContainer();
-        $commandBus = $container->get('prestashop.core.command_bus');
-
-        return $commandBus->handle($command)->getValue();
     }
 
     protected static function addShopGroup(string $groupName, ?string $color = null): int

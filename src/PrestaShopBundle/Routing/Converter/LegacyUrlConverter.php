@@ -125,9 +125,22 @@ final class LegacyUrlConverter
         $this->router->getContext()->fromRequest($request);
         $this->checkAlreadyMatchingRoute($request->getRequestUri());
 
-        $parameters = array_merge($request->query->all(), $request->request->all());
+        // We can't use convertByParameters with the combined parameters, or the POST parameters will be added
+        // in the redirection URL, so we do check for the validity of parameters and the matching route based on
+        // all the parameters
+        $allParameters = $request->query->all() + $request->request->all();
+        if (empty($allParameters['controller'])) {
+            throw new ArgumentException('Missing required controller argument');
+        }
 
-        return $this->convertByParameters($parameters);
+        /** @var LegacyRoute $legacyRoute */
+        $legacyRoute = $this->findLegacyRouteNameByParameters($allParameters);
+
+        // But only query parameters are used to generate the new URL, so we clean them (remove controller, action, ...)
+        // the POST parameters will remain unchanged in the 308 redirection
+        $queryParameters = $this->convertLegacyParameters($request->query->all(), $legacyRoute);
+
+        return $this->router->generate($legacyRoute->getRouteName(), $queryParameters, UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     /**
@@ -141,7 +154,7 @@ final class LegacyUrlConverter
         $legacyAction = $this->getActionFromParameters($parameters);
 
         foreach ($legacyRoute->getRouteParameters() as $legacyParameter => $parameter) {
-            if (isset($parameters[$legacyParameter])) {
+            if (isset($parameters[$legacyParameter]) && !isset($parameters[$parameter])) {
                 $parameters[$parameter] = $parameters[$legacyParameter];
                 unset($parameters[$legacyParameter]);
             }
@@ -235,7 +248,7 @@ final class LegacyUrlConverter
                 $this->router->match($urlPath);
                 throw new AlreadyConvertedException(sprintf('%s is already a converted url', $url));
             }
-        } catch (ExceptionInterface $e) {
+        } catch (ExceptionInterface) {
         }
     }
 }

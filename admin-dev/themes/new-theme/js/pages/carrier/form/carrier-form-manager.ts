@@ -152,6 +152,7 @@ export default class CarrierFormManager {
 
         // We need to update the zone id and the zone name
         const $prototype = $(prototype);
+        $prototype.attr('data-zone-id', zoneId);
         $prototype.find(CarrierFormMap.zoneIdInput).val(zoneId);
         $prototype.find(CarrierFormMap.zoneNamePreview).text(this.$zonesInput.find(CarrierFormMap.zoneIdOption(zoneId)).text());
 
@@ -245,7 +246,10 @@ export default class CarrierFormManager {
 
         // We set the previous value for this range if it exists
         // @ts-ignore
-        $rPrototype.find(CarrierFormMap.rangePriceInput).val(price);
+        $rPrototype.find(CarrierFormMap.rangePriceInput)
+          .attr('data-from', range.from || '0')
+          .attr('data-to', range.to || '0')
+          .val(price);
         // Then, we append the new range row into the range container
         $zoneRangesContainerBody.append($rPrototype);
       });

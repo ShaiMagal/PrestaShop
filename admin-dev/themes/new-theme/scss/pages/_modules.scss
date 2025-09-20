@@ -664,6 +664,11 @@ form#importDropzone {
       @extend .text-muted;
     }
 
+    .help-box {
+      margin-bottom: 0.5rem;
+      margin-left: 0;
+    }
+
     .hook_description {
       @extend .text-muted;
       padding: 3px 0 0 3px;

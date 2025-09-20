@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import imageSettingsPage from '@pages/BO/design/imageSettings';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boImageSettingsPage,
+  boLoginPage,
+  type BrowserContext,
   type ImageTypeRegenerationSpecific,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -88,7 +84,13 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
 
   describe('Regenerate thumbnail - BackOffice', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Design > Image Settings\' page', async function () {
@@ -99,28 +101,28 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
         boDashboardPage.designParentLink,
         boDashboardPage.imageSettingsLink,
       );
-      await imageSettingsPage.closeSfToolBar(page);
+      await boImageSettingsPage.closeSfToolBar(page);
 
-      const pageTitle = await imageSettingsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(imageSettingsPage.pageTitle);
+      const pageTitle = await boImageSettingsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boImageSettingsPage.pageTitle);
     });
 
     it('should enable WebP image format', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'enableWebP', baseContext);
 
-      const result = await imageSettingsPage.setImageFormatToGenerateChecked(page, 'webp', true);
-      expect(result).to.be.eq(imageSettingsPage.messageSettingsUpdated);
+      const result = await boImageSettingsPage.setImageFormatToGenerateChecked(page, 'webp', true);
+      expect(result).to.be.eq(boImageSettingsPage.messageSettingsUpdated);
     });
 
     it('should check image generation options', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkImageGenerationOptions', baseContext);
 
       // JPEG/PNG should be checked
-      const jpegChecked = await imageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
+      const jpegChecked = await boImageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
       expect(jpegChecked).to.eq(true);
 
       // WebP should be checked
-      const webpChecked = await imageSettingsPage.isImageFormatToGenerateChecked(page, 'webp');
+      const webpChecked = await boImageSettingsPage.isImageFormatToGenerateChecked(page, 'webp');
       expect(webpChecked).to.eq(true);
     });
   });
@@ -130,7 +132,7 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
       it('should fetch image name', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${arg.type}FetchImageName`, baseContext);
 
-        formats[arg.type] = await imageSettingsPage.getRegenerateThumbnailsFormats(page, arg.type);
+        formats[arg.type] = await boImageSettingsPage.getRegenerateThumbnailsFormats(page, arg.type);
         expect(formats[arg.type].length).to.gt(0);
       });
 
@@ -175,14 +177,14 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
       it('should regenerate thumbnails', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${arg.type}RegenerateThumbnails`, baseContext);
 
-        const textResult = await imageSettingsPage.regenerateThumbnails(page, arg.type);
-        expect(textResult).to.contains(imageSettingsPage.messageThumbnailsRegenerated);
+        const textResult = await boImageSettingsPage.regenerateThumbnails(page, arg.type);
+        expect(textResult).to.contains(boImageSettingsPage.messageThumbnailsRegenerated);
       });
 
       it('should check that the form is reset', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${arg.type}CheckFormReset`, baseContext);
 
-        const image = await imageSettingsPage.getRegenerateThumbnailsImage(page);
+        const image = await boImageSettingsPage.getRegenerateThumbnailsImage(page);
         expect(image).to.contains('all');
       });
 
@@ -263,14 +265,14 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
     it('should regenerate thumbnails', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'allRegenerateThumbnails', baseContext);
 
-      const textResult = await imageSettingsPage.regenerateThumbnails(page, 'all');
-      expect(textResult).to.contains(imageSettingsPage.messageThumbnailsRegenerated);
+      const textResult = await boImageSettingsPage.regenerateThumbnails(page, 'all');
+      expect(textResult).to.contains(boImageSettingsPage.messageThumbnailsRegenerated);
     });
 
     it('should check that the form is reset', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'allCheckFormReset', baseContext);
 
-      const image = await imageSettingsPage.getRegenerateThumbnailsImage(page);
+      const image = await boImageSettingsPage.getRegenerateThumbnailsImage(page);
       expect(image).to.contains('all');
     });
 
@@ -350,14 +352,14 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
     it('should regenerate thumbnails', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'specificCategoryRegenerateThumbnails', baseContext);
 
-      const textResult = await imageSettingsPage.regenerateThumbnails(page, 'categories', formats.categories[0]);
-      expect(textResult).to.contains(imageSettingsPage.messageThumbnailsRegenerated);
+      const textResult = await boImageSettingsPage.regenerateThumbnails(page, 'categories', formats.categories[0]);
+      expect(textResult).to.contains(boImageSettingsPage.messageThumbnailsRegenerated);
     });
 
     it('should check that the form is reset', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'specificCategoryCheckFormReset', baseContext);
 
-      const image = await imageSettingsPage.getRegenerateThumbnailsImage(page);
+      const image = await boImageSettingsPage.getRegenerateThumbnailsImage(page);
       expect(image).to.contains('all');
     });
 
@@ -396,14 +398,14 @@ describe('BO - Design - Image Settings - Regenerate thumbnail', async () => {
     it('should regenerate thumbnails', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'categoryWithEraseRegenerateThumbnails', baseContext);
 
-      const textResult = await imageSettingsPage.regenerateThumbnails(page, 'categories', 'All', true);
-      expect(textResult).to.contains(imageSettingsPage.messageThumbnailsRegenerated);
+      const textResult = await boImageSettingsPage.regenerateThumbnails(page, 'categories', 'All', true);
+      expect(textResult).to.contains(boImageSettingsPage.messageThumbnailsRegenerated);
     });
 
     it('should check that the form is reset', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'categoryWithEraseCheckFormReset', baseContext);
 
-      const image = await imageSettingsPage.getRegenerateThumbnailsImage(page);
+      const image = await boImageSettingsPage.getRegenerateThumbnailsImage(page);
       expect(image).to.contains('all');
     });
 

@@ -1,4 +1,4 @@
-{#**
+{# **
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
@@ -21,7 +21,7 @@
  * @author    PrestaShop SA and Contributors <contact@prestashop.com>
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- *#}
+ * #}
 
 <div class="card">
   <h3 class="card-header">
@@ -33,7 +33,7 @@
       {% for product in viewableManufacturer.manufacturerProducts %}
         <div class="card">
           <div class="card-header clearfix">
-            <a href="{{ path('admin_products_edit', {'productId': product.id}) }}">{{ product.name }}</a>
+            <a href="{{ path('admin_products_edit', {productId: product.id}) }}">{{ product.name }}</a>
 
             <div class="d-inline-block float-right">
               <div class="btn-group-action text-right">
@@ -42,13 +42,13 @@
                   </a>
                   <div class="dropdown-menu dropdown-menu-right">
                     <a class="btn tooltip-link js-submit-row-action dropdown-item"
-                      href="{{ path('admin_products_edit', {'productId': product.id}) }}"
+                      href="{{ path('admin_products_edit', {productId: product.id}) }}"
                     >
                       {{ 'Edit'|trans({}, 'Admin.Actions') }}
                     </a>
                     <button class="btn tooltip-link js-form-submit-btn dropdown-item"
                             type="button"
-                            data-form-submit-url="{{ path('admin_products_delete_from_all_shops', {'productId': product.id}) }}"
+                            data-form-submit-url="{{ path('admin_products_delete_from_all_shops', {productId: product.id}) }}"
                             data-form-confirm-message="{{ '%s%s?'|format('Delete item #'|trans({}, 'Admin.International.Feature'), product.id) }}"
                     >
                       {{ 'Delete'|trans({}, 'Admin.Actions') }}
@@ -105,8 +105,8 @@
                   <tr>
                     <td>{{ product.reference }}</td>
                     <td>{{ product.ean13 }}</td>
-                    <td>{{  product.upc }}</td>
-                    <td>{{  product.mpn }}</td>
+                    <td>{{ product.upc }}</td>
+                    <td>{{ product.mpn }}</td>
                     {% if isStockManagementEnabled %}
                       <td>{{ product.quantity }}</td>
                     {% endif %}

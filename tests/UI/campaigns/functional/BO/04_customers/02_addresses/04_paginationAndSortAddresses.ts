@@ -1,21 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import importFileTest from '@commonTests/BO/advancedParameters/importFile';
 import {bulkDeleteAddressesTest} from '@commonTests/BO/customers/address';
-import loginCommon from '@commonTests/BO/loginBO';
 
-// Import pages
-import addressesPage from '@pages/BO/customers/addresses';
-
-// Import data
-import ImportAddresses from '@data/import/addresses';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  boAddressesPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
+  dataImportAddresses,
+  type Page,
   utilsCore,
   utilsFile,
   utilsPlaywright,
@@ -41,14 +36,14 @@ describe('BO - Customers - Addresses : Pagination and sort addresses table', asy
   const fileName: string = 'addresses.csv';
 
   // Pre-condition: Import list of categories
-  importFileTest(fileName, ImportAddresses.entity, `${baseContext}_preTest_1`);
+  importFileTest(fileName, dataImportAddresses.entity, `${baseContext}_preTest_1`);
 
   // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
     // Create csv file with all customers data
-    await utilsFile.createCSVFile('.', fileName, ImportAddresses);
+    await utilsFile.createCSVFile('.', fileName, dataImportAddresses);
   });
 
   after(async () => {
@@ -60,7 +55,13 @@ describe('BO - Customers - Addresses : Pagination and sort addresses table', asy
   // 1 : Go to addresses page
   describe('Go to \'Customers > Addresses\' page', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Customers > Addresses\' page', async function () {
@@ -73,14 +74,14 @@ describe('BO - Customers - Addresses : Pagination and sort addresses table', asy
       );
       await boDashboardPage.closeSfToolBar(page);
 
-      const pageTitle = await addressesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addressesPage.pageTitle);
+      const pageTitle = await boAddressesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boAddressesPage.pageTitle);
     });
 
     it('should reset all filters and get number of addresses in BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFirst', baseContext);
 
-      numberOfAddresses = await addressesPage.resetAndGetNumberOfLines(page);
+      numberOfAddresses = await boAddressesPage.resetAndGetNumberOfLines(page);
       expect(numberOfAddresses).to.be.above(0);
     });
   });
@@ -90,28 +91,28 @@ describe('BO - Customers - Addresses : Pagination and sort addresses table', asy
     it('should change the items number to 10 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo10', baseContext);
 
-      const paginationNumber = await addressesPage.selectPaginationLimit(page, 10);
+      const paginationNumber = await boAddressesPage.selectPaginationLimit(page, 10);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await addressesPage.paginationNext(page);
+      const paginationNumber = await boAddressesPage.paginationNext(page);
       expect(paginationNumber).to.contains('(page 2 / 2)');
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await addressesPage.paginationPrevious(page);
+      const paginationNumber = await boAddressesPage.paginationPrevious(page);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should change the items number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo50', baseContext);
 
-      const paginationNumber = await addressesPage.selectPaginationLimit(page, 50);
+      const paginationNumber = await boAddressesPage.selectPaginationLimit(page, 50);
       expect(paginationNumber).to.contains('(page 1 / 1)');
     });
   });
@@ -147,11 +148,11 @@ describe('BO - Customers - Addresses : Pagination and sort addresses table', asy
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await addressesPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const nonSortedTable = await boAddressesPage.getAllRowsColumnContent(page, test.args.sortBy);
 
-        await addressesPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        await boAddressesPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await addressesPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const sortedTable = await boAddressesPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));

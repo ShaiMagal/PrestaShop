@@ -28,6 +28,7 @@ namespace Core\Form\IdentifiableObject\DataProvider;
 
 use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Adapter\Form\ChoiceProvider\ZoneByIdChoiceProvider;
+use PrestaShop\PrestaShop\Adapter\Group\GroupDataProvider;
 use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
 use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
@@ -45,48 +46,55 @@ class CarrierFormDataProviderTest extends TestCase
     {
         // Create a mock for CommandBusInterface
         $queryBus = $this->createMock(CommandBusInterface::class);
-        $queryBus
+        $invokedCount = $this->exactly(2);
+        $queryBus->expects($invokedCount)
             ->method('handle')
-            ->withConsecutive(
-                [$this->isInstanceOf(GetCarrierForEditing::class)],
-                [$this->isInstanceOf(GetCarrierRanges::class)]
-            )
-            ->willReturnOnConsecutiveCalls(
-                new EditableCarrier(
-                    42,
-                    'Carrier name',
-                    5,
-                    'http://track.to',
-                    1,
-                    true,
-                    [
-                        1 => 'English delay',
-                        2 => 'French delay',
-                    ],
-                    1234,
-                    1123,
-                    3421,
-                    1657,
-                    [1, 2, 3],
-                    false,
-                    true,
-                    1,
-                    1,
-                    OutOfRangeBehavior::USE_HIGHEST_RANGE,
-                    [1, 3],
-                    [1, 2],
-                    '/img/c/45.jkg',
-                ),
-                new CarrierRangesCollection([
-                    ['id_zone' => 1, 'range_from' => 0, 'range_to' => 10, 'range_price' => '10.00'],
-                    ['id_zone' => 1, 'range_from' => 10, 'range_to' => 20, 'range_price' => '11.00'],
-                    ['id_zone' => 1, 'range_from' => 20, 'range_to' => 25, 'range_price' => '12.00'],
-                    ['id_zone' => 2, 'range_from' => 0, 'range_to' => 10, 'range_price' => '20.00'],
-                    ['id_zone' => 2, 'range_from' => 10, 'range_to' => 20, 'range_price' => '21.00'],
-                    ['id_zone' => 2, 'range_from' => 20, 'range_to' => 25, 'range_price' => '22.00'],
-                ])
-            )
-        ;
+            ->willReturnCallback(function ($query) use ($invokedCount) {
+                if ($invokedCount->numberOfInvocations() === 1) {
+                    $this->assertInstanceOf(GetCarrierForEditing::class, $query);
+
+                    return new EditableCarrier(
+                        42,
+                        'Carrier name',
+                        5,
+                        'http://track.to',
+                        1,
+                        true,
+                        [
+                            1 => 'English delay',
+                            2 => 'French delay',
+                        ],
+                        1234,
+                        1123,
+                        3421,
+                        1657,
+                        [1, 2, 3],
+                        false,
+                        true,
+                        1,
+                        1,
+                        OutOfRangeBehavior::USE_HIGHEST_RANGE,
+                        [1, 3],
+                        [1, 2],
+                        '/img/c/45.jkg',
+                    );
+                }
+
+                if ($invokedCount->numberOfInvocations() === 2) {
+                    $this->assertInstanceOf(GetCarrierRanges::class, $query);
+
+                    return new CarrierRangesCollection([
+                        ['id_zone' => 1, 'range_from' => 0, 'range_to' => 10, 'range_price' => '10.00'],
+                        ['id_zone' => 1, 'range_from' => 10, 'range_to' => 20, 'range_price' => '11.00'],
+                        ['id_zone' => 1, 'range_from' => 20, 'range_to' => 25, 'range_price' => '12.00'],
+                        ['id_zone' => 2, 'range_from' => 0, 'range_to' => 10, 'range_price' => '20.00'],
+                        ['id_zone' => 2, 'range_from' => 10, 'range_to' => 20, 'range_price' => '21.00'],
+                        ['id_zone' => 2, 'range_from' => 20, 'range_to' => 25, 'range_price' => '22.00'],
+                    ]);
+                }
+
+                return null;
+            });
 
         // Create a mock for CurrencyDataProviderInterface
         $currencyDataProvider = $this->createMock(CurrencyDataProviderInterface::class);
@@ -111,12 +119,15 @@ class CarrierFormDataProviderTest extends TestCase
                 'Zone C' => 3,
             ]);
 
+        $groupDataProvider = $this->createMock(GroupDataProvider::class);
+
         $formDataProvider = new CarrierFormDataProvider(
             $queryBus,
             $this->createMock(ShopContext::class),
             $currencyDataProvider,
             $configuration,
-            $zonesChoiceProvider
+            $zonesChoiceProvider,
+            $groupDataProvider
         );
         $formData = $formDataProvider->getData(42);
         $this->assertEquals([
@@ -173,17 +184,24 @@ class CarrierFormDataProviderTest extends TestCase
     {
         $shopContext = $this->createMock(ShopContext::class);
         $shopContext->method('getAssociatedShopIds')->willReturn([2, 4]);
+        $groupDataProvider = $this->createMock(GroupDataProvider::class);
+        $groupDataProvider
+            ->method('getAllGroupIds')
+            ->willReturn([1, 2, 3]);
+
         $formDataProvider = new CarrierFormDataProvider(
             $this->createMock(CommandBusInterface::class),
             $shopContext,
             $this->createMock(CurrencyDataProviderInterface::class),
             $this->createMock(ConfigurationInterface::class),
-            $this->createMock(ZoneByIdChoiceProvider::class)
+            $this->createMock(ZoneByIdChoiceProvider::class),
+            $groupDataProvider
         );
         $this->assertEquals([
             'general_settings' => [
                 'grade' => 0,
                 'associated_shops' => [2, 4],
+                'group_access' => [1, 2, 3],
             ],
         ], $formDataProvider->getDefaultData());
     }

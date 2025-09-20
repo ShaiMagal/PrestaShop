@@ -1,21 +1,20 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {
   boCustomersPage,
   boDashboardPage,
+  boLoginPage,
   boModuleManagerPage,
+  type BrowserContext,
   dataCustomers,
   dataModules,
   modPsEmailSubscriptionBoMain,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_customers_customers_subscribeToNewsletter';
 
@@ -35,7 +34,13 @@ describe('BO - Customers - Customers : Check customer subscription to newsletter
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Customers > Customers\' page', async function () {

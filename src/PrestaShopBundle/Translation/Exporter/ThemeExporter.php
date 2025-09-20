@@ -130,7 +130,7 @@ class ThemeExporter
 
         try {
             $themeCatalogue = $this->themeProvider->getThemeCatalogue();
-        } catch (Exception $exception) {
+        } catch (Exception) {
             $themeCatalogue = new MessageCatalogue($locale, []);
         }
         $databaseCatalogue = $this->themeProvider->getDatabaseCatalogue($themeName);
@@ -154,6 +154,7 @@ class ThemeExporter
             'path' => $archiveParentDirectory,
             'default_locale' => $locale,
             'root_dir' => $rootDir,
+            'split_files' => false,
         ]);
 
         $this->renameCatalogues($locale, $archiveParentDirectory);

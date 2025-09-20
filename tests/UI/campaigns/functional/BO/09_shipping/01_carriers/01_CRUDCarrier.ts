@@ -1,12 +1,11 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {
   boCarriersPage,
   boCarriersCreatePage,
+  boLoginPage,
+  type BrowserContext,
   dataCustomers,
   dataZones,
   FakerCarrier,
@@ -16,12 +15,12 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shipping_carriers_CRUDCarrier';
 
@@ -180,7 +179,13 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shipping > Carriers\' page', async function () {
@@ -219,6 +224,19 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
 
       const textResult = await boCarriersCreatePage.createEditCarrier(page, createCarrierData);
       expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+    });
+
+    it('should return to carriers page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriers', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.shippingLink,
+        boDashboardPage.carriersLink,
+      );
+
+      const pageTitle = await boCarriersPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCarriersPage.pageTitle);
 
       const numberCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
       expect(numberCarriersAfterCreation).to.be.equal(numberOfCarriers + 1);
@@ -310,10 +328,7 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
       const isCustomerConnected = await foClassicCheckoutPage.isCustomerConnected(page);
       expect(isCustomerConnected, 'Customer is connected').to.eq(false);
     });
-  });
 
-  // 3 - Update carrier
-  describe('Update carrier created', async () => {
     it('should go back to BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'firstGoBackToBO', baseContext);
 
@@ -322,7 +337,10 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
       const pageTitle = await boCarriersPage.getPageTitle(page);
       expect(pageTitle).to.contains(boCarriersPage.pageTitle);
     });
+  });
 
+  // 3 - Update carrier
+  describe('Update carrier created', async () => {
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterForUpdate', baseContext);
 
@@ -352,6 +370,19 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
 
       const textResult = await boCarriersCreatePage.createEditCarrier(page, editCarrierData);
       expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+    });
+
+    it('should return to carriers page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdate', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.shippingLink,
+        boDashboardPage.carriersLink,
+      );
+
+      const pageTitle = await boCarriersPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCarriersPage.pageTitle);
 
       const numberOfCarriersAfterUpdate = await boCarriersPage.resetAndGetNumberOfLines(page);
       expect(numberOfCarriersAfterUpdate).to.be.equal(numberOfCarriers + 1);
@@ -443,10 +474,7 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
       const isCustomerConnected = await foClassicCheckoutPage.isCustomerConnected(page);
       expect(isCustomerConnected, 'Customer is connected').to.eq(false);
     });
-  });
 
-  // 5 - Delete carrier
-  describe('Delete carrier', async () => {
     it('should go back to BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'secondGoBackToBO', baseContext);
 
@@ -455,7 +483,10 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
       const pageTitle = await boCarriersPage.getPageTitle(page);
       expect(pageTitle).to.contains(boCarriersPage.pageTitle);
     });
+  });
 
+  // 5 - Delete carrier
+  describe('Delete carrier', async () => {
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterForDelete', baseContext);
 

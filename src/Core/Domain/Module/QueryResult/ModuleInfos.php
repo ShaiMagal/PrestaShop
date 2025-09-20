@@ -31,14 +31,16 @@ namespace PrestaShop\PrestaShop\Core\Domain\Module\QueryResult;
 class ModuleInfos
 {
     public function __construct(
-        private readonly int $moduleId,
+        private readonly ?int $moduleId,
         private readonly string $technicalName,
-        private readonly string $version,
+        private readonly string $moduleVersion,
+        private readonly ?string $installedVersion,
         private readonly bool $enabled,
+        private readonly bool $installed,
     ) {
     }
 
-    public function getModuleId(): int
+    public function getModuleId(): ?int
     {
         return $this->moduleId;
     }
@@ -48,13 +50,23 @@ class ModuleInfos
         return $this->technicalName;
     }
 
-    public function getVersion(): string
+    public function getModuleVersion(): string
     {
-        return $this->version;
+        return $this->moduleVersion;
+    }
+
+    public function getInstalledVersion(): ?string
+    {
+        return $this->installedVersion;
     }
 
     public function isEnabled(): bool
     {
         return $this->enabled;
+    }
+
+    public function isInstalled(): bool
+    {
+        return $this->installed;
     }
 }

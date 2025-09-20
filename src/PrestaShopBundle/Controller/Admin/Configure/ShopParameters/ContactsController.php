@@ -101,7 +101,7 @@ class ContactsController extends PrestaShopAdminController
         } catch (Exception $exception) {
             $this->addFlash(
                 'error',
-                $this->getErrorMessageForException($exception, $this->getErrorMessages($exception))
+                $this->getErrorMessageForException($exception, $this->getErrorMessages())
             );
         }
 
@@ -137,7 +137,7 @@ class ContactsController extends PrestaShopAdminController
         } catch (Exception $exception) {
             $this->addFlash(
                 'error',
-                $this->getErrorMessageForException($exception, $this->getErrorMessages($exception))
+                $this->getErrorMessageForException($exception, $this->getErrorMessages())
             );
         }
 
@@ -193,7 +193,7 @@ class ContactsController extends PrestaShopAdminController
         return $this->redirectToRoute('admin_contacts_index');
     }
 
-    private function getErrorMessages(Exception $e): array
+    private function getErrorMessages(): array
     {
         return [
             ContactNotFoundException::class => $this->trans(

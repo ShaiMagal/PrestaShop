@@ -6,6 +6,8 @@ services:
     bind:
       $controllersLockedToAllShopContext: '%prestashop.controllers_all_shop_context%'
       $container: "@service_container"
+      $adminFolderName: '%prestashop.admin_folder_name%'
+      $psVersion: !php/const _PS_VERSION_
   _instanceof:
     PrestaShop\PrestaShop\Core\Context\LegacyContextBuilderInterface:
       tags: [ 'core.legacy_context_builder' ]
@@ -51,3 +53,7 @@ services:
   PrestaShop\PrestaShop\Core\Context\ApiClientContext:
     lazy: true
     factory: [ '@PrestaShop\PrestaShop\Core\Context\ApiClientContextBuilder', 'build' ]
+
+  PrestaShop\PrestaShop\Core\Context\ContextBuilderPreparer:
+    public: true
+    lazy: true

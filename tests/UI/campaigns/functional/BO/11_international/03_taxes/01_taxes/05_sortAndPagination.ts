@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import taxesPage from '@pages/BO/international/taxes';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boTaxesPage,
+  type BrowserContext,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -33,7 +29,13 @@ describe('BO - International - Taxes : Sort and pagination', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'International > Taxes\' page', async function () {
@@ -45,14 +47,14 @@ describe('BO - International - Taxes : Sort and pagination', async () => {
       boDashboardPage.taxesLink,
     );
 
-    const pageTitle = await taxesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(taxesPage.pageTitle);
+    const pageTitle = await boTaxesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boTaxesPage.pageTitle);
   });
 
   it('should reset all filters and get Number of Taxes in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfTaxes = await taxesPage.resetAndGetNumberOfLines(page);
+    numberOfTaxes = await boTaxesPage.resetAndGetNumberOfLines(page);
     expect(numberOfTaxes).to.be.above(0);
   });
 
@@ -99,11 +101,11 @@ describe('BO - International - Taxes : Sort and pagination', async () => {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
         // Get non sorted table
-        const nonSortedTable = await taxesPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const nonSortedTable = await boTaxesPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         // Get sorted table
-        await taxesPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
-        const sortedTable = await taxesPage.getAllRowsColumnContent(page, test.args.sortBy);
+        await boTaxesPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        const sortedTable = await boTaxesPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat = nonSortedTable.map((text: string): number => parseFloat(text));
@@ -133,28 +135,28 @@ describe('BO - International - Taxes : Sort and pagination', async () => {
     it('should change the item number to 10 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo10', baseContext);
 
-      const paginationNumber = await taxesPage.selectPaginationLimit(page, 10);
+      const paginationNumber = await boTaxesPage.selectPaginationLimit(page, 10);
       expect(paginationNumber).to.contains('(page 1 / 4)');
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await taxesPage.paginationNext(page);
+      const paginationNumber = await boTaxesPage.paginationNext(page);
       expect(paginationNumber).to.contains('(page 2 / 4)');
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await taxesPage.paginationPrevious(page);
+      const paginationNumber = await boTaxesPage.paginationPrevious(page);
       expect(paginationNumber).to.contains('(page 1 / 4)');
     });
 
     it('should change the item number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo50', baseContext);
 
-      const paginationNumber = await taxesPage.selectPaginationLimit(page, 50);
+      const paginationNumber = await boTaxesPage.selectPaginationLimit(page, 50);
       expect(paginationNumber).to.contains('(page 1 / 1)');
     });
   });

@@ -1,32 +1,25 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {setupSmtpConfigTest, resetSmtpConfigTest} from '@commonTests/BO/advancedParameters/smtp';
-
-// Import pages
-// Import BO pages
-import emailPage from '@pages/BO/advancedParameters/email';
-
-// Import FO pages
-import {createAccountPage} from '@pages/FO/classic/myAccount/add';
 
 import {
   boCustomersPage,
   boCustomerSettingsPage,
   boDashboardPage,
+  boEmailPage,
+  boLoginPage,
+  type BrowserContext,
   FakerCustomer,
+  foClassicCreateAccountPage,
   foClassicHomePage,
   foClassicLoginPage,
   type MailDev,
   type MailDevEmail,
+  type Page,
   utilsMail,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_customerSettings_customers_sendEmailAfterRegistration';
 
@@ -75,7 +68,13 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
 
   describe('Enable/Disable send an email after registration', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     const tests = [
@@ -134,9 +133,9 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
         // Create account
         await foClassicHomePage.goToLoginPage(page);
         await foClassicLoginPage.goToCreateAccountPage(page);
-        await createAccountPage.createAccount(page, test.args.customer);
+        await foClassicCreateAccountPage.createAccount(page, test.args.customer);
 
-        const connected = await createAccountPage.isCustomerConnected(page);
+        const connected = await foClassicCreateAccountPage.isCustomerConnected(page);
         expect(connected, 'Customer is not created in FO').to.eq(true);
       });
 
@@ -144,7 +143,7 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
         await testContext.addContextItem(this, 'testIdentifier', `logoutFO_${index}`, baseContext);
 
         // Logout from FO
-        await createAccountPage.logout(page);
+        await foClassicCreateAccountPage.logout(page);
 
         const connected = await foClassicHomePage.isCustomerConnected(page);
         expect(connected, 'Customer is connected in FO').to.eq(false);
@@ -161,7 +160,7 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
       it('should go back to BO', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goBackTOBO${index}`, baseContext);
 
-        page = await createAccountPage.closePage(browserContext, page, 0);
+        page = await foClassicCreateAccountPage.closePage(browserContext, page, 0);
 
         const pageTitle = await boCustomerSettingsPage.getPageTitle(page);
         expect(pageTitle).to.contains(boCustomerSettingsPage.pageTitle);
@@ -176,16 +175,16 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
           boCustomerSettingsPage.emailLink,
         );
 
-        const pageTitle = await emailPage.getPageTitle(page);
-        expect(pageTitle).to.contains(emailPage.pageTitle);
+        const pageTitle = await boEmailPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boEmailPage.pageTitle);
       });
 
       it('should check if there is a welcome email for the new customer', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `searchNewCustomerEmail${index}`, baseContext);
 
-        await emailPage.filterEmailLogs(page, 'input', 'recipient', test.args.customer.email);
+        await boEmailPage.filterEmailLogs(page, 'input', 'recipient', test.args.customer.email);
 
-        const numberOfEmailAfterFilter = await emailPage.getNumberOfElementInGrid(page);
+        const numberOfEmailAfterFilter = await boEmailPage.getNumberOfElementInGrid(page);
         expect(numberOfEmailAfterFilter).to.be.equal(test.args.nbrAfterFilter);
       });
     });
@@ -195,10 +194,10 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
     it('should go to \'Customers > Customers\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToCustomersPageToDelete', baseContext);
 
-      await emailPage.goToSubMenu(
+      await boEmailPage.goToSubMenu(
         page,
-        emailPage.customersParentLink,
-        emailPage.customersLink,
+        boEmailPage.customersParentLink,
+        boEmailPage.customersLink,
       );
 
       const pageTitle = await boCustomersPage.getPageTitle(page);

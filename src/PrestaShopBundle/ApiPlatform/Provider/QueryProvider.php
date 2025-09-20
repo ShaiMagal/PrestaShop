@@ -31,27 +31,22 @@ namespace PrestaShopBundle\ApiPlatform\Provider;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
-use PrestaShop\PrestaShop\Core\Context\ApiClientContext;
-use PrestaShop\PrestaShop\Core\Context\LanguageContext;
-use PrestaShop\PrestaShop\Core\Context\ShopContext;
-use PrestaShopBundle\ApiPlatform\ContextParametersTrait;
+use PrestaShopBundle\ApiPlatform\ContextParametersProvider;
 use PrestaShopBundle\ApiPlatform\Exception\CQRSQueryNotFoundException;
+use PrestaShopBundle\ApiPlatform\NormalizationMapper;
 use PrestaShopBundle\ApiPlatform\QueryResultSerializerTrait;
-use PrestaShopBundle\ApiPlatform\Serializer\DomainSerializer;
+use PrestaShopBundle\ApiPlatform\Serializer\CQRSApiSerializer;
 use ReflectionException;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 
 class QueryProvider implements ProviderInterface
 {
     use QueryResultSerializerTrait;
-    use ContextParametersTrait;
 
     public function __construct(
         protected readonly CommandBusInterface $queryBus,
-        protected readonly DomainSerializer $domainSerializer,
-        protected readonly ShopContext $shopContext,
-        protected readonly LanguageContext $languageContext,
-        protected readonly ApiClientContext $apiClientContext,
+        protected readonly CQRSApiSerializer $domainSerializer,
+        protected readonly ContextParametersProvider $contextParametersProvider,
     ) {
     }
 
@@ -74,10 +69,14 @@ class QueryProvider implements ProviderInterface
         }
 
         $filters = $context['filters'] ?? [];
-        $queryParameters = array_merge($uriVariables, $filters, $this->getContextParameters());
+        $queryParameters = array_merge($uriVariables, $filters, $this->contextParametersProvider->getContextParameters());
 
-        $CQRSQuery = $this->domainSerializer->denormalize($queryParameters, $CQRSQueryClass, null, [DomainSerializer::NORMALIZATION_MAPPING => $this->getCQRSQueryMapping($operation)]);
+        $CQRSQuery = $this->domainSerializer->denormalize($queryParameters, $CQRSQueryClass, null, [NormalizationMapper::NORMALIZATION_MAPPING => $this->getCQRSQueryMapping($operation)]);
         $CQRSQueryResult = $this->queryBus->handle($CQRSQuery);
+        // The result may be null (for DELETE action for example)
+        if (null === $CQRSQueryResult) {
+            return new ($operation->getClass())();
+        }
 
         return $this->denormalizeQueryResult($CQRSQueryResult, $operation);
     }

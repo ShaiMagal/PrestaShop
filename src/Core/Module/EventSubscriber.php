@@ -57,6 +57,7 @@ class EventSubscriber implements EventSubscriberInterface
             ModuleManagementEvent::POST_INSTALL => 'onModuleStateChanged',
             ModuleManagementEvent::UNINSTALL => 'onModuleStateChanged',
             ModuleManagementEvent::UPGRADE => 'onModuleStateChanged',
+            ModuleManagementEvent::UPLOAD => 'onModuleStateChanged',
             ModuleManagementEvent::ENABLE => 'onModuleStateChanged',
             ModuleManagementEvent::DISABLE => 'onModuleStateChanged',
             ModuleManagementEvent::DELETE => 'onModuleStateChanged',
@@ -65,8 +66,8 @@ class EventSubscriber implements EventSubscriberInterface
 
     public function onModuleStateChanged(ModuleManagementEvent $event): void
     {
-        $moduleName = $event->getModule()->get('name');
-        $this->moduleRepository->clearCache($moduleName, true);
+        // Force clearing all cache because it's so badly handled
+        $this->moduleRepository->clearCache();
         $this->cacheClearer->clear();
     }
 }

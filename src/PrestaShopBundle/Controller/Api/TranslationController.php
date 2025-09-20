@@ -82,7 +82,7 @@ class TranslationController extends ApiController
 
             try {
                 $this->translationService->findLanguageByLocale($locale);
-            } catch (InvalidLanguageException $e) {
+            } catch (InvalidLanguageException) {
                 // If the locale is invalid, no need to call the translation provider.
                 throw UnsupportedLocaleException::invalidLocale($locale);
             }

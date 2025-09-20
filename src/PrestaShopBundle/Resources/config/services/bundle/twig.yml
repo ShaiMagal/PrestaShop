@@ -54,10 +54,6 @@ services:
   PrestaShopBundle\Twig\Extension\LocalizationExtension:
     autowire: true
 
-  PrestaShopBundle\Twig\Extension\MultistoreComponentsExtension:
-    arguments:
-      - '@prestashop.core.admin.multistore'
-
   PrestaShopBundle\Twig\Layout\TemplateVariablesBuilder: ~
   PrestaShopBundle\Twig\Layout\TemplateVariables:
     lazy: true
@@ -151,13 +147,6 @@ services:
 
   prestashop.bundle.twig.extension.number_extension:
     alias: 'PrestaShopBundle\Twig\Extension\NumberExtension'
-    public: true
-    deprecated:
-      package: PrestaShop\PrestaShop
-      version: 9.0
-
-  prestashop.twig.extension.multistore_components_extension:
-    alias: 'PrestaShopBundle\Twig\Extension\MultistoreComponentsExtension'
     public: true
     deprecated:
       package: PrestaShop\PrestaShop

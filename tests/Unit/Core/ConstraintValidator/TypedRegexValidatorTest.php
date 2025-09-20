@@ -381,6 +381,37 @@ class TypedRegexValidatorTest extends ConstraintValidatorTestCase
     }
 
     /**
+     * @dataProvider getInvalidCharactersForDiscountCode
+     *
+     * @param string $invalidChar
+     */
+    public function testItFailsForDiscountCodeWhenInvalidCharactersGiven(string $invalidChar): void
+    {
+        $this->assertViolationIsRaised(new TypedRegex(['type' => TypedRegex::TYPE_DISCOUNT_CODE]), $invalidChar);
+    }
+
+    /**
+     * @dataProvider getDataForDiscountCodeTest
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    public function testDiscountCode(string $value, bool $expectSuccess): void
+    {
+        $constraint = new TypedRegex(TypedRegex::TYPE_DISCOUNT_CODE);
+        $this->validator->validate($value, $constraint);
+
+        if ($expectSuccess) {
+            $this->assertNoViolation();
+        } else {
+            $this->buildViolation($constraint->message)
+                ->setParameter('%s', '"' . $value . '"')
+                ->assertRaised();
+        }
+    }
+
+    /**
      * @dataProvider getDataForLinkRewriteTest
      *
      * @param string $value
@@ -498,7 +529,7 @@ class TypedRegexValidatorTest extends ConstraintValidatorTestCase
     public function getInvalidCharactersForCatalogNameType(): array
     {
         return [
-            ['<'], ['>'], [';'], ['='], ['#'], ['{'], ['}'],
+            ['<'], ['>'], ['{'], ['}'],
         ];
     }
 
@@ -508,7 +539,7 @@ class TypedRegexValidatorTest extends ConstraintValidatorTestCase
     public function getInvalidCharactersForGenericNameType(): array
     {
         return [
-            ['<'], ['>'], ['='], ['{'], ['}'],
+            ['<'], ['>'], ['{'], ['}'],
         ];
     }
 
@@ -866,6 +897,53 @@ class TypedRegexValidatorTest extends ConstraintValidatorTestCase
         yield [':'];
         yield ['.'];
         yield [','];
+    }
+
+    /**
+     * @return Generator
+     */
+    public function getInvalidCharactersForDiscountCode(): Generator
+    {
+        yield ['!'];
+        yield ['@'];
+        yield ['$'];
+        yield ['^'];
+        yield ['&'];
+        yield ['*'];
+        yield ['('];
+        yield [')'];
+        yield ['+'];
+        yield ['='];
+        yield ['{'];
+        yield ['}'];
+        yield ['['];
+        yield ['['];
+        yield ['<'];
+        yield ['>'];
+        yield ['?'];
+        yield ['/'];
+        yield ['\\'];
+        yield ['\''];
+        yield [';'];
+        yield [':'];
+        yield ['.'];
+        yield [','];
+    }
+
+    /**
+     * @return array[]
+     */
+    public function getDataForDiscountCodeTest(): array
+    {
+        return [
+            ['CODE123', true],
+            ['code123', true],
+            ['CODE-123', true],
+            ['CODE_123', true],
+            ['CODE[]123', false],
+            ['CODE{}123', false],
+            ['CODE)(123', false],
+        ];
     }
 
     /**

@@ -1,4 +1,4 @@
-{#**
+{# **
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
@@ -21,7 +21,7 @@
  * @author    PrestaShop SA and Contributors <contact@prestashop.com>
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- *#}
+ * #}
 {# TODO: To be removed when we find a better time to fill the smarty variables. #}
 {{ ps.setupSmarty(layoutTitle ?? '', metaTitle, lightDisplay) }}
 <!DOCTYPE html>
@@ -29,18 +29,18 @@
 <head>
   {% block header %}
     {% block core_javascript %}
-      {% include '@PrestaShop/Admin/Layout/core_javascript.html.twig' %}
+      {{ include('@PrestaShop/Admin/Layout/core_javascript.html.twig') }}
     {% endblock %}
-    {{ component('HeadTag', { metaTitle: metaTitle }) }}
+    {{ component('HeadTag', {metaTitle: metaTitle}) }}
     {% block stylesheets %}
-      {% include '@PrestaShop/Admin/Layout/stylesheets.html.twig' %}
+      {{ include('@PrestaShop/Admin/Layout/stylesheets.html.twig') }}
     {% endblock %}
     {% block extra_stylesheets %}{% endblock %}
   {% endblock %}
 </head>
 
 <body
-  class="lang-{{ ps.isoUser }}{%if ps.isRtlLanguage %} lang-rtl{% endif %} {{ ps.controllerName|escape|lower }}{% if ps.menuCollapsed %} page-sidebar-closed{% endif %}{% if ps.debugMode|default(false) %} developer-mode{% endif %} ps-bo-rebrand"
+  class="lang-{{ ps.isoUser }}{% if ps.isRtlLanguage %} lang-rtl{% endif %} {{ ps.controllerName|escape|lower }}{% if ps.menuCollapsed %} page-sidebar-closed{% endif %}{% if ps.debugMode|default(false) %} developer-mode{% endif %} ps-bo-rebrand"
   {% if ps.jsRouterMetadata is defined and ps.jsRouterMetadata.base_url is defined %}data-base-url="{{ ps.jsRouterMetadata.base_url }}"{% endif %}
   {% if ps.jsRouterMetadata is defined and ps.jsRouterMetadata.token %}data-token="{{ ps.jsRouterMetadata.token }}"{% endif %}
 >

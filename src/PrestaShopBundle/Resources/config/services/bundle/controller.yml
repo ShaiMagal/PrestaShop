@@ -101,12 +101,13 @@ services:
     parent: PrestaShopBundle\Controller\Api\ApiController
     public: true
 
-  prestashop.core.admin.multistore:
-    class: PrestaShopBundle\Controller\Admin\MultistoreController
-    public: true
-    lazy: true
-    autoconfigure: true
+  PrestaShopBundle\Controller\Admin\Sell\Catalog\FeatureController:
+    arguments:
+      $featureFeature: "@prestashop.adapter.feature.feature"
+      $featureAttributeRepository: "@prestashop.core.api.feature_attribute.repository"
+    public: false
     autowire: true
+    autoconfigure: true
 
   PrestaShopBundle\Controller\Admin\SecuredFileReaderController:
     arguments:

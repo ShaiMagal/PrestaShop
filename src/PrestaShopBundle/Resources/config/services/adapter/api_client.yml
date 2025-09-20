@@ -12,4 +12,6 @@ services:
 
   PrestaShop\PrestaShop\Adapter\ApiClient\CommandHandler\GenerateApiClientSecretHandler:
 
+  PrestaShop\PrestaShop\Adapter\ApiClient\CommandHandler\ForceApiClientSecretHandler:
+
   PrestaShop\PrestaShop\Adapter\ApiClient\QueryHandler\GetApiClientForEditingHandler:

@@ -34,7 +34,7 @@ trait SafeUnserializeTrait
     protected function safelyUnserialize(string $serializedToken): mixed
     {
         $token = null;
-        $prevUnserializeHandler = ini_set('unserialize_callback_func', __CLASS__ . '::handleSafeUnserializeCallback');
+        $prevUnserializeHandler = ini_set('unserialize_callback_func', self::class . '::handleSafeUnserializeCallback');
         $prevErrorHandler = set_error_handler(function ($type, $msg, $file, $line, $context = []) use (&$prevErrorHandler) {
             if (__FILE__ === $file) {
                 throw new ErrorException($msg, 0x37313BC, $type, $file, $line);

@@ -1147,7 +1147,8 @@ class ProductFormDataProviderTest extends TestCase
             $product['attachments'] ?? [],
             $this->createProductStockInformation($product),
             $this->createVirtualProductFile($product),
-            $product['cover_thumbnail'] ?? self::COVER_URL
+            $product['cover_thumbnail'] ?? self::COVER_URL,
+            [1],
         );
     }
 

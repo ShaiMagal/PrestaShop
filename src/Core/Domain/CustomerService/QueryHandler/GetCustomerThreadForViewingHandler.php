@@ -113,7 +113,7 @@ class GetCustomerThreadForViewingHandler implements GetCustomerThreadForViewingH
     {
         $threadMessages = [];
 
-        foreach ($messages as $key => $message) {
+        foreach ($messages as $message) {
             $employeeImage = null;
 
             if ($message['id_employee']) {

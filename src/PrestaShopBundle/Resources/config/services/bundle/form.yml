@@ -13,9 +13,7 @@ services:
       $formRenderer: '@twig.form.renderer'
       $requestStack: '@request_stack'
       $locale: '@prestashop.core.localization.locale.context_locale'
-      $multistoreController: '@prestashop.core.admin.multistore'
       $validate: "@prestashop.adapter.validate"
-      $multiStoreContext: '@prestashop.adapter.shop.context'
       $themeRepository: '@prestashop.core.addon.theme.repository'
       $shopThemeName: '@=service("prestashop.adapter.legacy.context").getContext().shop.theme.getName()'
 
@@ -24,6 +22,7 @@ services:
 
   PrestaShopBundle\Form\FormCloner:
   PrestaShopBundle\Form\FormBuilderModifier:
+  PrestaShopBundle\Service\Form\MultistoreConfigurationDropdownRenderer:
   PrestaShopBundle\Service\Form\MultistoreCheckboxEnabler:
   PrestaShopBundle\Form\Admin\Improve\Design\Theme\PageLayoutCustomizationFormFactory:
 

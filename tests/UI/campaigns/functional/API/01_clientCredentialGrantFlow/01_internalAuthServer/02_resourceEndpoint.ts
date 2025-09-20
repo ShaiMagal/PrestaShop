@@ -1,16 +1,18 @@
 import testContext from '@utils/testContext';
 
 // Import commonTest
-import loginCommon from '@commonTests/BO/loginBO';
 import {deleteAPIClientTest} from '@commonTests/BO/advancedParameters/authServer';
 
 import {expect} from 'chai';
-import type {APIRequestContext, BrowserContext, Page} from 'playwright';
 import {
+  type APIRequestContext,
   boApiClientsPage,
   boApiClientsCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   FakerAPIClient,
+  type Page,
   utilsAPI,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -25,7 +27,7 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
   let accessTokenExpired: string;
   let clientSecret: string;
 
-  const clientClient: FakerAPIClient = new FakerAPIClient({
+  const apiClient: FakerAPIClient = new FakerAPIClient({
     enabled: true,
     scopes: [
       'hook_read',
@@ -45,7 +47,13 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
 
   describe('BO - Advanced Parameter - API Client : CRUD', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > API Client\' page', async function () {
@@ -61,11 +69,11 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
       expect(pageTitle).to.eq(boApiClientsPage.pageTitle);
     });
 
-    it('should check that no records found', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkThatNoRecordFound', baseContext);
+    it('should check that at least one API client is present', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkThatOneAPIClientExists', baseContext);
 
-      const noRecordsFoundText = await boApiClientsPage.getTextForEmptyTable(page);
-      expect(noRecordsFoundText).to.contains('warning No records found');
+      const apiClientsNumber = await boApiClientsPage.getNumberOfElementInGrid(page);
+      expect(apiClientsNumber).to.be.greaterThanOrEqual(1);
     });
 
     it('should go to add New API Client page', async function () {
@@ -80,7 +88,7 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
     it('should create API Client', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createAPIClient', baseContext);
 
-      const textResult = await boApiClientsCreatePage.addAPIClient(page, clientClient);
+      const textResult = await boApiClientsCreatePage.addAPIClient(page, apiClient);
       expect(textResult).to.contains(boApiClientsCreatePage.successfulCreationMessage);
 
       const textMessage = await boApiClientsCreatePage.getAlertInfoBlockParagraphContent(page);
@@ -103,7 +111,7 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
 
       const apiResponse = await apiContext.post('access_token', {
         form: {
-          client_id: clientClient.clientId,
+          client_id: apiClient.clientId,
           client_secret: clientSecret,
           grant_type: 'client_credentials',
           scope: 'hook_read',
@@ -119,17 +127,17 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
       accessTokenExpired = utilsAPI.setAccessTokenAsExpired(accessToken);
     });
 
-    it('should request the endpoint /hook-status/1 without access token', async function () {
+    it('should request the endpoint /hook/1 without access token', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointWithoutAccessToken', baseContext);
 
-      const apiResponse = await apiContext.get('hook-status/1');
+      const apiResponse = await apiContext.get('hook/1');
       expect(apiResponse.status()).to.eq(401);
     });
 
-    it('should request the endpoint /hook-status/1 with invalid access token', async function () {
+    it('should request the endpoint /hook/1 with invalid access token', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointWithInvalidAccessToken', baseContext);
 
-      const apiResponse = await apiContext.get('hook-status/1', {
+      const apiResponse = await apiContext.get('hook/1', {
         headers: {
           Authorization: 'Bearer INVALIDTOKEN',
         },
@@ -139,10 +147,10 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
       expect(utilsAPI.getResponseHeader(apiResponse, 'WWW-Authenticate')).to.be.eq('Bearer');
     });
 
-    it('should request the endpoint /hook-status/1 with expired access token', async function () {
+    it('should request the endpoint /hook/1 with expired access token', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointWithExpiredAccessToken', baseContext);
 
-      const apiResponse = await apiContext.get('hook-status/1', {
+      const apiResponse = await apiContext.get('hook/1', {
         headers: {
           Authorization: `Bearer ${accessTokenExpired}`,
         },
@@ -152,10 +160,10 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
       expect(utilsAPI.getResponseHeader(apiResponse, 'WWW-Authenticate')).to.be.eq('Bearer');
     });
 
-    it('should request the endpoint /hook-status/1 with valid access token', async function () {
+    it('should request the endpoint /hook/1 with valid access token', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointWithValidAccessToken', baseContext);
 
-      const apiResponse = await apiContext.get('hook-status/1', {
+      const apiResponse = await apiContext.get('hook/1', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -166,12 +174,12 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
       expect(utilsAPI.getResponseHeader(apiResponse, 'Content-Type')).to.contains('application/json');
 
       const jsonResponse = await apiResponse.json();
-      expect(jsonResponse).to.have.property('id');
-      expect(jsonResponse.id).to.be.a('number');
+      expect(jsonResponse).to.have.property('hookId');
+      expect(jsonResponse.hookId).to.be.a('number');
       expect(jsonResponse).to.have.property('active');
       expect(jsonResponse.active).to.be.a('boolean');
     });
   });
 
-  deleteAPIClientTest(`${baseContext}_postTest_0`);
+  deleteAPIClientTest(`${baseContext}_postTest_0`, apiClient.clientId);
 });

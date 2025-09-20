@@ -165,13 +165,13 @@ class GetFileControllerCore extends FrontController
      *
      * @see FrontController::init()
      */
-    public function init()
+    public function init(): void
     {
         if (isset($this->context->employee) && $this->context->employee->isLoggedBack() && Tools::getValue('file')) {
             // Admin can directly access to file
             $filename = Tools::getValue('file');
             if (!Validate::isSha1($filename)) {
-                die(Tools::displayError('Filename is not a valid SHA1 checksum.'));
+                throw new PrestaShopException('Filename is not a valid SHA1 checksum.');
             }
             $file = _PS_DOWNLOAD_DIR_ . (string) preg_replace('/\.{2,}/', '.', $filename);
             $filename = ProductDownload::getFilenameFromFilename(Tools::getValue('file'));

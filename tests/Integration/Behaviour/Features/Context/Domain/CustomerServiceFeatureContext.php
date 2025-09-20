@@ -38,24 +38,12 @@ use PrestaShop\PrestaShop\Core\Domain\CustomerService\Query\GetCustomerThreadFor
 use PrestaShop\PrestaShop\Core\Domain\CustomerService\QueryResult\CustomerThreadView;
 use PrestaShop\PrestaShop\Core\Domain\CustomerService\ValueObject\CustomerThreadStatus;
 use RuntimeException;
-use Tests\Integration\Behaviour\Features\Context\CommonFeatureContext;
 use Tests\Integration\Behaviour\Features\Context\SharedStorage;
 use Tests\Integration\Behaviour\Features\Context\Util\NoExceptionAlthoughExpectedException;
 use Tools;
 
 class CustomerServiceFeatureContext extends AbstractDomainFeatureContext
 {
-    /**
-     * @var int default shop id from configs
-     */
-    private $defaultShopId;
-
-    public function __construct()
-    {
-        $configuration = CommonFeatureContext::getContainer()->get('prestashop.adapter.legacy.configuration');
-        $this->defaultShopId = $configuration->get('PS_SHOP_DEFAULT');
-    }
-
     /**
      * @When I add new customer thread :threadReference with following properties:
      *
@@ -70,7 +58,7 @@ class CustomerServiceFeatureContext extends AbstractDomainFeatureContext
         $customerThread = new CustomerThread();
         $customerThread->id_contact = 2;
         $customerThread->id_customer = 1;
-        $customerThread->id_shop = $this->defaultShopId;
+        $customerThread->id_shop = $this->getDefaultShopId();
         $customerThread->id_order = 0;
         $customerThread->id_lang = 1;
         $customerThread->email = 'test@gmail.com';

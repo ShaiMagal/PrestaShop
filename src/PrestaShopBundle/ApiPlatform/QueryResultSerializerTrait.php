@@ -30,11 +30,11 @@ namespace PrestaShopBundle\ApiPlatform;
 
 use ApiPlatform\Metadata\CollectionOperationInterface;
 use ApiPlatform\Metadata\Operation;
-use PrestaShopBundle\ApiPlatform\Serializer\DomainSerializer;
+use PrestaShopBundle\ApiPlatform\Serializer\CQRSApiSerializer;
 
 trait QueryResultSerializerTrait
 {
-    protected readonly DomainSerializer $domainSerializer;
+    protected readonly CQRSApiSerializer $domainSerializer;
 
     /**
      * @param mixed $CQRSQueryResult this is the QueryResult DTO returned by a CQRS query
@@ -45,17 +45,17 @@ trait QueryResultSerializerTrait
     protected function denormalizeQueryResult($CQRSQueryResult, Operation $operation)
     {
         // Start by normalizing the QueryResult object into normalized array
-        $normalizedQueryResult = $this->domainSerializer->normalize($CQRSQueryResult, null, [DomainSerializer::NORMALIZATION_MAPPING => $this->getCQRSQueryMapping($operation)]);
+        $normalizedQueryResult = $this->domainSerializer->normalize($CQRSQueryResult, null, [NormalizationMapper::NORMALIZATION_MAPPING => $this->getCQRSQueryMapping($operation)]);
 
         if ($operation instanceof CollectionOperationInterface) {
             foreach ($normalizedQueryResult as $key => $result) {
-                $normalizedQueryResult[$key] = $this->domainSerializer->denormalize($result, $operation->getClass(), null, [DomainSerializer::NORMALIZATION_MAPPING => $this->getApiResourceMapping($operation)]);
+                $normalizedQueryResult[$key] = $this->domainSerializer->denormalize($result, $operation->getClass(), null, [NormalizationMapper::NORMALIZATION_MAPPING => $this->getApiResourceMapping($operation)]);
             }
 
             return $normalizedQueryResult;
         }
 
-        return $this->domainSerializer->denormalize($normalizedQueryResult, $operation->getClass(), null, [DomainSerializer::NORMALIZATION_MAPPING => $this->getApiResourceMapping($operation)]);
+        return $this->domainSerializer->denormalize($normalizedQueryResult, $operation->getClass(), null, [NormalizationMapper::NORMALIZATION_MAPPING => $this->getApiResourceMapping($operation)]);
     }
 
     /**

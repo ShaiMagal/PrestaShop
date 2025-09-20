@@ -1,21 +1,18 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import addCustomerPage from '@pages/BO/customers/add';
-
 import {
   boCustomersPage,
+  boCustomersCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   FakerCustomer,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_customers_customers_customersBulkActions';
 
@@ -42,7 +39,13 @@ describe('BO - Customers - Customers : Customers bulk actions', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Customers > Customers\' page', async function () {
@@ -77,14 +80,14 @@ describe('BO - Customers - Customers : Customers bulk actions', async () => {
 
         await boCustomersPage.goToAddNewCustomerPage(page);
 
-        const pageTitle = await addCustomerPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addCustomerPage.pageTitleCreate);
+        const pageTitle = await boCustomersCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCustomersCreatePage.pageTitleCreate);
       });
 
       it(`should create customer n°${index + 1} and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `createCustomer${index + 1}`, baseContext);
 
-        const textResult = await addCustomerPage.createEditCustomer(page, test.args.customerToCreate);
+        const textResult = await boCustomersCreatePage.createEditCustomer(page, test.args.customerToCreate);
         expect(textResult).to.equal(boCustomersPage.successfulCreationMessage);
 
         const numberOfCustomersAfterCreation = await boCustomersPage.getNumberOfElementInGrid(page);

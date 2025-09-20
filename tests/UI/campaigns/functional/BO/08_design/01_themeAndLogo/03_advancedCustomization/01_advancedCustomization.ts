@@ -1,18 +1,17 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import login steps
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boModuleManagerPage,
   boThemeAndLogoPage,
   boThemeAdvancedConfigurationPage,
+  type BrowserContext,
   dataModules,
   foClassicHomePage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -51,7 +50,13 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   // Pre-condition: Check if the module Theme Customization is installed and enabled
@@ -66,18 +71,18 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
       );
     });
 
-    it(`should search for module ${dataModules.themeCustomization.name}`, async function () {
+    it(`should search for module ${dataModules.psThemeCusto.name}`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'searchForModule', baseContext);
 
-      const isModuleVisible = await boModuleManagerPage.searchModule(page, dataModules.themeCustomization);
-      expect(isModuleVisible, `The module ${dataModules.themeCustomization.name} is not installed`).to.eq(true);
+      const isModuleVisible = await boModuleManagerPage.searchModule(page, dataModules.psThemeCusto);
+      expect(isModuleVisible, `The module ${dataModules.psThemeCusto.name} is not installed`).to.eq(true);
     });
 
-    it(`should check the status of the module ${dataModules.themeCustomization.name}`, async function () {
+    it(`should check the status of the module ${dataModules.psThemeCusto.name}`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkStatusModule', baseContext);
 
-      const isModuleEnabled = await boModuleManagerPage.isModuleStatus(page, dataModules.themeCustomization.name, 'enable');
-      expect(isModuleEnabled, `The module ${dataModules.themeCustomization.name} is disabled`).to.eq(true);
+      const isModuleEnabled = await boModuleManagerPage.isModuleStatus(page, dataModules.psThemeCusto.name, 'enable');
+      expect(isModuleEnabled, `The module ${dataModules.psThemeCusto.name} is disabled`).to.eq(true);
     });
   });
 

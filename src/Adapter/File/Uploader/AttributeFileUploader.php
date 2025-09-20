@@ -38,7 +38,7 @@ class AttributeFileUploader implements AttributeFileUploaderInterface
             if (file_exists($filePath)) {
                 move_uploaded_file($filePath, _PS_IMG_DIR_ . 'co/' . $id . '.jpg');
             }
-        } catch (FileException $e) {
+        } catch (FileException) {
             throw new AttributeUploadFailedException(sprintf('Failed to copy the file %s.', $filePath));
         }
     }

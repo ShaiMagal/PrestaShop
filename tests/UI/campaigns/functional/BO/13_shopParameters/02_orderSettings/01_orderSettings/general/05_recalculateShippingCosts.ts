@@ -2,27 +2,26 @@
 import testContext from '@utils/testContext';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
-
-// Import BO pages
-import orderSettingsPage from '@pages/BO/shopParameters/orderSettings';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  boOrderSettingsPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
   FakerOrderShipping,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_orderSettings_orderSettings_general_recalculateShippingCosts';
 
@@ -68,7 +67,13 @@ describe('BO - Shop Parameters - Order Settings : Recalculate shipping costs aft
 
   describe('Set recalculate shipping costs after editing the order', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     const tests = [
@@ -99,17 +104,17 @@ describe('BO - Shop Parameters - Order Settings : Recalculate shipping costs aft
           boDashboardPage.shopParametersParentLink,
           boDashboardPage.orderSettingsLink,
         );
-        await orderSettingsPage.closeSfToolBar(page);
+        await boOrderSettingsPage.closeSfToolBar(page);
 
-        const pageTitle = await orderSettingsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(orderSettingsPage.pageTitle);
+        const pageTitle = await boOrderSettingsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boOrderSettingsPage.pageTitle);
       });
 
       it(`should ${test.args.action} final summary`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}FinalSummary`, baseContext);
 
-        const result = await orderSettingsPage.recalculateShippingCostAfterEditingOrder(page, test.args.toEnable);
-        expect(result).to.contains(orderSettingsPage.successfulUpdateMessage);
+        const result = await boOrderSettingsPage.recalculateShippingCostAfterEditingOrder(page, test.args.toEnable);
+        expect(result).to.contains(boOrderSettingsPage.successfulUpdateMessage);
       });
 
       it('should go to \'Orders > Orders\' page', async function () {

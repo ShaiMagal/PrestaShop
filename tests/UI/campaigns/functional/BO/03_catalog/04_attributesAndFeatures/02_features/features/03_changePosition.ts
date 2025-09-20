@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import attributesPage from '@pages/BO/catalog/attributes';
-import featuresPage from '@pages/BO/catalog/features';
-import addFeaturePage from '@pages/BO/catalog/features/addFeature';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boAttributesPage,
   boDashboardPage,
+  boFeaturesPage,
+  boFeaturesCreatePage,
+  boLoginPage,
+  type BrowserContext,
   FakerFeature,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -43,7 +39,13 @@ describe('BO - Catalog - Attributes & Features : Change feature position', async
 
   describe('PRE-TEST: Create new feature', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Attributes & Features\' page', async function () {
@@ -54,35 +56,35 @@ describe('BO - Catalog - Attributes & Features : Change feature position', async
         boDashboardPage.catalogParentLink,
         boDashboardPage.attributesAndFeaturesLink,
       );
-      await attributesPage.closeSfToolBar(page);
+      await boAttributesPage.closeSfToolBar(page);
 
-      const pageTitle = await attributesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(attributesPage.pageTitle);
+      const pageTitle = await boAttributesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boAttributesPage.pageTitle);
     });
 
     it('should go to Features page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFeaturesPage', baseContext);
 
-      await attributesPage.goToFeaturesPage(page);
+      await boAttributesPage.goToFeaturesPage(page);
 
-      const pageTitle = await featuresPage.getPageTitle(page);
-      expect(pageTitle).to.contains(featuresPage.pageTitle);
+      const pageTitle = await boFeaturesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boFeaturesPage.pageTitle);
     });
 
     it('should go to add new feature page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToAddNewFeaturePage', baseContext);
 
-      await featuresPage.goToAddFeaturePage(page);
+      await boFeaturesPage.goToAddFeaturePage(page);
 
-      const pageTitle = await addFeaturePage.getPageTitle(page);
-      expect(pageTitle).to.eq(addFeaturePage.createPageTitle);
+      const pageTitle = await boFeaturesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.eq(boFeaturesCreatePage.createPageTitle);
     });
 
     it('should create feature', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createNewFeature', baseContext);
 
-      const textResult = await addFeaturePage.setFeature(page, createFeatureData);
-      expect(textResult).to.contains(featuresPage.successfulCreationMessage);
+      const textResult = await boFeaturesCreatePage.setFeature(page, createFeatureData);
+      expect(textResult).to.contains(boFeaturesPage.successfulCreationMessage);
     });
   });
 
@@ -90,11 +92,11 @@ describe('BO - Catalog - Attributes & Features : Change feature position', async
     it('should sort by \'position\' \'asc\' And check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sortByPosition', baseContext);
 
-      const nonSortedTable = await featuresPage.getAllRowsColumnContent(page, 'position', 'id_feature');
+      const nonSortedTable = await boFeaturesPage.getAllRowsColumnContent(page, 'position', 'id_feature');
 
-      await featuresPage.sortTable(page, 'position', 'asc');
+      await boFeaturesPage.sortTable(page, 'position', 'asc');
 
-      const sortedTable = await featuresPage.getAllRowsColumnContent(page, 'position', 'position');
+      const sortedTable = await boFeaturesPage.getAllRowsColumnContent(page, 'position', 'position');
 
       const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));
       const sortedTableFloat: number[] = sortedTable.map((text: string): number => parseFloat(text));
@@ -108,43 +110,40 @@ describe('BO - Catalog - Attributes & Features : Change feature position', async
       await testContext.addContextItem(this, 'testIdentifier', 'changeFeaturePosition', baseContext);
 
       // Get first row feature name
-      const firstRowFeatureName = await featuresPage.getTextColumn(page, 1, 'name', 'position');
+      const firstRowFeatureName = await boFeaturesPage.getTextColumn(page, 1, 'name', 'position');
 
       // Change position and check successful message
-      const textResult = await featuresPage.changePosition(page, 1, 2);
-      expect(textResult, 'Unable to change position').to.contains(featuresPage.successfulUpdateMessage);
+      const textResult = await boFeaturesPage.changePosition(page, 1, 2);
+      expect(textResult, 'Unable to change position').to.contains(boFeaturesPage.successfulUpdateMessage);
 
       // Get second row feature name and check if is equal the first row feature name before changing position
-      const secondRowFeatureName = await featuresPage.getTextColumn(page, 2, 'name', 'position');
+      const secondRowFeatureName = await boFeaturesPage.getTextColumn(page, 2, 'name', 'position');
       expect(secondRowFeatureName, 'Changing position was done wrongly').to.equal(firstRowFeatureName);
     });
 
     it('should change second feature position to 3', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFeaturePosition', baseContext);
 
-      // Close alert
-      await featuresPage.closeAlertBlock(page);
-
       // Get third row feature name
-      const secondRowFeatureName = await featuresPage.getTextColumn(page, 2, 'name', 'position');
+      const secondRowFeatureName = await boFeaturesPage.getTextColumn(page, 2, 'name', 'position');
 
       // Change position and check successful message
-      const textResult = await featuresPage.changePosition(page, 2, 3);
-      expect(textResult, 'Unable to change position').to.contains(featuresPage.successfulUpdateMessage);
+      const textResult = await boFeaturesPage.changePosition(page, 2, 3);
+      expect(textResult, 'Unable to change position').to.contains(boFeaturesPage.successfulUpdateMessage);
 
       // Get first row feature name and check if is equal the first row feature name before changing position
-      const thirdRowFeatureName = await featuresPage.getTextColumn(page, 3, 'name', 'position');
+      const thirdRowFeatureName = await boFeaturesPage.getTextColumn(page, 3, 'name', 'position');
       expect(thirdRowFeatureName, 'Changing position was done wrongly').to.equal(secondRowFeatureName);
     });
 
     it('should reset the sort to \'id_feature\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sortByIdFeature', baseContext);
 
-      const nonSortedTable = await featuresPage.getAllRowsColumnContent(page, 'id_feature', 'position');
+      const nonSortedTable = await boFeaturesPage.getAllRowsColumnContent(page, 'id_feature', 'position');
 
-      await featuresPage.sortTable(page, 'id_feature', 'asc');
+      await boFeaturesPage.sortTable(page, 'id_feature', 'asc');
 
-      const sortedTable = await featuresPage.getAllRowsColumnContent(page, 'id_feature', 'id_feature');
+      const sortedTable = await boFeaturesPage.getAllRowsColumnContent(page, 'id_feature', 'id_feature');
 
       const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));
       const sortedTableFloat: number[] = sortedTable.map((text: string): number => parseFloat(text));
@@ -159,23 +158,23 @@ describe('BO - Catalog - Attributes & Features : Change feature position', async
     it('should filter list of features by the created feature', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterFeature', baseContext);
 
-      await featuresPage.filterTable(page, 'name', createFeatureData.name);
+      await boFeaturesPage.filterTable(page, 'name', createFeatureData.name);
 
-      const textColumn = await featuresPage.getTextColumn(page, 1, 'name');
+      const textColumn = await boFeaturesPage.getTextColumn(page, 1, 'name');
       expect(textColumn).to.contains(createFeatureData.name);
     });
 
     it('should delete the created feature', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteFeature', baseContext);
 
-      const textResult = await featuresPage.deleteFeature(page, 1);
-      expect(textResult).to.contains(featuresPage.successfulDeleteMessage);
+      const textResult = await boFeaturesPage.deleteFeature(page, 1);
+      expect(textResult).to.contains(boFeaturesPage.successfulDeleteMessage);
     });
 
     it('should reset all filters and get number of features in BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFilter', baseContext);
 
-      const numberOfFeatures = await featuresPage.resetAndGetNumberOfLines(page);
+      const numberOfFeatures = await boFeaturesPage.resetAndGetNumberOfLines(page);
       expect(numberOfFeatures).to.be.above(0);
     });
   });

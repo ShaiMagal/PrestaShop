@@ -28,8 +28,12 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\ApiPlatform\Metadata;
 
+use ApiPlatform\Metadata\Parameters;
+use ApiPlatform\OpenApi\Attributes\Webhook;
+use ApiPlatform\OpenApi\Model\Operation as OpenApiOperation;
+use ApiPlatform\State\OptionsInterface;
 use Attribute;
-use PrestaShopBundle\ApiPlatform\Provider\QueryProvider;
+use Stringable;
 
 /**
  * Class CQRSUpdate is a custom operation that provides extra parameters to help configure an operation
@@ -37,7 +41,7 @@ use PrestaShopBundle\ApiPlatform\Provider\QueryProvider;
  * but you can also use PATCH method.
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-class CQRSDelete extends AbstractCQRSOperation
+class CQRSDelete extends CQRSCommand
 {
     public function __construct(
         ?string $uriTemplate = null,
@@ -59,14 +63,15 @@ class CQRSDelete extends AbstractCQRSOperation
         ?array $schemes = null,
         ?string $condition = null,
         ?string $controller = null,
+        ?array $headers = null,
         ?array $cacheHeaders = null,
-
+        ?array $paginationViaCursor = null,
         ?array $hydraContext = null,
         ?array $openapiContext = null,
-        ?bool $openapi = null,
+        bool|OpenApiOperation|Webhook|null $openapi = null,
         ?array $exceptionToStatus = null,
-
-        ?bool $queryParameterValidationEnabled = null,
+        ?array $links = null,
+        ?array $errors = null,
 
         ?string $shortName = null,
         ?string $class = null,
@@ -80,16 +85,16 @@ class CQRSDelete extends AbstractCQRSOperation
         ?bool $paginationClientPartial = null,
         ?bool $paginationFetchJoinCollection = null,
         ?bool $paginationUseOutputWalkers = null,
-        ?array $paginationViaCursor = null,
         ?array $order = null,
         ?string $description = null,
         ?array $normalizationContext = null,
         ?array $denormalizationContext = null,
-        ?string $security = null,
+        ?bool $collectDenormalizationErrors = null,
+        string|Stringable|null $security = null,
         ?string $securityMessage = null,
-        ?string $securityPostDenormalize = null,
+        string|Stringable|null $securityPostDenormalize = null,
         ?string $securityPostDenormalizeMessage = null,
-        ?string $securityPostValidation = null,
+        string|Stringable|null $securityPostValidation = null,
         ?string $securityPostValidationMessage = null,
         ?string $deprecationReason = null,
         ?array $filters = null,
@@ -111,20 +116,28 @@ class CQRSDelete extends AbstractCQRSOperation
         ?string $name = null,
         $provider = null,
         $processor = null,
+        ?OptionsInterface $stateOptions = null,
+        array|Parameters|null $parameters = null,
+        ?bool $queryParameterValidationEnabled = null,
         array $extraProperties = [],
-        ?string $CQRSQuery = null,
+        ?string $CQRSCommand = null,
         array $scopes = [],
-        ?array $CQRSQueryMapping = null,
         ?array $ApiResourceMapping = null,
+        ?array $CQRSCommandMapping = null,
         ?bool $experimentalOperation = null,
+        ?bool $allowEmptyBody = null,
     ) {
         $passedArguments = \get_defined_vars();
         $passedArguments['method'] = self::METHOD_DELETE;
         // Usually DELETE operation has nothing to show so no output is needed
         $passedArguments['output'] = $output ?? false;
-        // Delete operations are performed like a query not a command, because API Platform has specific behaviour with DELETE methods that make
-        // it easier to use a provider instead of a processor
-        $passedArguments['provider'] = $provider ?? QueryProvider::class;
+        // By default, the ReadProvider will trigger a 404 exception with DELETE method, so we disable it unless said otherwise
+        $passedArguments['read'] = $read ?? false;
+        // For methods POST, PUT and PATCH deserialization is automatically enabled, not with DELETE and we need it to deserialize the command input
+        $passedArguments['deserialize'] = $deserialize ?? true;
+        // Usually DELETE request don't need a body as the only needed thing is the ID provided in the uri, so we enabled this custom setting,
+        // so that empty body is accepted
+        $passedArguments['allowEmptyBody'] = $allowEmptyBody ?? $extraProperties['allowEmptyBody'] ?? true;
 
         parent::__construct(...$passedArguments);
     }

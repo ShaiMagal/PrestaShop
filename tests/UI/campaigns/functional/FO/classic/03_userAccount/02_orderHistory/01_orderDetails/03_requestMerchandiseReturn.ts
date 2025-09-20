@@ -1,23 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
+import {expect} from 'chai';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
 import {
   enableMerchandiseReturns,
   disableMerchandiseReturns,
 } from '@commonTests/BO/customerService/merchandiseReturns';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import {orderHistoryPage} from '@pages/FO/classic/myAccount/orderHistory';
-import invoicesPage from '@pages/BO/orders/invoices';
-import {orderDetailsPage} from '@pages/FO/classic/myAccount/orderDetails';
-import {merchandiseReturnsPage as foMerchandiseReturnsPage} from '@pages/FO/classic/myAccount/merchandiseReturns';
 
 import {
+  boDashboardPage,
+  boInvoicesPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
@@ -26,14 +21,14 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
+  foClassicMyMerchandiseReturnsPage,
+  foClassicMyOrderDetailsPage,
+  foClassicMyOrderHistoryPage,
+  type Page,
   utilsDate,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_classic_userAccount_orderHistory_orderDetails_requestMerchandiseReturn';
 
 /*
@@ -83,16 +78,22 @@ describe('FO - Account - Order details : Request merchandise return', async () =
 
   describe('Change the created order status to \'Delivered\'', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Orders > Orders\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToOrdersPageForUpdatedPrefix', baseContext);
 
-      await invoicesPage.goToSubMenu(
+      await boInvoicesPage.goToSubMenu(
         page,
-        invoicesPage.ordersParentLink,
-        invoicesPage.ordersLink,
+        boInvoicesPage.ordersParentLink,
+        boInvoicesPage.ordersLink,
       );
 
       const pageTitle = await boOrdersPage.getPageTitle(page);
@@ -166,39 +167,39 @@ describe('FO - Account - Order details : Request merchandise return', async () =
 
       await foClassicMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foClassicMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foClassicMyOrderHistoryPage.pageTitle);
     });
 
     it('should go to order details page of the first order in list', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFoToOrderDetails', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foClassicMyOrderHistoryPage.goToDetailsPage(page);
 
-      const pageTitle = await orderDetailsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(orderDetailsPage.pageTitle);
+      const pageTitle = await foClassicMyOrderDetailsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foClassicMyOrderDetailsPage.pageTitle);
     });
 
     it('should check the existence of order return form', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'isOrderReturnFormVisible', baseContext);
 
-      const result = await orderDetailsPage.isOrderReturnFormVisible(page);
+      const result = await foClassicMyOrderDetailsPage.isOrderReturnFormVisible(page);
       expect(result).to.eq(true);
     });
 
     it('should create a merchandise return and check if merchandise return page is displayed', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createMerchandiseReturn', baseContext);
 
-      await orderDetailsPage.requestMerchandiseReturn(page, 'Test merchandise returns');
+      await foClassicMyOrderDetailsPage.requestMerchandiseReturn(page, 'Test merchandise returns');
 
-      const pageTitle = await foMerchandiseReturnsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(foMerchandiseReturnsPage.pageTitle);
+      const pageTitle = await foClassicMyMerchandiseReturnsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(foClassicMyMerchandiseReturnsPage.pageTitle);
     });
 
     it('should check the merchandise returns table', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkMerchandiseReturnsTable', baseContext);
 
-      const result = await foMerchandiseReturnsPage.getMerchandiseReturnsDetails(page);
+      const result = await foClassicMyMerchandiseReturnsPage.getMerchandiseReturnsDetails(page);
       await Promise.all([
         expect(result.orderReference).to.equal(orderReference),
         expect(result.fileName).to.contains('#RE'),

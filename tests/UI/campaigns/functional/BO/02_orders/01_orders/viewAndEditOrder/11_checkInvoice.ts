@@ -1,26 +1,25 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import common tests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 import {bulkDeleteProductsTest} from '@commonTests/BO/catalog/product';
 import {enableEcoTaxTest, disableEcoTaxTest} from '@commonTests/BO/international/ecoTax';
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderByCustomerTest, createOrderSpecificProductTest} from '@commonTests/FO/classic/order';
-
-// Import BO pages
-import addProductPage from '@pages/BO/catalog/products/add';
-import pricingTab from '@pages/BO/catalog/products/add/pricingTab';
-import detailsTab from '@pages/BO/catalog/products/add/detailsTab';
-import orderPageCustomerBlock from '@pages/BO/orders/view/customerBlock';
-import orderPagePaymentBlock from '@pages/BO/orders/view/paymentBlock';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  boOrdersViewBlockCustomersPage,
+  boOrdersViewBlockPaymentsPage,
   boOrdersViewBlockProductsPage,
   boOrdersViewBlockTabListPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabDetailsPage,
+  boProductsCreateTabPricingPage,
+  type BrowserContext,
   dataAddresses,
   dataCarriers,
   dataCustomers,
@@ -31,15 +30,13 @@ import {
   FakerOrderShipping,
   FakerProduct,
   type OrderPayment,
+  type Page,
   type ProductDiscount,
   utilsCore,
   utilsDate,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext = 'functional_BO_orders_orders_viewAndEditOrder_checkInvoice';
 
@@ -177,7 +174,13 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Products\' page', async function () {
@@ -211,8 +214,8 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
 
           await boProductsPage.selectProductType(page, product.type);
 
-          const pageTitle = await addProductPage.getPageTitle(page);
-          expect(pageTitle).to.contains(addProductPage.pageTitle);
+          const pageTitle = await boProductsCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
         });
       }
 
@@ -220,56 +223,59 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
         await testContext.addContextItem(this, 'testIdentifier', `goToNewProductPage${index}`, baseContext);
 
         if (index !== 0) {
-          await addProductPage.clickOnNewProductButton(page);
+          await boProductsCreatePage.clickOnNewProductButton(page);
         } else {
           await boProductsPage.clickOnAddNewProduct(page);
         }
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       if (index !== 0) {
         it(`should choose '${product.type} product'`, async function () {
           await testContext.addContextItem(this, 'testIdentifier', `chooseTypeOfProduct2${index}`, baseContext);
 
-          await addProductPage.chooseProductType(page, product.type);
-          await addProductPage.closeSfToolBar(page);
+          await boProductsCreatePage.chooseProductType(page, product.type);
+          await boProductsCreatePage.closeSfToolBar(page);
 
-          const pageTitle = await addProductPage.getPageTitle(page);
-          expect(pageTitle).to.contains(addProductPage.pageTitle);
+          const pageTitle = await boProductsCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
         });
       }
 
       it(`should create product '${product.name}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `createProduct2${index}`, baseContext);
 
-        createProductMessage = await addProductPage.setProduct(page, product);
-        expect(createProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+        createProductMessage = await boProductsCreatePage.setProduct(page, product);
+        expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
 
         // Add specific price
         if (product === productWithSpecificPrice) {
-          await addProductPage.goToTab(page, 'pricing');
-          await pricingTab.clickOnAddSpecificPriceButton(page);
+          await boProductsCreatePage.goToTab(page, 'pricing');
+          await boProductsCreateTabPricingPage.clickOnAddSpecificPriceButton(page);
 
-          createProductMessage = await pricingTab.setSpecificPrice(page, productWithSpecificPrice.specificPrice);
-          expect(createProductMessage).to.equal(addProductPage.successfulCreationMessage);
+          createProductMessage = await boProductsCreateTabPricingPage.setSpecificPrice(
+            page,
+            productWithSpecificPrice.specificPrice,
+          );
+          expect(createProductMessage).to.equal(boProductsCreatePage.successfulCreationMessage);
         }
         // Add eco tax
         if (product === productWithEcoTax) {
-          await addProductPage.goToTab(page, 'pricing');
-          await pricingTab.addEcoTax(page, productWithEcoTax.ecoTax);
+          await boProductsCreatePage.goToTab(page, 'pricing');
+          await boProductsCreateTabPricingPage.addEcoTax(page, productWithEcoTax.ecoTax);
 
-          updateProductMessage = await addProductPage.saveProduct(page);
-          expect(updateProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+          updateProductMessage = await boProductsCreatePage.saveProduct(page);
+          expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
         }
         // Add customization
         if (product === customizedProduct) {
-          await addProductPage.goToTab(page, 'details');
-          await detailsTab.addNewCustomizations(page, product);
+          await boProductsCreatePage.goToTab(page, 'details');
+          await boProductsCreateTabDetailsPage.addNewCustomizations(page, product);
 
-          updateProductMessage = await addProductPage.saveProduct(page);
-          expect(updateProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+          updateProductMessage = await boProductsCreatePage.saveProduct(page);
+          expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
         }
       });
     });
@@ -352,8 +358,8 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
           + `${dataAddresses.address_5.address} ${dataAddresses.address_5.secondAddress} `
           + `${dataAddresses.address_5.postalCode} ${dataAddresses.address_5.city}`;
 
-        const alertMessage = await orderPageCustomerBlock.selectAnotherInvoiceAddress(page, addressToSelect);
-        expect(alertMessage).to.contains(orderPageCustomerBlock.successfulUpdateMessage);
+        const alertMessage = await boOrdersViewBlockCustomersPage.selectAnotherInvoiceAddress(page, addressToSelect);
+        expect(alertMessage).to.contains(boOrdersViewBlockCustomersPage.successfulUpdateMessage);
       });
 
       it(`should change the order status to '${dataOrderStatuses.paymentAccepted.name}'`, async function () {
@@ -916,7 +922,7 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
           + 'are correct', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'checkBasePriceSpecificPrice', baseContext);
 
-          const discountValue = await utilsCore.percentage(
+          const discountValue = utilsCore.percentage(
             productWithSpecificPrice.price,
             productWithSpecificPrice.specificPrice.discount,
           );
@@ -970,7 +976,7 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
           async function () {
             await testContext.addContextItem(this, 'testIdentifier', 'checkTotalToPay3', baseContext);
 
-            const discount = await utilsCore.percentage(
+            const discount = utilsCore.percentage(
               productWithSpecificPrice.price,
               productWithSpecificPrice.specificPrice.discount,
             );
@@ -1242,8 +1248,8 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
             + `${dataAddresses.address_5.address} ${dataAddresses.address_5.secondAddress} `
             + `${dataAddresses.address_5.postalCode} ${dataAddresses.address_5.city}`;
 
-          const alertMessage = await orderPageCustomerBlock.selectAnotherShippingAddress(page, addressToSelect);
-          expect(alertMessage).to.contains(orderPageCustomerBlock.successfulUpdateMessage);
+          const alertMessage = await boOrdersViewBlockCustomersPage.selectAnotherShippingAddress(page, addressToSelect);
+          expect(alertMessage).to.contains(boOrdersViewBlockCustomersPage.successfulUpdateMessage);
         });
 
         it('should click on \'View invoice\' button and check that the file is downloaded', async function () {
@@ -1279,8 +1285,8 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
             + `${dataAddresses.address_5.address} ${dataAddresses.address_5.secondAddress} `
             + `${dataAddresses.address_5.postalCode} ${dataAddresses.address_5.city}`;
 
-          const alertMessage = await orderPageCustomerBlock.selectAnotherInvoiceAddress(page, addressToSelect);
-          expect(alertMessage).to.contains(orderPageCustomerBlock.successfulUpdateMessage);
+          const alertMessage = await boOrdersViewBlockCustomersPage.selectAnotherInvoiceAddress(page, addressToSelect);
+          expect(alertMessage).to.contains(boOrdersViewBlockCustomersPage.successfulUpdateMessage);
         });
 
         it('should click on \'View invoice\' button and check that the file is downloaded', async function () {
@@ -1463,7 +1469,7 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
           await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountsTable', baseContext);
 
           const totalPrice = productWithEcoTax.price + customizedProduct.price;
-          const discount = await utilsCore.percentage(totalPrice, parseInt(discountData.value, 10));
+          const discount = utilsCore.percentage(totalPrice, parseInt(discountData.value, 10));
 
           const isDiscountVisible = await utilsFile.isTextInPDF(
             filePath,
@@ -1477,7 +1483,7 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
           await testContext.addContextItem(this, 'testIdentifier', 'checkTotalDiscount', baseContext);
 
           const totalPrice = productWithEcoTax.price + customizedProduct.price;
-          const discount = await utilsCore.percentage(totalPrice, parseInt(discountData.value, 10));
+          const discount = utilsCore.percentage(totalPrice, parseInt(discountData.value, 10));
 
           const isDiscountVisible = await utilsFile.isTextInPDF(
             filePath,
@@ -1512,7 +1518,7 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
           await testContext.addContextItem(this, 'testIdentifier', 'checkIsDiscountNotVisible', baseContext);
 
           const totalPrice = productWithEcoTax.price + customizedProduct.price;
-          const discount = await utilsCore.percentage(totalPrice, parseInt(discountData.value, 10));
+          const discount = utilsCore.percentage(totalPrice, parseInt(discountData.value, 10));
 
           const isDiscountVisible = await utilsFile.isTextInPDF(
             filePath,
@@ -1527,11 +1533,11 @@ describe('BO - Orders - View and edit order: Check invoice', async () => {
         it('should add payment', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'addPayment', baseContext);
 
-          const validationMessage = await orderPagePaymentBlock.addPayment(page, paymentData);
+          const validationMessage = await boOrdersViewBlockPaymentsPage.addPayment(page, paymentData);
           expect(
             validationMessage,
             'Successful message is not correct!',
-          ).to.equal(orderPagePaymentBlock.successfulUpdateMessage);
+          ).to.equal(boOrdersViewBlockPaymentsPage.successfulUpdateMessage);
         });
 
         it('should click on \'View invoice\' button and check that the file is downloaded', async function () {

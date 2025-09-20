@@ -24,7 +24,10 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 use PrestaShop\PrestaShop\Adapter\MailTemplate\MailPartialTemplateRenderer;
+use PrestaShop\PrestaShop\Adapter\Shipment\OrderShipmentCreator;
 use PrestaShop\PrestaShop\Adapter\StockManager;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagSettings;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 
 abstract class PaymentModuleCore extends Module
 {
@@ -252,7 +255,7 @@ abstract class PaymentModuleCore extends Module
 
         if (!$this->active) {
             PrestaShopLogger::addLog('PaymentModule::validateOrder - Module is not active', 3, null, 'Cart', (int) $id_cart, true);
-            die(Tools::displayError('Error processing order. Payment module is not active.'));
+            throw new PrestaShopException('Error processing order. Payment module is not active.');
         }
 
         // Make sure cart is loaded and not related to an existing order
@@ -260,12 +263,12 @@ abstract class PaymentModuleCore extends Module
         if (!$cart_is_loaded || $this->context->cart->OrderExists()) {
             $error = $this->trans('Cart cannot be loaded or an order has already been placed using this cart', [], 'Admin.Payment.Notification');
             PrestaShopLogger::addLog($error, 4, 1, 'Cart', (int) $this->context->cart->id);
-            die(Tools::displayError($error));
+            throw new PrestaShopException($error);
         }
 
         if ($secure_key !== false && $secure_key != $this->context->cart->secure_key) {
             PrestaShopLogger::addLog('PaymentModule::validateOrder - Secure key does not match', 3, null, 'Cart', (int) $id_cart, true);
-            die(Tools::displayError('Error processing order. Secure key does not match.'));
+            throw new PrestaShopException('Error processing order. Secure key does not match.');
         }
 
         // For each package, generate an order
@@ -346,33 +349,66 @@ abstract class PaymentModuleCore extends Module
             $id_order_state = Configuration::get('PS_OS_ERROR');
         }
 
-        foreach ($package_list as $id_address => $packageByAddress) {
-            foreach ($packageByAddress as $id_package => $package) {
-                $orderData = $this->createOrderFromCart(
-                    $this->context->cart,
-                    $this->context->currency,
-                    $package['product_list'],
-                    $id_address,
-                    $this->context,
-                    $reference,
-                    $secure_key,
-                    $payment_method,
-                    $this->name,
-                    $dont_touch_amount,
-                    $amount_paid,
-                    0,
-                    $cart_total_paid,
-                    self::DEBUG_MODE,
-                    $order_status,
-                    $id_order_state,
-                    isset($package['id_carrier']) ? $package['id_carrier'] : null
-                );
-                $order = $orderData['order'];
-                $order_list[] = $order;
-                $order_detail_list[] = $orderData['orderDetail'];
+        if (!$this->isFeatureFlagIsEnabledForMultiShipment()) {
+            foreach ($package_list as $id_address => $packageByAddress) {
+                foreach ($packageByAddress as $id_package => $package) {
+                    $orderData = $this->createOrderFromCart(
+                        $this->context->cart,
+                        $this->context->currency,
+                        $package['product_list'],
+                        $id_address,
+                        $this->context,
+                        $reference,
+                        $secure_key,
+                        $payment_method,
+                        $this->name,
+                        $dont_touch_amount,
+                        $amount_paid,
+                        0,
+                        $cart_total_paid,
+                        self::DEBUG_MODE,
+                        $order_status,
+                        $id_order_state,
+                        isset($package['id_carrier']) ? $package['id_carrier'] : null
+                    );
+                    $order = $orderData['order'];
+                    $order_list[] = $order;
+                    $order_detail_list[] = $orderData['orderDetail'];
+                }
             }
-        }
+        } else {
+            $productsByCarriers = [];
+            $idAddress = null;
 
+            foreach ($package_list as $id_address => $packageByAddress) {
+                $idAddress = $id_address;
+                foreach ($packageByAddress as $id_package => $package) {
+                    $productsByCarriers[$package['id_carrier']]['product_list'] = $package['product_list'];
+                }
+            }
+            $orderData = $this->createOrderFromCart(
+                $this->context->cart,
+                $this->context->currency,
+                $productsByCarriers,
+                $idAddress,
+                $this->context,
+                $reference,
+                $secure_key,
+                $payment_method,
+                $this->name,
+                $dont_touch_amount,
+                $amount_paid,
+                0,
+                $cart_total_paid,
+                self::DEBUG_MODE,
+                $order_status,
+                $id_order_state,
+                null
+            );
+            $order = $orderData['order'];
+            $order_list[] = $order;
+            $order_detail_list[] = $orderData['orderDetail'];
+        }
         // The country can only change if the address used for the calculation is the delivery address, and if multi-shipping is activated
         if (Configuration::get('PS_TAX_ADDRESS_TYPE') == 'id_address_delivery' && isset($context_country)) {
             $this->context->country = $context_country;
@@ -417,7 +453,7 @@ abstract class PaymentModuleCore extends Module
             if (!isset($order->id)) {
                 $error = $this->trans('Order creation failed', [], 'Admin.Payment.Notification');
                 PrestaShopLogger::addLog($error, 4, 2, 'Cart', (int) $order->id_cart);
-                die(Tools::displayError($error));
+                throw new PrestaShopException($error);
             }
             if (!$secure_key) {
                 $message .= '<br />' . $this->trans('Warning: the secure key is empty, check your payment account before validation', [], 'Admin.Payment.Notification');
@@ -496,6 +532,13 @@ abstract class PaymentModuleCore extends Module
                     }
                 }
 
+                Hook::exec('actionPaymentModuleProductVarTplAfter', [
+                    'product_var_tpl' => &$product_var_tpl,
+                    'product' => $product,
+                    'order' => $order,
+                    'context' => $this->context,
+                ]);
+
                 $product_var_tpl_list[] = $product_var_tpl;
                 // Check if is not a virtual product for the displaying of shipping
                 if (!$product['is_virtual']) {
@@ -572,8 +615,8 @@ abstract class PaymentModuleCore extends Module
                 'orderStatus' => $order_status,
             ]);
 
-            foreach ($this->context->cart->getProducts() as $product) {
-                if ($order_status->logable) {
+            if ($order_status->logable) {
+                foreach ($this->context->cart->getProducts() as $product) {
                     ProductSale::addProductSale((int) $product['id_product'], (int) $product['cart_quantity']);
                 }
             }
@@ -847,8 +890,6 @@ abstract class PaymentModuleCore extends Module
     /**
      * Allows specified payment modules to be used by a specific currency.
      *
-     * @since 1.4.5
-     *
      * @param int $id_currency
      * @param array $id_module_list
      *
@@ -882,7 +923,6 @@ abstract class PaymentModuleCore extends Module
      * List all installed and active payment modules.
      *
      * @see Module::getPaymentModules() if you need a list of module related to the user context
-     * @since 1.4.5
      *
      * @return array module information
      */
@@ -965,10 +1005,18 @@ abstract class PaymentModuleCore extends Module
         $debug,
         $order_status,
         $id_order_state,
-        $carrierId = null
+        $carrierId = null,
     ) {
         $order = new Order();
-        $order->product_list = $productList;
+        if (!$this->isFeatureFlagIsEnabledForMultiShipment()) {
+            $order->product_list = $productList;
+        } else {
+            foreach ($productList as $products) {
+                foreach ($products['product_list'] as $product) {
+                    $order->product_list[] = $product;
+                }
+            }
+        }
 
         $computingPrecision = Context::getContext()->getComputingPrecision();
 
@@ -1030,14 +1078,33 @@ abstract class PaymentModuleCore extends Module
         );
         $order->total_discounts = $order->total_discounts_tax_incl;
 
-        $order->total_shipping_tax_excl = Tools::ps_round(
-            (float) $cart->getPackageShippingCost($carrierId, false, null, $order->product_list),
-            $computingPrecision
-        );
         $order->total_shipping_tax_incl = Tools::ps_round(
-            (float) $cart->getPackageShippingCost($carrierId, true, null, $order->product_list),
+            (float) abs($cart->getOrderTotal(true, Cart::ONLY_SHIPPING, $order->product_list, null)),
             $computingPrecision
         );
+
+        $order->total_shipping_tax_excl = Tools::ps_round(
+            (float) abs($cart->getOrderTotal(false, Cart::ONLY_SHIPPING, $order->product_list, null)),
+            $computingPrecision
+        );
+
+        // loop for each carrier to store the shipping cost
+        if ($this->isFeatureFlagIsEnabledForMultiShipment()) {
+            foreach ($productList as $carrierId => $product) {
+                $totalShippingTaxExcl = Tools::ps_round(
+                    (float) abs($cart->getOrderTotal(false, Cart::ONLY_SHIPPING, $order->product_list, $carrierId)),
+                    $computingPrecision
+                );
+                $totalShippingTaxIncl = Tools::ps_round(
+                    (float) abs($cart->getOrderTotal(true, Cart::ONLY_SHIPPING, $order->product_list, $carrierId)),
+                    $computingPrecision
+                );
+
+                $productList[$carrierId]['total_shipping_tax_excl'] = $totalShippingTaxExcl;
+                $productList[$carrierId]['total_shipping_tax_incl'] = $totalShippingTaxIncl;
+            }
+        }
+
         $order->total_shipping = $order->total_shipping_tax_incl;
 
         if (null !== $carrier && Validate::isLoadedObject($carrier)) {
@@ -1120,6 +1187,10 @@ abstract class PaymentModuleCore extends Module
             $order_carrier->add();
         }
 
+        if ($this->isFeatureFlagIsEnabledForMultiShipment()) {
+            $this->addShipmentToOrder($order, $productList);
+        }
+
         return ['order' => $order, 'orderDetail' => $order_detail];
     }
 
@@ -1149,7 +1220,7 @@ abstract class PaymentModuleCore extends Module
             ];
 
             // If the reduction is not applicable to this order, then continue with the next one
-            if (!$values['tax_excl']) {
+            if (!$values['tax_excl'] && empty($cartRule->gift_product)) {
                 continue;
             }
 
@@ -1267,5 +1338,25 @@ abstract class PaymentModuleCore extends Module
         }
 
         return $cart_rules_list;
+    }
+
+    private function addShipmentToOrder(Order $order, array $productsByCarrier)
+    {
+        if (!$this->isFeatureFlagIsEnabledForMultiShipment()) {
+            return;
+        }
+
+        /** @var OrderShipmentCreator $orderShipmentCreator */
+        $orderShipmentCreator = $this->get('PrestaShop\PrestaShop\Adapter\Shipment\OrderShipmentCreator');
+
+        $orderShipmentCreator->addShipmentOrder($order, $productsByCarrier);
+    }
+
+    private function isFeatureFlagIsEnabledForMultiShipment()
+    {
+        /** @var FeatureFlagStateCheckerInterface $featureFlagManager */
+        $featureFlagManager = $this->get(FeatureFlagStateCheckerInterface::class);
+
+        return $featureFlagManager->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_SHIPMENT);
     }
 }

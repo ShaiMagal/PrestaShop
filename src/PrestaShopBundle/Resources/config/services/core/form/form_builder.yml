@@ -323,6 +323,14 @@ services:
       - 'PrestaShopBundle\Form\Admin\Sell\CartRule\CartRuleType'
       - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\CartRuleFormDataProvider'
 
+  prestashop.core.form.identifiable_object.builder.discount_form_builder:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
+    factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]
+    arguments:
+      - 'PrestaShopBundle\Form\Admin\Sell\Discount\DiscountType'
+      - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\DiscountFormDataProvider'
+      - '@prestashop.core.form.identifiable_object.option_provider.discount_form_options_provider'
+
   prestashop.core.form.identifiable_object.builder.title_form_builder:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
     factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]
@@ -350,3 +358,10 @@ services:
     arguments:
       - 'PrestaShopBundle\Form\Admin\Improve\Shipping\Carrier\CarrierType'
       - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\CarrierFormDataProvider'
+
+  prestashop.core.form.identifiable_object.builder.alias_search_term_form_builder:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
+    factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]
+    arguments:
+      - 'PrestaShopBundle\Form\Admin\Configure\ShopParameters\Search\SearchTermType'
+      - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\AliasFormDataProvider'

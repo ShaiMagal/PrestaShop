@@ -67,25 +67,10 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
         'down' => 1,
     ];
 
-    /** @var int */
-    private $defaultLanguageId;
-
-    /** @var string */
-    private $psCatImgDir;
-
     private const PROPERTY_TYPE_BASIC = 0;
     private const PROPERTY_TYPE_REFERENCE = 1;
     private const PROPERTY_TYPE_REFERENCE_ARRAY = 2;
     private const PROPERTY_TYPE_BOOL = 3;
-
-    /**
-     * CategoryFeatureContext constructor.
-     */
-    public function __construct()
-    {
-        $this->defaultLanguageId = (int) Configuration::get('PS_LANG_DEFAULT');
-        $this->psCatImgDir = _PS_CAT_IMG_DIR_;
-    }
 
     /**
      * @Then I should see following root categories in ":langIso" language:
@@ -180,7 +165,6 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
         $this->assertProperty($data, 'additional description', $editableCategory->getAdditionalDescription());
         $this->assertProperty($data, 'group access', $editableCategory->getGroupAssociationIds(), self::PROPERTY_TYPE_REFERENCE_ARRAY);
         $this->assertProperty($data, 'associated shops', $editableCategory->getShopAssociationIds(), self::PROPERTY_TYPE_REFERENCE_ARRAY);
-        $this->assertProperty($data, 'meta keywords', $editableCategory->getMetaKeywords());
         $this->assertProperty($data, 'redirect type', $editableCategory->getRedirectType());
 
         $expectedRedirectTarget = isset($data['redirect target']) ?
@@ -367,9 +351,6 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
         if (isset($data['associated shops'])) {
             $command->setAssociatedShopIds($this->referencesToIds($data['associated shops']));
         }
-        if (isset($data['meta keywords'])) {
-            $command->setLocalizedMetaKeywords($data['meta keywords']);
-        }
         if (isset($data['redirect type'])) {
             $target = isset($data['redirect target']) ? $this->getSharedStorage()->get($data['redirect target']) : 0;
 
@@ -434,9 +415,6 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
         }
         if (isset($data['associated shops'])) {
             $command->setAssociatedShopIds($this->referencesToIds($data['associated shops']));
-        }
-        if (isset($data['meta keywords'])) {
-            $command->setLocalizedMetaKeywords($data['meta keywords']);
         }
         if ($command instanceof EditCategoryCommand && isset($data['parent category'])) {
             $command->setParentCategoryId($this->getSharedStorage()->get($data['parent category']));
@@ -582,7 +560,7 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
      */
     public function assertCategoryExistsByName(string $categoryReference, string $categoryName)
     {
-        $foundCategory = Category::searchByName($this->defaultLanguageId, $categoryName, true);
+        $foundCategory = Category::searchByName($this->getDefaultLangId(), $categoryName, true);
 
         if (!isset($foundCategory['name']) || $foundCategory['name'] !== $categoryName) {
             throw new RuntimeException(sprintf(
@@ -771,7 +749,7 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
         return $this->uploadImage(
             $imageReference,
             $fileName,
-            $this->psCatImgDir . $categoryId . self::JPG_IMAGE_TYPE
+            _PS_CAT_IMG_DIR_ . $categoryId . self::JPG_IMAGE_TYPE
         );
     }
 
@@ -787,7 +765,7 @@ class CategoryFeatureContext extends AbstractDomainFeatureContext
         return $this->uploadImage(
             $imageReference,
             $fileName,
-            $this->psCatImgDir . $categoryId . '-small_default' . self::JPG_IMAGE_TYPE
+            _PS_CAT_IMG_DIR_ . $categoryId . '_thumb' . self::JPG_IMAGE_TYPE
         );
     }
 

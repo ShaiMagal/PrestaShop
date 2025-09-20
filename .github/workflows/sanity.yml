@@ -21,45 +21,32 @@ jobs:
     strategy:
       matrix:
         include:
-          ## 8.1
+          ## Check all PHP versions
           - php: 8.1
             browser: chromium
             db: mysql
-          - php: 8.1
+          - php: 8.2
+            browser: chromium
+            db: mysql
+          - php: 8.3
+            browser: chromium
+            db: mysql
+          - php: 8.4
+            browser: chromium
+            db: mysql
+
+          ## Check all browsers (except Chrome)
+          - php: 8.4
             browser: firefox
             db: mysql
-          - php: 8.1
-            browser: webkit
-            db: mysql
-          - php: 8.1
-            browser: chromium
-            db: mariadb
-          ## 8.2
-          - php: 8.2
-            browser: chromium
-            db: mysql
-          - php: 8.2
-            browser: firefox
-            db: mysql
-          - php: 8.2
-            browser: webkit
-            db: mysql
-          - php: 8.2
-            browser: chromium
-            db: mariadb
-          ## 8.3
-          - php: 8.3
-            browser: chromium
-            db: mysql
-          - php: 8.3
-            browser: firefox
-            db: mysql
-          - php: 8.3
-            browser: webkit
-            db: mysql
-          - php: 8.3
-            browser: chromium
-            db: mariadb
+          ## @todo : https://github.com/PrestaShop/PrestaShop/issues/37680
+          # - php: 8.4
+          #   browser: webkit
+          #   db: mysql
+
+          ## Check all DB supported
+          # MySQL is checked in sanity
+          # MariaDB is check in nightly
       fail-fast: false
 
     steps:
@@ -102,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: sanity-${{ matrix.php }}-${{ matrix.browser }}
+          name: sanity-${{ matrix.php }}-${{ matrix.browser }}-${{ matrix.db }}
           path: |
             ./tests/UI/screenshots/
             ./var/logs

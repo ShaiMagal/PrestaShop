@@ -140,9 +140,9 @@ final class Importer implements ImporterInterface
                     $runtimeConfig,
                     $dataRow
                 );
-            } catch (InvalidDataRowException $e) {
+            } catch (InvalidDataRowException) {
                 continue;
-            } catch (SkippedIterationException $e) {
+            } catch (SkippedIterationException) {
                 continue;
             } finally {
                 ++$processedRows;

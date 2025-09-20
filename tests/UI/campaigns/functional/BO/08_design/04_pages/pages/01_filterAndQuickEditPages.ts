@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import pagesPage from '@pages/BO/design/pages';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boCMSPagesPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCMSPages,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -39,7 +35,13 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Design > Pages\' page', async function () {
@@ -50,16 +52,16 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
       boDashboardPage.designParentLink,
       boDashboardPage.pagesLink,
     );
-    await pagesPage.closeSfToolBar(page);
+    await boCMSPagesPage.closeSfToolBar(page);
 
-    const pageTitle = await pagesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(pagesPage.pageTitle);
+    const pageTitle = await boCMSPagesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCMSPagesPage.pageTitle);
   });
 
   it('should reset all filters and get number of pages in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFiltersFirst', baseContext);
 
-    numberOfPages = await pagesPage.resetAndGetNumberOfLines(page, pagesTableName);
+    numberOfPages = await boCMSPagesPage.resetAndGetNumberOfLines(page, pagesTableName);
     expect(numberOfPages).to.be.above(0);
   });
 
@@ -108,7 +110,7 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
       it(`should filter by ${test.args.filterBy} '${test.args.filterValue}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        await pagesPage.filterTable(
+        await boCMSPagesPage.filterTable(
           page,
           pagesTableName,
           test.args.filterType,
@@ -116,15 +118,15 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
           test.args.filterValue,
         );
 
-        const numberOfPagesAfterFilter = await pagesPage.getNumberOfElementInGrid(page, pagesTableName);
+        const numberOfPagesAfterFilter = await boCMSPagesPage.getNumberOfElementInGrid(page, pagesTableName);
         expect(numberOfPagesAfterFilter).to.be.at.most(numberOfPages);
 
         for (let i = 1; i <= numberOfPagesAfterFilter; i++) {
           if (test.args.filterBy === 'active') {
-            const pagesStatus = await pagesPage.getStatus(page, pagesTableName, i);
+            const pagesStatus = await boCMSPagesPage.getStatus(page, pagesTableName, i);
             expect(pagesStatus).to.equal(test.args.filterValue === '1');
           } else {
-            const textColumn = await pagesPage.getTextColumnFromTableCmsPage(page, i, test.args.filterBy);
+            const textColumn = await boCMSPagesPage.getTextColumnFromTableCmsPage(page, i, test.args.filterBy);
             expect(textColumn).to.contains(test.args.filterValue);
           }
         }
@@ -133,7 +135,7 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `reset_${test.args.testIdentifier}`, baseContext);
 
-        const numberOfPagesAfterReset = await pagesPage.resetAndGetNumberOfLines(page, pagesTableName);
+        const numberOfPagesAfterReset = await boCMSPagesPage.resetAndGetNumberOfLines(page, pagesTableName);
         expect(numberOfPagesAfterReset).to.be.equal(numberOfPages);
       });
     });
@@ -144,7 +146,7 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
     it('should filter by Title \'Terms and conditions of use\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'quickEditFilter', baseContext);
 
-      await pagesPage.filterTable(
+      await boCMSPagesPage.filterTable(
         page,
         pagesTableName,
         'input',
@@ -152,7 +154,7 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
         dataCMSPages.termsAndCondition.title,
       );
 
-      const numberOfPagesAfterFilter = await pagesPage.getNumberOfElementInGrid(page, pagesTableName);
+      const numberOfPagesAfterFilter = await boCMSPagesPage.getNumberOfElementInGrid(page, pagesTableName);
 
       if (numberOfPages === 0) {
         expect(numberOfPagesAfterFilter).to.be.equal(numberOfPages + 1);
@@ -160,7 +162,7 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
         expect(numberOfPagesAfterFilter).to.be.at.most(numberOfPages);
       }
 
-      const textColumn = await pagesPage.getTextColumnFromTableCmsPage(page, 1, 'meta_title');
+      const textColumn = await boCMSPagesPage.getTextColumnFromTableCmsPage(page, 1, 'meta_title');
       expect(textColumn).to.contains(dataCMSPages.termsAndCondition.title);
     });
 
@@ -171,14 +173,14 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
       it(`should ${pageStatus.args.status} the page`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${pageStatus.args.status}Page`, baseContext);
 
-        const isActionPerformed = await pagesPage.setStatus(page, pagesTableName, 1, pageStatus.args.enable);
+        const isActionPerformed = await boCMSPagesPage.setStatus(page, pagesTableName, 1, pageStatus.args.enable);
 
         if (isActionPerformed) {
-          const resultMessage = await pagesPage.getAlertSuccessBlockParagraphContent(page);
-          expect(resultMessage).to.contains(pagesPage.successfulUpdateStatusMessage);
+          const resultMessage = await boCMSPagesPage.getAlertSuccessBlockParagraphContent(page);
+          expect(resultMessage).to.contains(boCMSPagesPage.successfulUpdateStatusMessage);
         }
 
-        const currentStatus = await pagesPage.getStatus(page, pagesTableName, 1);
+        const currentStatus = await boCMSPagesPage.getStatus(page, pagesTableName, 1);
         expect(currentStatus).to.be.equal(pageStatus.args.enable);
       });
     });
@@ -186,7 +188,7 @@ describe('BO - Design - Pages : Filter and quick edit pages table', async () => 
     it('should reset all filters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'quickEditReset', baseContext);
 
-      const numberOfPagesAfterReset = await pagesPage.resetAndGetNumberOfLines(page, pagesTableName);
+      const numberOfPagesAfterReset = await boCMSPagesPage.resetAndGetNumberOfLines(page, pagesTableName);
       expect(numberOfPagesAfterReset).to.be.equal(numberOfPages);
     });
   });

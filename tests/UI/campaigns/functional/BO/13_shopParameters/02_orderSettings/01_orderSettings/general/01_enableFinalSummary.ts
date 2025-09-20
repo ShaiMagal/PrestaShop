@@ -1,26 +1,22 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import orderSettingsPage from '@pages/BO/shopParameters/orderSettings';
-
 import {
   boDashboardPage,
+  boLoginPage,
+  boOrderSettingsPage,
+  type BrowserContext,
   dataCustomers,
   foClassicCartPage,
   foClassicCheckoutPage,
   foClassicCheckoutOrderConfirmationPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_orderSettings_orderSettings_general_enableFinalSummary';
 
@@ -43,7 +39,13 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable final summary',
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop Parameters > Order Settings\' page', async function () {
@@ -54,10 +56,10 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable final summary',
       boDashboardPage.shopParametersParentLink,
       boDashboardPage.orderSettingsLink,
     );
-    await orderSettingsPage.closeSfToolBar(page);
+    await boOrderSettingsPage.closeSfToolBar(page);
 
-    const pageTitle = await orderSettingsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(orderSettingsPage.pageTitle);
+    const pageTitle = await boOrderSettingsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boOrderSettingsPage.pageTitle);
   });
 
   const tests = [
@@ -69,15 +71,15 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable final summary',
     it(`should ${test.args.action} final summary`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}FinalSummary`, baseContext);
 
-      const result = await orderSettingsPage.setFinalSummaryStatus(page, test.args.exist);
-      expect(result).to.contains(orderSettingsPage.successfulUpdateMessage);
+      const result = await boOrderSettingsPage.setFinalSummaryStatus(page, test.args.exist);
+      expect(result).to.contains(boOrderSettingsPage.successfulUpdateMessage);
     });
 
     it('should view my shop', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}AndViewMyShop`, baseContext);
 
       // Click on view my shop
-      page = await orderSettingsPage.viewMyShop(page);
+      page = await boOrderSettingsPage.viewMyShop(page);
       // Change FO language
       await foClassicHomePage.changeLanguage(page, 'en');
 
@@ -140,8 +142,8 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable final summary',
 
       page = await foClassicCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await orderSettingsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(orderSettingsPage.pageTitle);
+      const pageTitle = await boOrderSettingsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boOrderSettingsPage.pageTitle);
     });
   });
 });

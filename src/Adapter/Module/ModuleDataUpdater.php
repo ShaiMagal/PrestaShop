@@ -51,7 +51,7 @@ class ModuleDataUpdater
             $fs->remove(_PS_MODULE_DIR_ . '/' . $name);
 
             return true;
-        } catch (IOException $e) {
+        } catch (IOException) {
             return false;
         }
     }

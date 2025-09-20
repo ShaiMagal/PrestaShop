@@ -38,10 +38,15 @@ use PrestaShop\PrestaShop\Core\Context\EmployeeContext;
 use PrestaShop\PrestaShop\Core\Context\LanguageContext;
 use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShop\PrestaShop\Core\EnvironmentInterface;
+use PrestaShop\PrestaShop\Core\Exception\MultiShopAccessDeniedException;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\GridDefinitionFactoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\GridInterface;
 use PrestaShop\PrestaShop\Core\Grid\Position\GridPositionUpdaterInterface;
 use PrestaShop\PrestaShop\Core\Grid\Position\PositionDefinition;
+use PrestaShop\PrestaShop\Core\Grid\Position\PositionDefinitionInterface;
 use PrestaShop\PrestaShop\Core\Grid\Position\PositionUpdateFactoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Presenter\GridPresenterInterface;
 use PrestaShop\PrestaShop\Core\Help\Documentation;
@@ -84,6 +89,8 @@ class PrestaShopAdminController extends AbstractController
             ResponseBuilder::class => ResponseBuilder::class,
             PositionUpdateFactoryInterface::class => PositionUpdateFactoryInterface::class,
             GridPositionUpdaterInterface::class => GridPositionUpdaterInterface::class,
+            FeatureFlagStateCheckerInterface::class => FeatureFlagStateCheckerInterface::class,
+            EnvironmentInterface::class => EnvironmentInterface::class,
         ];
     }
 
@@ -95,6 +102,11 @@ class PrestaShopAdminController extends AbstractController
     protected function getConfiguration(): ConfigurationInterface
     {
         return $this->container->get(ConfigurationInterface::class);
+    }
+
+    protected function getFeatureFlagStateChecker(): FeatureFlagStateCheckerInterface
+    {
+        return $this->container->get(FeatureFlagStateCheckerInterface::class);
     }
 
     protected function getApiClientContext(): ApiClientContext
@@ -130,6 +142,11 @@ class PrestaShopAdminController extends AbstractController
     protected function getShopContext(): ShopContext
     {
         return $this->container->get(ShopContext::class);
+    }
+
+    protected function getEnvironment(): EnvironmentInterface
+    {
+        return $this->container->get(EnvironmentInterface::class);
     }
 
     /**
@@ -186,7 +203,7 @@ class PrestaShopAdminController extends AbstractController
      *
      * @return string
      */
-    protected function getErrorMessageForException(Throwable $e, array $messages): string
+    protected function getErrorMessageForException(Throwable $e, array $messages = []): string
     {
         if ($e instanceof ModuleErrorInterface) {
             return $e->getMessage();
@@ -207,9 +224,41 @@ class PrestaShopAdminController extends AbstractController
             }
         }
 
+        if ($e instanceof MultiShopAccessDeniedException && $e->getShopConstraint()) {
+            if ($e->getShopConstraint()->forAllShops()) {
+                return $this->trans(
+                    'Authorization not allowed for all stores.',
+                    [],
+                    'Admin.Notifications.Error'
+                );
+            }
+
+            if ($e->getShopConstraint()->getShopId()) {
+                return $this->trans(
+                    'Authorization not allowed for this store.',
+                    [],
+                    'Admin.Notifications.Error'
+                );
+            }
+
+            if ($e->getShopConstraint()->getShopGroupId()) {
+                return $this->trans(
+                    'Authorization not allowed for this group of stores.',
+                    [],
+                    'Admin.Notifications.Error'
+                );
+            }
+
+            return $this->trans(
+                'Authorization not allowed for this store context.',
+                [],
+                'Admin.Notifications.Error'
+            );
+        }
+
         // Fallback error message
         $isDebug = $this->getParameter('kernel.debug');
-        if ($isDebug && !empty($message)) {
+        if ($isDebug && !empty($e->getMessage())) {
             return $this->trans(
                 'An unexpected error occurred. [%type% code %code%]: %message%',
                 [
@@ -310,7 +359,7 @@ class PrestaShopAdminController extends AbstractController
     /**
      * Updates the position of a grid based on the provided PositionDefinition and provided data.
      *
-     * @param PositionDefinition $positionDefinition
+     * @param PositionDefinitionInterface $positionDefinition
      * @param array $positionsData
      *
      * @return void
@@ -318,7 +367,7 @@ class PrestaShopAdminController extends AbstractController
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    protected function updateGridPosition(PositionDefinition $positionDefinition, array $positionsData): void
+    protected function updateGridPosition(PositionDefinitionInterface $positionDefinition, array $positionsData): void
     {
         $positionUpdateFactory = $this->container->get(PositionUpdateFactoryInterface::class);
         $positionUpdate = $positionUpdateFactory->buildPositionUpdate($positionsData, $positionDefinition);
@@ -373,6 +422,27 @@ class PrestaShopAdminController extends AbstractController
         }
 
         return 0;
+    }
+
+    protected function hasAuthorizationByShopConstraint(ShopConstraint $shopConstraint): bool
+    {
+        if (!$this->getShopContext()->isMultiShopEnabled()) {
+            return true;
+        }
+
+        if ($shopConstraint->getShopId()) {
+            return $this->getEmployeeContext()->hasAuthorizationOnShop($shopConstraint->getShopId()->getValue());
+        }
+
+        if ($shopConstraint->getShopGroupId()) {
+            return $this->getEmployeeContext()->hasAuthorizationOnShopGroup($shopConstraint->getShopGroupId()->getValue());
+        }
+
+        if ($shopConstraint->forAllShops()) {
+            return $this->getEmployeeContext()->hasAuthorizationForAllShops();
+        }
+
+        return false;
     }
 
     protected function isDemoModeEnabled(): bool

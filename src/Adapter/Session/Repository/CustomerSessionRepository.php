@@ -111,7 +111,7 @@ class CustomerSessionRepository extends AbstractObjectModelRepository
         foreach ($customerSessionIds as $customerSessionId) {
             try {
                 $this->delete($customerSessionId);
-            } catch (CannotDeleteCustomerSessionException $e) {
+            } catch (CannotDeleteCustomerSessionException) {
                 $failedIds[] = $customerSessionId->getValue();
             }
         }
@@ -145,7 +145,7 @@ class CustomerSessionRepository extends AbstractObjectModelRepository
                 ->setParameter('dateUpdated', $date->format('Y-m-d H:i:s'));
 
             $qb->executeStatement();
-        } catch (CoreException $e) {
+        } catch (CoreException) {
             throw new CannotClearCustomerSessionException();
         }
     }

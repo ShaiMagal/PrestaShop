@@ -1,21 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
-
-// Import BO pages
-import loginCommon from '@commonTests/BO/loginBO';
-import createProductPage from '@pages/BO/catalog/products/add';
-import detailsTab from '@pages/BO/catalog/products/add/detailsTab';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabDetailsPage,
+  type BrowserContext,
   FakerProduct,
   foClassicProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -58,7 +54,13 @@ describe('FO - Product page - Product page : Add a required customization', asyn
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -89,31 +91,31 @@ describe('FO - Product page - Product page : Add a required customization', asyn
       await boProductsPage.selectProductType(page, newProductData.type);
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      const createProductMessage = await createProductPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should create 2 customizations', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCustomizations', baseContext);
 
-      await detailsTab.addNewCustomizations(page, newProductData);
+      await boProductsCreateTabDetailsPage.addNewCustomizations(page, newProductData);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       await foClassicProductPage.changeLanguage(page, 'en');
 

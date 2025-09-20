@@ -79,7 +79,7 @@ class ProductPackRepository extends AbstractObjectModelRepository
      */
     public function getPackedProducts(PackId $productId, LanguageId $languageId, ShopConstraint $shopConstraint): array
     {
-        if ($shopConstraint->getShopGroupId() || $shopConstraint->forAllShops()) {
+        if (!$shopConstraint->isSingleShopContext()) {
             throw new InvalidShopConstraintException('Product Pack has no features related with shop group or all shops, use single shop constraint');
         }
 

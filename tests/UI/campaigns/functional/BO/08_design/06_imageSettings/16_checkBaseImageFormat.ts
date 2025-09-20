@@ -1,21 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import {deleteProductTest} from '@commonTests/BO/catalog/product';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-import imageSettingsPage from '@pages/BO/design/imageSettings';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
+import {deleteProductTest} from '@commonTests/BO/catalog/product';
+
 import {
   boDashboardPage,
+  boImageSettingsPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabDescriptionPage,
+  type BrowserContext,
   FakerProduct,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -76,7 +73,13 @@ describe('BO - Design - Image Settings - Check base image format', async () => {
 
   describe('Check base image format', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Design > Image Settings\' page', async function () {
@@ -87,25 +90,25 @@ describe('BO - Design - Image Settings - Check base image format', async () => {
         boDashboardPage.designParentLink,
         boDashboardPage.imageSettingsLink,
       );
-      await imageSettingsPage.closeSfToolBar(page);
+      await boImageSettingsPage.closeSfToolBar(page);
 
-      const pageTitle = await imageSettingsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(imageSettingsPage.pageTitle);
+      const pageTitle = await boImageSettingsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boImageSettingsPage.pageTitle);
     });
 
     it('should check Image Generation Options', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkImageGenerationOptions', baseContext);
 
       // Image Format : JPEG/PNG should be checked
-      const jpegChecked = await imageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
+      const jpegChecked = await boImageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
       expect(jpegChecked).to.eq(true);
 
       // Image Format : JPEG/PNG should be disabled
-      const jpegDisabled = await imageSettingsPage.isImageFormatToGenerateDisabled(page, 'jpg');
+      const jpegDisabled = await boImageSettingsPage.isImageFormatToGenerateDisabled(page, 'jpg');
       expect(jpegDisabled).to.eq(true);
 
       // Base Format : PNG should be checked
-      const pngChecked = await imageSettingsPage.isBaseFormatToGenerateChecked(page, 'png');
+      const pngChecked = await boImageSettingsPage.isBaseFormatToGenerateChecked(page, 'png');
       expect(pngChecked).to.eq(true);
     });
 
@@ -139,20 +142,20 @@ describe('BO - Design - Image Settings - Check base image format', async () => {
               boDashboardPage.designParentLink,
               boDashboardPage.imageSettingsLink,
             );
-            await imageSettingsPage.closeSfToolBar(page);
+            await boImageSettingsPage.closeSfToolBar(page);
 
-            const pageTitle = await imageSettingsPage.getPageTitle(page);
-            expect(pageTitle).to.contains(imageSettingsPage.pageTitle);
+            const pageTitle = await boImageSettingsPage.getPageTitle(page);
+            expect(pageTitle).to.contains(boImageSettingsPage.pageTitle);
           });
         }
 
         it(`should enable ${arg.baseFormat.toUpperCase()} as Base Format in Image Generation Options`, async function () {
           await testContext.addContextItem(this, 'testIdentifier', `setBaseFormatImageGenerationOptions${index}`, baseContext);
 
-          const textResult = await imageSettingsPage.setBaseFormatChecked(page, arg.baseFormat, true);
-          expect(textResult).to.be.eq(imageSettingsPage.messageSettingsUpdated);
+          const textResult = await boImageSettingsPage.setBaseFormatChecked(page, arg.baseFormat, true);
+          expect(textResult).to.be.eq(boImageSettingsPage.messageSettingsUpdated);
 
-          const baseFormatChecked = await imageSettingsPage.isBaseFormatToGenerateChecked(page, arg.baseFormat);
+          const baseFormatChecked = await boImageSettingsPage.isBaseFormatToGenerateChecked(page, arg.baseFormat);
           expect(baseFormatChecked).to.eq(true);
         });
 
@@ -194,8 +197,8 @@ describe('BO - Design - Image Settings - Check base image format', async () => {
 
           await boProductsPage.selectProductType(page, arg.product.type);
 
-          const pageTitle = await createProductsPage.getPageTitle(page);
-          expect(pageTitle).to.contains(createProductsPage.pageTitle);
+          const pageTitle = await boProductsCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
         });
 
         it('should go to new product page', async function () {
@@ -203,26 +206,26 @@ describe('BO - Design - Image Settings - Check base image format', async () => {
 
           await boProductsPage.clickOnAddNewProduct(page);
 
-          const pageTitle = await createProductsPage.getPageTitle(page);
-          expect(pageTitle).to.contains(createProductsPage.pageTitle);
+          const pageTitle = await boProductsCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
         });
 
         it('should create standard product', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `createStandardProduct${index}`, baseContext);
 
-          await createProductsPage.closeSfToolBar(page);
+          await boProductsCreatePage.closeSfToolBar(page);
 
-          const createProductMessage = await createProductsPage.setProduct(page, arg.product);
-          expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+          const createProductMessage = await boProductsCreatePage.setProduct(page, arg.product);
+          expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
         });
 
         it('should check that the save button is changed to \'Save and publish\'', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `checkSaveButton${index}`, baseContext);
 
-          const saveButtonName = await createProductsPage.getSaveButtonName(page);
+          const saveButtonName = await boProductsCreatePage.getSaveButtonName(page);
           expect(saveButtonName).to.equal('Save and publish');
 
-          idProduct = await createProductsPage.getProductID(page);
+          idProduct = await boProductsCreatePage.getProductID(page);
           idProductImage = await boProductsCreateTabDescriptionPage.getProductIDImageCover(page);
           expect(idProduct).to.be.gt(0);
         });

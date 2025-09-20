@@ -120,7 +120,7 @@ class MetaType extends AbstractType
                     ],
                     'constraints' => [
                         new Regex([
-                            'pattern' => '/^[^<>={}]*$/u',
+                            'pattern' => '/^[^<>{}]*$/u',
                             'message' => $this->trans(
                                 '%s is invalid.',
                                 [],
@@ -149,7 +149,7 @@ class MetaType extends AbstractType
                     ],
                     'constraints' => [
                         new Regex([
-                            'pattern' => '/^[^<>={}]*$/u',
+                            'pattern' => '/^[^<>{}]*$/u',
                             'message' => $this->trans(
                                 '%s is invalid.',
                                 [],
@@ -164,29 +164,6 @@ class MetaType extends AbstractType
                                 'Admin.Notifications.Error'
                             ),
                         ]),
-                    ],
-                    'required' => false,
-                ],
-            ])
-            ->add('meta_keywords', TranslatableType::class, [
-                'required' => false,
-                'options' => [
-                    'constraints' => [
-                        new Regex([
-                            'pattern' => '/^[^<>={}]*$/u',
-                            'message' => $this->trans(
-                                '%s is invalid.',
-                                [],
-                                'Admin.Notifications.Error'
-                            ),
-                        ]),
-                        new Length([
-                            'max' => self::META_DESCRIPTION_MAX_CHARS,
-                        ]),
-                    ],
-                    'attr' => [
-                        'class' => 'js-taggable-field',
-                        'placeholder' => $this->trans('Add tag', [], 'Admin.Actions'),
                     ],
                     'required' => false,
                 ],

@@ -1,4 +1,4 @@
-{#**
+{# **
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
@@ -21,7 +21,7 @@
  * @author    PrestaShop SA and Contributors <contact@prestashop.com>
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- *#}
+ * #}
 
 {% block carrier_ranges_costs_zone_row %}
 <div class="card shadow-none mb-2 js-carrier-zone-row">
@@ -43,7 +43,7 @@
 
 {% block carrier_ranges_costs_zone_ranges_collection_widget %}
   {% if prototype is defined and not prototype.rendered %}
-    {%- set attr = attr|merge({'data-prototype': form_row(prototype), 'class': ('js-carrier-range-container ' ~ form.vars.attr.class|default(''))|trim }) -%}
+    {%- set attr = attr|merge({'data-prototype': form_row(prototype), class: ('js-carrier-range-container ' ~ form.vars.attr.class|default(''))|trim}) -%}
   {% endif %}
   {%- if form is rootform -%}
     {{ form_errors(form) }}

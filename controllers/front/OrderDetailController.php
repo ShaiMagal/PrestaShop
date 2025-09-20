@@ -45,7 +45,7 @@ class OrderDetailControllerCore extends FrontController
      *
      * @see FrontController::postProcess()
      */
-    public function postProcess()
+    public function postProcess(): void
     {
         if (Tools::isSubmit('submitMessage')) {
             $idOrder = (int) Tools::getValue('id_order');
@@ -86,6 +86,7 @@ class OrderDetailControllerCore extends FrontController
 
                     $cm->id_customer_thread = $ct->id;
                     $cm->message = $msgText;
+                    $cm->id_product = $id_product;
                     $client_ip_address = Tools::getRemoteAddr();
                     $cm->ip_address = (string) ip2long($client_ip_address);
                     $cm->add();
@@ -159,7 +160,7 @@ class OrderDetailControllerCore extends FrontController
      *
      * @see FrontController::initContent()
      */
-    public function initContent()
+    public function initContent(): void
     {
         parent::initContent();
         if (Configuration::isCatalogMode()) {
@@ -222,7 +223,7 @@ class OrderDetailControllerCore extends FrontController
         $this->setTemplate('customer/order-detail');
     }
 
-    public function getBreadcrumbLinks()
+    public function getBreadcrumbLinks(): array
     {
         $breadcrumb = parent::getBreadcrumbLinks();
 

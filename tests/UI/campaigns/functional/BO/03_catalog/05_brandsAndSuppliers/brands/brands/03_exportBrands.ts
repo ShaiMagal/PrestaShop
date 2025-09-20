@@ -1,16 +1,13 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import page
-import brandsPage from '@pages/BO/catalog/brands';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  boBrandsPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -41,7 +38,13 @@ describe('BO - Catalog - Brands & Suppliers : Export brands', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Brands & Suppliers\' page', async function () {
@@ -52,23 +55,23 @@ describe('BO - Catalog - Brands & Suppliers : Export brands', async () => {
       boDashboardPage.catalogParentLink,
       boDashboardPage.brandsAndSuppliersLink,
     );
-    await brandsPage.closeSfToolBar(page);
+    await boBrandsPage.closeSfToolBar(page);
 
-    const pageTitle = await brandsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(brandsPage.pageTitle);
+    const pageTitle = await boBrandsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boBrandsPage.pageTitle);
   });
 
   it('should reset all filters and get number of brands in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilter', baseContext);
 
-    numberOfBrands = await brandsPage.resetAndGetNumberOfLines(page, tableName);
+    numberOfBrands = await boBrandsPage.resetAndGetNumberOfLines(page, tableName);
     expect(numberOfBrands).to.be.above(0);
   });
 
   it('should export brands to a csv file', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'exportBrands', baseContext);
 
-    filePath = await brandsPage.exportBrandsDataToCsv(page);
+    filePath = await boBrandsPage.exportBrandsDataToCsv(page);
 
     const doesFileExist = await utilsFile.doesFileExist(filePath, 5000);
     expect(doesFileExist, 'Export of data has failed').to.eq(true);
@@ -77,10 +80,10 @@ describe('BO - Catalog - Brands & Suppliers : Export brands', async () => {
   it('should check existence of brands data in csv file', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'checkAllBrandsInCsvFile', baseContext);
 
-    const numberOfCategories = await brandsPage.getNumberOfElementInGrid(page, tableName);
+    const numberOfCategories = await boBrandsPage.getNumberOfElementInGrid(page, tableName);
 
     for (let row = 1; row <= numberOfCategories; row++) {
-      const brandInCsvFormat = await brandsPage.getBrandInCsvFormat(page, row);
+      const brandInCsvFormat = await boBrandsPage.getBrandInCsvFormat(page, row);
 
       const textExist = await utilsFile.isTextInFile(filePath, brandInCsvFormat, true, true);
       expect(textExist, `${brandInCsvFormat} was not found in the file`).to.eq(true);

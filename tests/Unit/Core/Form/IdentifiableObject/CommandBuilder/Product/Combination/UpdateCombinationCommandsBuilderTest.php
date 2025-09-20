@@ -36,7 +36,7 @@ use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\CommandBuilder\Product\Co
 use PrestaShop\PrestaShop\Core\Util\DateTime\NullDateTime;
 use PrestaShopBundle\Form\Extension\DisablingSwitchExtension;
 
-class UpdateCombinationCommandsBuilderTest extends AbstractCombinationCommandBuilderTest
+class UpdateCombinationCommandsBuilderTest extends AbstractCombinationCommandBuilderTestCase
 {
     /**
      * @dataProvider getExpectedCommands

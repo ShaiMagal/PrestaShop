@@ -1,21 +1,20 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 // Import pages
 import {
-  boDashboardPage,
-  boLocalizationPage,
   boCurrenciesPage,
   boCurrenciesCreatePage,
+  boDashboardPage,
+  boLocalizationPage,
+  boLoginPage,
+  type BrowserContext,
   dataCurrencies,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_international_localization_currencies_updateExchangeRate';
 
@@ -37,7 +36,13 @@ describe('BO - International - Currencies : Update exchange rate', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('Create new currency', async () => {

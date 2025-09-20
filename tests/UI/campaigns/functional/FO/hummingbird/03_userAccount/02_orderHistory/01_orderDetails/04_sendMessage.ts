@@ -1,21 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
+import {faker} from '@faker-js/faker';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {resetSmtpConfigTest, setupSmtpConfigTest} from '@commonTests/BO/advancedParameters/smtp';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-// Import BO pages
-import customerServicePage from '@pages/BO/customerService/customerService';
-// Import FO pages
-import orderDetailsPage from '@pages/FO/hummingbird/myAccount/orderDetails';
-import orderHistoryPage from '@pages/FO/hummingbird/myAccount/orderHistory';
-
 import {
+  boCustomerServicePage,
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
@@ -26,16 +22,15 @@ import {
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
   foHummingbirdMyAccountPage,
+  foHummingbirdMyOrderDetailsPage,
+  foHummingbirdMyOrderHistoryPage,
   foHummingbirdProductPage,
   type MailDev,
   type MailDevEmail,
+  type Page,
   utilsMail,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import {faker} from '@faker-js/faker';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_hummingbird_userAccount_orderHistory_orderDetails_sendMessage';
 
@@ -164,7 +159,13 @@ describe('FO - Account : Send a message with an ordered product', async () => {
 
   describe('Check invoice file in BO', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to the orders page', async function () {
@@ -198,7 +199,12 @@ describe('FO - Account : Send a message with an ordered product', async () => {
     });
 
     it('disconnect from BO', async function () {
-      await loginCommon.logoutBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'logoutBO', baseContext);
+
+      await boDashboardPage.logoutBO(page);
+
+      const pageTitle = await boLoginPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLoginPage.pageTitle);
     });
   });
 
@@ -236,17 +242,17 @@ describe('FO - Account : Send a message with an ordered product', async () => {
       await foHummingbirdHomePage.goToMyAccountPage(page);
       await foHummingbirdMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foHummingbirdMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foHummingbirdMyOrderHistoryPage.pageTitle);
     });
 
     it('should go to order details and add a comment', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFoToOrderDetails', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foHummingbirdMyOrderHistoryPage.goToDetailsPage(page);
 
-      const successMessageText = await orderDetailsPage.addAMessage(page, messageOption, messageSend);
-      expect(successMessageText).to.equal(orderDetailsPage.successMessageText);
+      const successMessageText = await foHummingbirdMyOrderDetailsPage.addAMessage(page, messageOption, messageSend);
+      expect(successMessageText).to.equal(foHummingbirdMyOrderDetailsPage.successMessageText);
     });
 
     it('should check the received email', async function () {
@@ -264,7 +270,13 @@ describe('FO - Account : Send a message with an ordered product', async () => {
 
   describe('Check message in BO', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to customer service page', async function () {
@@ -276,43 +288,43 @@ describe('FO - Account : Send a message with an ordered product', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServicePage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServicePage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should check customer name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkCustomerName', baseContext);
 
-      const email = await customerServicePage.getTextColumn(page, 1, 'customer');
+      const email = await boCustomerServicePage.getTextColumn(page, 1, 'customer');
       expect(email).to.contain(`${dataCustomers.johnDoe.firstName} ${dataCustomers.johnDoe.lastName}`);
     });
 
     it('should check customer email', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkCustomerEmail', baseContext);
 
-      const email = await customerServicePage.getTextColumn(page, 1, 'a!email');
+      const email = await boCustomerServicePage.getTextColumn(page, 1, 'a!email');
       expect(email).to.contain(dataCustomers.johnDoe.email);
     });
 
     it('should check message type', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkMessageType', baseContext);
 
-      const email = await customerServicePage.getTextColumn(page, 1, 'cl!id_contact');
+      const email = await boCustomerServicePage.getTextColumn(page, 1, 'cl!id_contact');
       expect(email).to.contain('--');
     });
 
     it('should check message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkMessage', baseContext);
 
-      const email = await customerServicePage.getTextColumn(page, 1, 'message');
+      const email = await boCustomerServicePage.getTextColumn(page, 1, 'message');
       expect(email).to.contain(messageSend);
     });
 
     it('should delete the message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteMessage', baseContext);
 
-      const textResult = await customerServicePage.deleteMessage(page, 1);
-      expect(textResult).to.contains(customerServicePage.successfulDeleteMessage);
+      const textResult = await boCustomerServicePage.deleteMessage(page, 1);
+      expect(textResult).to.contains(boCustomerServicePage.successfulDeleteMessage);
     });
   });
 

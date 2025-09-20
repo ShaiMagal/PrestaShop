@@ -1,18 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import movementsPage from '@pages/BO/catalog/stocks/movements';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boStockPage,
+  boStockMovementsPage,
+  type BrowserContext,
   dataProducts,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -34,7 +30,13 @@ describe('BO - Catalog - Movements : Sort and pagination', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('PRE-TEST: Bulk edit the quantity of products in stocks table', async () => {
@@ -69,8 +71,8 @@ describe('BO - Catalog - Movements : Sort and pagination', async () => {
 
       await boStockPage.goToSubTabMovements(page);
 
-      const pageTitle = await movementsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(movementsPage.pageTitle);
+      const pageTitle = await boStockMovementsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
     });
 
     const sortTests = [
@@ -102,11 +104,11 @@ describe('BO - Catalog - Movements : Sort and pagination', async () => {
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await movementsPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const nonSortedTable = await boStockMovementsPage.getAllRowsColumnContent(page, test.args.sortBy);
 
-        await movementsPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        await boStockMovementsPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await movementsPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const sortedTable = await boStockMovementsPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         if (test.args.isNumber) {
           const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseInt(text, 10));
@@ -169,21 +171,21 @@ describe('BO - Catalog - Movements : Sort and pagination', async () => {
 
       await boStockPage.goToSubTabMovements(page);
 
-      const pageTitle = await movementsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(movementsPage.pageTitle);
+      const pageTitle = await boStockMovementsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
     });
 
     it('should go to the next page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToNextPage', baseContext);
 
-      const pageNumber = await movementsPage.paginateTo(page, 2);
+      const pageNumber = await boStockMovementsPage.paginateTo(page, 2);
       expect(pageNumber).to.eq(2);
     });
 
     it('should go back to the first page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToFirstPage', baseContext);
 
-      const pageNumber = await movementsPage.paginateTo(page, 1);
+      const pageNumber = await boStockMovementsPage.paginateTo(page, 1);
       expect(pageNumber).to.eq(1);
     });
   });

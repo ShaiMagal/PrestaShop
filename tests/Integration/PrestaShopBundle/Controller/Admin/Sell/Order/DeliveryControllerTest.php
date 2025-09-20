@@ -61,7 +61,7 @@ class DeliveryControllerTest extends WebTestCase
 
         // Enable debug mode
         $configurationMock = $this->getMockBuilder(Configuration::class)
-            ->setMethods(['get'])
+            ->onlyMethods(['get'])
             ->disableOriginalConstructor()
             ->disableAutoload()
             ->getMock();

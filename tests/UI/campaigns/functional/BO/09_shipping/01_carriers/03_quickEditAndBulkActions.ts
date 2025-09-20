@@ -1,15 +1,12 @@
-// Import utils
+import {expect} from 'chai';
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boCarriersPage,
   boCarriersCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   FakerCarrier,
@@ -17,6 +14,7 @@ import {
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -51,7 +49,6 @@ describe('BO - Shipping - Carriers : Bulk actions', async () => {
     maxWeight: 500,
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -65,7 +62,13 @@ describe('BO - Shipping - Carriers : Bulk actions', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shipping> Carriers\' page', async function () {
@@ -214,18 +217,29 @@ describe('BO - Shipping - Carriers : Bulk actions', async () => {
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierData);
     expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+  });
 
-    const numberOfCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
-    expect(numberOfCarriersAfterCreation).to.be.equal(numberOfCarriers + 1);
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriers', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterCreation).to.be.equal(numberOfCarriers + 1);
   });
 
   it('should check there are carriers (after creation)', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'checkCarriersAfterCreate', baseContext);
 
     page = await boCarriersPage.changePage(browserContext, 1);
-    await page.reload({
-      waitUntil: 'networkidle',
-    });
+    await page.reload();
 
     const carrierNames = await foClassicCheckoutPage.getAllCarriersNames(page);
     expect(carrierNames.length).to.equals(numberOfCarriers + 1);

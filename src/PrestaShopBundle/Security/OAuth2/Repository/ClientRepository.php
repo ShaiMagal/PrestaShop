@@ -91,7 +91,7 @@ class ClientRepository implements ClientRepositoryInterface
     {
         try {
             return $this->userProvider->loadUserByIdentifier($clientIdentifier);
-        } catch (UserNotFoundException $exception) {
+        } catch (UserNotFoundException) {
             return null;
         }
     }

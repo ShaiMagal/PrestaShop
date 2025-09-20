@@ -1,16 +1,13 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import importPage from '@pages/BO/advancedParameters/import';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boImportPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -33,7 +30,13 @@ describe('BO - Advanced Parameters - Import : Download sample csv files', async 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Advanced Parameters > Import\' page', async function () {
@@ -44,10 +47,10 @@ describe('BO - Advanced Parameters - Import : Download sample csv files', async 
       boDashboardPage.advancedParametersLink,
       boDashboardPage.importLink,
     );
-    await importPage.closeSfToolBar(page);
+    await boImportPage.closeSfToolBar(page);
 
-    const pageTitle = await importPage.getPageTitle(page);
-    expect(pageTitle).to.contains(importPage.pageTitle);
+    const pageTitle = await boImportPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boImportPage.pageTitle);
   });
 
   const sampleFiles = [
@@ -56,7 +59,7 @@ describe('BO - Advanced Parameters - Import : Download sample csv files', async 
         {
           type: 'categories_import',
           textToCheck: 'Category ID;Active (0/1);Name *;Parent category;Root category (0/1);Description;Meta title;'
-            + 'Meta keywords;Meta description;URL rewritten;Image URL',
+            + 'Meta description;URL rewritten;Image URL',
         },
     },
     {
@@ -102,7 +105,7 @@ describe('BO - Advanced Parameters - Import : Download sample csv files', async 
         {
           type: 'brands_import',
           textToCheck: 'ID;Active (0/1);Name *;Description;Short description;'
-            + 'Meta title;Meta keywords;Meta description;Image URL',
+            + 'Meta title;Meta description;Image URL',
         },
     },
     {
@@ -110,7 +113,7 @@ describe('BO - Advanced Parameters - Import : Download sample csv files', async 
         {
           type: 'suppliers_import',
           textToCheck: 'Supplier ID;Active (0/1);Name *;Description;Meta title;'
-            + 'Meta keywords;Meta description;Image URL',
+            + 'Meta description;Image URL',
         },
     },
     {
@@ -135,7 +138,7 @@ describe('BO - Advanced Parameters - Import : Download sample csv files', async 
       it(`should download ${sampleFile.args.type} sample file`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${sampleFile.args.type}DownloadFile`, baseContext);
 
-        filePath = await importPage.downloadSampleFile(page, sampleFile.args.type);
+        filePath = await boImportPage.downloadSampleFile(page, sampleFile.args.type);
 
         const doesFileExist = await utilsFile.doesFileExist(filePath);
         expect(doesFileExist, `${sampleFile.args.type} sample file was not downloaded`).to.eq(true);

@@ -1,31 +1,27 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import addProductPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boDashboardPage,
+  boLoginPage,
+  boProductsCreatePage,
   boStockPage,
+  type BrowserContext,
   dataCategories,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 const baseContext: string = 'functional_BO_catalog_stocks_filterStocksByCategories';
 
 /*
-Filter stocks page by categories and check products list
+ * Filter stocks page by categories and check products list
  */
 describe('BO - Catalog - Stocks : Filter stocks by categories', async () => {
   let browserContext: BrowserContext;
   let page: Page;
   let numberOfProducts: number = 0;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -36,16 +32,22 @@ describe('BO - Catalog - Stocks : Filter stocks by categories', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Stocks\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToStocksPage', baseContext);
 
-    await addProductPage.goToSubMenu(
+    await boProductsCreatePage.goToSubMenu(
       page,
-      addProductPage.catalogParentLink,
-      addProductPage.stocksLink,
+      boProductsCreatePage.catalogParentLink,
+      boProductsCreatePage.stocksLink,
     );
 
     const pageTitle = await boStockPage.getPageTitle(page);

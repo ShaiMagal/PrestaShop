@@ -123,7 +123,7 @@ class ModuleTabRegisterTest extends TestCase
         ];
 
         $this->tabRegister = $this->getMockBuilder(ModuleTabRegister::class)
-            ->setMethods(['getModuleAdminControllersFilename'])
+            ->onlyMethods(['getModuleAdminControllersFilename'])
             ->setConstructorArgs([
                 $this->createMock(TabRepository::class),
                 $this->createMock(LangRepository::class),
@@ -142,7 +142,7 @@ class ModuleTabRegisterTest extends TestCase
     protected function buildFilesystemMock(): Filesystem
     {
         $filesystemMock = $this->getMockBuilder(Filesystem::class)
-            ->setMethods(['exists'])
+            ->onlyMethods(['exists'])
             ->disableOriginalConstructor()
             ->getMock()
         ;
@@ -166,7 +166,7 @@ class ModuleTabRegisterTest extends TestCase
     protected function buildRoutingConfigLoaderMock(): Loader
     {
         $moduleRoutingLoader = $this->getMockBuilder(Loader::class)
-            ->setMethods(['import', 'load', 'supports', 'getResolver', 'setResolver'])
+            ->onlyMethods(['import', 'load', 'supports', 'getResolver', 'setResolver'])
             ->disableOriginalConstructor()
             ->getMock()
         ;

@@ -1,21 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import common tests
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataProducts,
   foHummingbirdCartPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   foHummingbirdProductPage,
   foHummingbirdSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -75,7 +72,7 @@ describe('FO - Product page - Product page : Add to cart', async () => {
 
       await foHummingbirdProductPage.addProductToTheCart(page, qtyProductPage, [], null);
 
-      const productDetails = await blockCartModal.getProductDetailsFromBlockCartModal(page);
+      const productDetails = await foHummingbirdModalBlockCartPage.getProductDetailsFromBlockCartModal(page);
       expect(productDetails.quantity).to.be.equal(qtyProductPage);
       expect(productDetails.name).to.be.equal(dataProducts.demo_12.name);
     });
@@ -83,7 +80,7 @@ describe('FO - Product page - Product page : Add to cart', async () => {
     it('should close the cart modal', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'closeCartModal', baseContext);
 
-      const isModalClosed = await blockCartModal.closeBlockCartModal(page);
+      const isModalClosed = await foHummingbirdModalBlockCartPage.closeBlockCartModal(page);
       expect(isModalClosed).to.be.equal(true);
     });
 
@@ -103,7 +100,7 @@ describe('FO - Product page - Product page : Add to cart', async () => {
       await foHummingbirdModalQuickViewPage.setQuantity(page, qtyQuickView);
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
 
-      const productDetails = await blockCartModal.getProductDetailsFromBlockCartModal(page);
+      const productDetails = await foHummingbirdModalBlockCartPage.getProductDetailsFromBlockCartModal(page);
       expect(productDetails.quantity).to.be.equal(qtyQuickView);
       expect(productDetails.name).to.be.equal(dataProducts.demo_1.name);
     });
@@ -111,7 +108,7 @@ describe('FO - Product page - Product page : Add to cart', async () => {
     it('should close the cart modal from quickview', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'closeCartModalQuickview', baseContext);
 
-      const isModalClosed = await blockCartModal.closeBlockCartModal(page);
+      const isModalClosed = await foHummingbirdModalBlockCartPage.closeBlockCartModal(page);
       expect(isModalClosed).to.be.equal(true);
     });
 
@@ -120,7 +117,7 @@ describe('FO - Product page - Product page : Add to cart', async () => {
 
       await foHummingbirdHomePage.addProductToCart(page, 1);
 
-      const productDetails = await blockCartModal.getProductDetailsFromBlockCartModal(page);
+      const productDetails = await foHummingbirdModalBlockCartPage.getProductDetailsFromBlockCartModal(page);
       expect(productDetails.quantity).to.be.equal(qtyQuickView + qtyQuickAdd);
       expect(productDetails.name).to.be.equal(dataProducts.demo_1.name);
     });
@@ -128,7 +125,7 @@ describe('FO - Product page - Product page : Add to cart', async () => {
     it('should proceed to checkout', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'proceedToCheckout', baseContext);
 
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.eq(foHummingbirdCartPage.pageTitle);

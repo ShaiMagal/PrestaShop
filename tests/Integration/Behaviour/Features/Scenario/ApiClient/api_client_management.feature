@@ -241,7 +241,7 @@ Feature: Api Client Management
       | lifetime | 0 |
     Then I should get an error that lifetime is invalid
 
-  Scenario: Check secret validity and generate ne secret
+  Scenario: Check secret validity, generate new secret and force new secret
     When I create an api client "AC-13" with generated secret "AC-13-secret" using following properties:
       | clientName  | Jojo-2         |
       | clientId    | test-id-jojo-2 |
@@ -258,3 +258,18 @@ Feature: Api Client Management
     When I generate new secret "AC-13-new-secret" for api client "AC-13"
     Then secret "AC-13-secret" is invalid for api client "AC-13"
     And secret "AC-13-new-secret" is valid for api client "AC-13"
+    When I force secret "18c7b983c2eaa22a111609ce2b1c435e" for api client "AC-13"
+    Then secret "AC-13-new-secret" is invalid for api client "AC-13"
+    And secret value "18c7b983c2eaa22a111609ce2b1c435e" is valid for api client "AC-13"
+    # Secret can be up to 72 characters
+    When I force secret "18c7b983c2eaa22a111609ce2b1c43518c7b983c2eaa22a111609ce2b1c43518c7b983c2" for api client "AC-13"
+    Then secret value "18c7b983c2eaa22a111609ce2b1c435e" is invalid for api client "AC-13"
+    And secret value "18c7b983c2eaa22a111609ce2b1c43518c7b983c2eaa22a111609ce2b1c43518c7b983c2" is valid for api client "AC-13"
+    # Secret under 32 characters is invalid
+    When I force secret "18c7b983c2eaa22a111609ce2b1c435" for api client "AC-13"
+    Then I should get an error that "secret" is invalid
+    # Secret above 72 characters is invalid
+    When I force secret "18c7b983c2eaa22a111609ce2b1c43518c7b983c2eaa22a111609ce2b1c43518c7b983c2e" for api client "AC-13"
+    Then I should get an error that "secret" is invalid
+    # The previous valid secret is still the current one
+    And secret value "18c7b983c2eaa22a111609ce2b1c43518c7b983c2eaa22a111609ce2b1c43518c7b983c2" is valid for api client "AC-13"

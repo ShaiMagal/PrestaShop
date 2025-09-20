@@ -46,10 +46,23 @@
  *                                                  // it will generate random value of 16 characters
  *                                                  // for input with id of "my-input-id"
  *
+ * Or if you use '.js-generator-btn' as default selector, you can just do:
+ * new GeneratableInput();
+ *
  * You can attach as many different buttons as you like using "attachOn()" function
  * as long as 2 required data-* attributes are present at each button.
  */
 export default class GeneratableInput {
+  /**
+   * Constructor for GeneratableInput component
+   * Attach event listeners on buttons that can generate random values, by default ".js-generator-btn".
+   *
+   * @param {String} generatorButtonsSelector
+   */
+  public constructor(generatorButtonsSelector?: string) {
+    this.attachOn(generatorButtonsSelector ?? '.js-generator-btn');
+  }
+
   /**
    * Attaches click event listeners on buttons than can generate random values
    *

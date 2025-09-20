@@ -1,18 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import addProductPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductSettingsPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -40,7 +36,13 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable default activ
 
   describe('Enable/Disable default activation status', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     const tests = [
@@ -101,14 +103,14 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable default activ
         await boProductsPage.selectProductType(page, 'standard');
         await boProductsPage.clickOnAddNewProduct(page);
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should check the new product online status', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToAddProductPage${index}`, baseContext);
 
-        const online = await addProductPage.getProductStatus(page);
+        const online = await boProductsCreatePage.getProductStatus(page);
         expect(online).to.be.equal(test.args.enable);
       });
     });

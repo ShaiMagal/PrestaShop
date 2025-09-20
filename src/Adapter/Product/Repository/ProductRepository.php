@@ -59,6 +59,7 @@ use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductType;
 use PrestaShop\PrestaShop\Core\Domain\Shop\Exception\ShopAssociationNotFound;
 use PrestaShop\PrestaShop\Core\Domain\Shop\Exception\ShopGroupAssociationNotFound;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopCollection;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopGroupId;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopId;
@@ -238,6 +239,10 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
 
         if ($shopConstraint->forAllShops()) {
             return $this->getProductByDefaultShop($productId);
+        }
+
+        if ($shopConstraint instanceof ShopCollection && $shopConstraint->hasShopIds()) {
+            return $this->getProductByShopId($productId, $shopConstraint->getShopIds()[0]);
         }
 
         return $this->getProductByShopId($productId, $shopConstraint->getShopId());
@@ -723,7 +728,7 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
 
         try {
             $accessories = Product::getAccessoriesLight($languageId->getValue(), $productIdValue);
-        } catch (PrestaShopException $e) {
+        } catch (PrestaShopException) {
             throw new CoreException(sprintf(
                 'Error occurred when fetching related products for product #%d',
                 $productIdValue
@@ -792,7 +797,7 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
             [],
             $limit);
         $qb
-            ->addSelect('p.id_product, pl.name, p.reference, i.id_image')
+            ->addSelect('p.id_product, pl.name, p.reference, i.id_image, p.product_type')
             ->addGroupBy('p.id_product')
             ->addOrderBy('pl.name', 'ASC')
             ->addOrderBy('p.id_product', 'ASC')
@@ -911,16 +916,14 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
         $dbSearchPhrase = sprintf('%%%s%%', $searchPhrase);
         $qb->setParameter('dbSearchPhrase', $dbSearchPhrase);
 
-        if (!empty($filters)) {
-            foreach ($filters as $type => $filter) {
-                switch ($type) {
-                    case 'filteredTypes':
-                        $qb->andWhere('p.product_type not in(:filter)')
-                            ->setParameter('filter', implode(', ', $filter));
-                        break;
-                    default:
-                        break;
-                }
+        foreach ($filters as $type => $filter) {
+            switch ($type) {
+                case 'filteredTypes':
+                    $qb->andWhere('p.product_type not in(:filter)')
+                        ->setParameter('filter', implode(', ', $filter));
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -977,6 +980,10 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
 
         if ($shopConstraint->forAllShops()) {
             return $this->getAssociatedShopIds($productId);
+        }
+
+        if ($shopConstraint instanceof ShopCollection && $shopConstraint->hasShopIds()) {
+            return $shopConstraint->getShopIds();
         }
 
         return [$shopConstraint->getShopId()];

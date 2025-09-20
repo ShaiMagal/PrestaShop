@@ -69,7 +69,6 @@ final class SecurityAttributeLinterCommand extends Command
         'admin_common_reset_search_by_filter_id',
         'admin_common_secured_file_image_reader',
         'admin_common_sidebar',
-        'admin_country_states',
         'admin_currencies_update_live_exchange_rates',
         'admin_emails_send_test',
         'admin_employees_change_form_language',
@@ -155,7 +154,7 @@ final class SecurityAttributeLinterCommand extends Command
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $actionToPerform = $input->getArgument('action');
 
@@ -192,7 +191,7 @@ final class SecurityAttributeLinterCommand extends Command
     {
         $listing = [];
 
-        foreach ($this->adminRouteProvider->getRoutes() as $routeName => $route) {
+        foreach ($this->adminRouteProvider->getRoutes() as $route) {
             /* @var Route $route */
             try {
                 $attributes = $this->securityAttributeLinter->getRouteSecurityAttributes($route);
@@ -205,7 +204,7 @@ final class SecurityAttributeLinterCommand extends Command
                         self::parseExpression($attribute->getAttribute()),
                     ];
                 }
-            } catch (LinterException $e) {
+            } catch (LinterException) {
                 $listing[] = [
                     $route->getDefault('_controller'),
                     implode(', ', $route->getMethods()),
@@ -236,7 +235,7 @@ final class SecurityAttributeLinterCommand extends Command
             }
             try {
                 $this->securityAttributeLinter->lint($routeName, $route);
-            } catch (LinterException $e) {
+            } catch (LinterException) {
                 $notConfiguredRoutes[] = $routeName;
             }
         }

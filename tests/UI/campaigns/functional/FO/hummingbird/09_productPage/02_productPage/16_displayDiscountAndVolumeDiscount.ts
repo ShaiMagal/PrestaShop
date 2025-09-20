@@ -1,26 +1,21 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import common tests
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import BO pages
-import loginCommon from '@commonTests/BO/loginBO';
-import createProductPage from '@pages/BO/catalog/products/add';
-import pricingTab from '@pages/BO/catalog/products/add/pricingTab';
-
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabPricingPage,
+  type BrowserContext,
   FakerProduct,
   foHummingbirdCartPage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -83,7 +78,13 @@ describe('FO - Product page - Product page : Display discount', async () => {
 
   describe('Create new product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -122,36 +123,36 @@ describe('FO - Product page - Product page : Display discount', async () => {
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create the product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createPackOfProducts', baseContext);
 
-      await createProductPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should go to pricing tab and set the retail price tax excl.', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setRetailPrice', baseContext);
 
-      await createProductPage.goToTab(page, 'pricing');
-      await pricingTab.setRetailPrice(page, false, 20);
+      await boProductsCreatePage.goToTab(page, 'pricing');
+      await boProductsCreateTabPricingPage.setRetailPrice(page, false, 20);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should create new specific price', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setSpecificPrice', baseContext);
 
-      await pricingTab.clickOnAddSpecificPriceButton(page);
+      await boProductsCreateTabPricingPage.clickOnAddSpecificPriceButton(page);
 
-      const createProductMessage = await pricingTab.setSpecificPrice(page, newProductData.specificPrice);
-      expect(createProductMessage).to.equal(createProductPage.successfulCreationMessage);
+      const createProductMessage = await boProductsCreateTabPricingPage.setSpecificPrice(page, newProductData.specificPrice);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulCreationMessage);
     });
   });
 
@@ -159,7 +160,7 @@ describe('FO - Product page - Product page : Display discount', async () => {
     it('should preview product page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct', baseContext);
 
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(newProductData.name);
@@ -224,7 +225,7 @@ describe('FO - Product page - Product page : Display discount', async () => {
 
       await foHummingbirdProductPage.clickOnAddToCartButton(page);
 
-      const result = await blockCartModal.getProductDetailsFromBlockCartModal(page);
+      const result = await foHummingbirdModalBlockCartPage.getProductDetailsFromBlockCartModal(page);
       await Promise.all([
         expect(result.price).to.equal(18),
         expect(result.quantity).to.equal(3),
@@ -236,7 +237,7 @@ describe('FO - Product page - Product page : Display discount', async () => {
     it('should remove the product from the cart', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'removeProduct', baseContext);
 
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
       await foHummingbirdCartPage.deleteProduct(page, 1);
 
       const notificationsNumber = await foHummingbirdCartPage.getCartNotificationsNumber(page);
@@ -250,17 +251,20 @@ describe('FO - Product page - Product page : Display discount', async () => {
 
       page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create a second specific price', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createSecondSpecificPrice', baseContext);
 
-      await pricingTab.clickOnAddSpecificPriceButton(page);
+      await boProductsCreateTabPricingPage.clickOnAddSpecificPriceButton(page);
 
-      const createProductMessage = await pricingTab.setSpecificPrice(page, secondSpecificPriceData.specificPrice);
-      expect(createProductMessage).to.equal(createProductPage.successfulCreationMessage);
+      const createProductMessage = await boProductsCreateTabPricingPage.setSpecificPrice(
+        page,
+        secondSpecificPriceData.specificPrice,
+      );
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulCreationMessage);
     });
 
     it('should go to the second tab', async function () {
@@ -273,7 +277,7 @@ describe('FO - Product page - Product page : Display discount', async () => {
     it('should preview product page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct2', baseContext);
 
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(newProductData.name);
@@ -326,7 +330,7 @@ describe('FO - Product page - Product page : Display discount', async () => {
 
       await foHummingbirdProductPage.clickOnAddToCartButton(page);
 
-      const result = await blockCartModal.getProductDetailsFromBlockCartModal(page);
+      const result = await foHummingbirdModalBlockCartPage.getProductDetailsFromBlockCartModal(page);
       await Promise.all([
         expect(result.price).to.equal(17),
         expect(result.quantity).to.equal(1),
@@ -338,7 +342,7 @@ describe('FO - Product page - Product page : Display discount', async () => {
     it('should remove the product from the cart', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'removeProduct2', baseContext);
 
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
       await foHummingbirdCartPage.deleteProduct(page, 1);
 
       const notificationsNumber = await foHummingbirdCartPage.getCartNotificationsNumber(page);

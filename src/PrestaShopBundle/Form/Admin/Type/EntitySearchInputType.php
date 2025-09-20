@@ -161,8 +161,10 @@ class EntitySearchInputType extends CollectionType
             }
         }
 
-        // Force the data in prototype so that placeholders are injected in the prototype template then render the view
-        $prototype->setData($options['prototype_mapping']);
+        // Force the data in prototype so that placeholders are injected in the prototype template then render the view,
+        // unless some default_empty_data has been specified on the prototype, in which case the prototype default data is
+        // preferred over the placeholder
+        $prototype->setData(($prototype->getConfig()->getOption('default_empty_data') ?? []) + $options['prototype_mapping']);
         parent::buildView($view, $form, $options);
 
         // Reformat parameter name for javascript (PHP and JS don't have same naming conventions)

@@ -84,7 +84,7 @@ class CarrierRangeRepository
 
         // Apply shipping method (weight or price) and shop constraint, then execute the query
         $this->applyRangeTypeForQuery($qb, $carrier);
-        $this->applyShopConstraint($qb, $shopConstraint);
+        $this->applyShopConstraint($qb);
 
         return $qb->executeQuery()->fetchAllAssociative();
     }
@@ -217,7 +217,7 @@ class CarrierRangeRepository
         return $queryBuilder;
     }
 
-    private function applyShopConstraint(QueryBuilder $queryBuilder, ShopConstraint $shopConstraint): QueryBuilder
+    private function applyShopConstraint(QueryBuilder $queryBuilder): QueryBuilder
     {
         // We need temporary to force where id_shop and id_shop_group are null for retro compatibility
         $queryBuilder->andWhere('cd.id_shop IS NULL AND cd.id_shop_group IS NULL');

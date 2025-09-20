@@ -13,9 +13,10 @@ $finder = PhpCsFixer\Finder::create()->in([
     __DIR__.'/app/parameters.php',
     'Unit/Resources/config/params.php',
     'Unit/Resources/config/params_modified.php',
-    'tests/Resources/modules_tests/testtrickyconflict/override/classes/Cart.php',
+    'Unit/Resources/parsed-modules/fqcn-const.php',
+    'Resources/modules_tests/testtrickyconflict/override/classes/Cart.php',
+    'Resources/modules_tests/override_for_unit_test/classes/Cart.php',
 ]);
-
 
 return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
@@ -52,6 +53,7 @@ return (new PhpCsFixer\Config())
         'single_line_throw' => false,
         'no_alias_language_construct_call' => false,
         'no_null_property_initialization' => false,
+        'nullable_type_declaration_for_default_null_value' => true,
         'global_namespace_import' => [
             'import_classes' => true,
             'import_constants' => false,

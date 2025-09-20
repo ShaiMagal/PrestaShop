@@ -46,8 +46,12 @@ const campaignsNightly: string[] = [
   'functional:FO:hummingbird:08-12',
   'functional:API',
   'functional:WS',
-  'modules',
+  'modules:01-09',
+  'modules:10-19',
+  'modules:20-29',
+  'modules:30-39',
   'regression',
+  'audit',
 ];
 
 let countTestsAll: number = 0;
@@ -57,7 +61,9 @@ function exec(command: string, output: string): void {
   console.log(`${output} > Execute the \`test:${command}\` campaign`);
   try {
     execSync(commandTest(command, output));
-  } catch (e) { /* empty */ }
+  } catch (e) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    /* empty */
+  }
 }
 
 // Init

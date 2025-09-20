@@ -1,17 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import addCartRulePage from '@pages/BO/catalog/discounts/add';
 
 import {
+  boCartRulesPage,
+  boCartRulesCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataProducts,
@@ -20,11 +18,9 @@ import {
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_catalog_discounts_cartRules_CRUDCartRule_conditions_carrierSelection';
 
@@ -57,6 +53,7 @@ describe('BO - Catalog - Cart rules : Carrier selection', async () => {
       tax: 'Tax included',
     },
   });
+  const newCartRuleDiscount: number = parseFloat(newCartRuleData.discountAmount!.value.toString());
 
   // before and after functions
   before(async function () {
@@ -70,7 +67,13 @@ describe('BO - Catalog - Cart rules : Carrier selection', async () => {
 
   describe('BO : Create new cart rule with carrier restriction', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Discounts\' page', async function () {
@@ -82,30 +85,30 @@ describe('BO - Catalog - Cart rules : Carrier selection', async () => {
         boDashboardPage.discountsLink,
       );
 
-      const pageTitle = await cartRulesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+      const pageTitle = await boCartRulesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
     });
 
     it('should go to new cart rule page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage', baseContext);
 
-      await cartRulesPage.goToAddNewCartRulesPage(page);
+      await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-      const pageTitle = await addCartRulePage.getPageTitle(page);
-      expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+      const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
     });
 
     it('should create cart rule', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCartRule', baseContext);
 
-      const validationMessage = await addCartRulePage.createEditCartRules(page, newCartRuleData);
-      expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+      const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, newCartRuleData);
+      expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
     });
 
     it('should view my shop', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'viewMyShop1', baseContext);
 
-      page = await addCartRulePage.viewMyShop(page);
+      page = await boCartRulesCreatePage.viewMyShop(page);
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
@@ -194,7 +197,7 @@ describe('BO - Catalog - Cart rules : Carrier selection', async () => {
       await foClassicCheckoutPage.addPromoCode(page, newCartRuleData.code);
 
       const totalAfterDiscount = dataProducts.demo_6.combinations[0].price
-        - newCartRuleData.discountAmount!.value + dataCarriers.myCarrier.priceTTC;
+        - newCartRuleDiscount + dataCarriers.myCarrier.priceTTC;
 
       const priceATI = await foClassicCheckoutPage.getATIPrice(page);
       expect(priceATI.toFixed(2)).to.equal(totalAfterDiscount.toFixed(2));

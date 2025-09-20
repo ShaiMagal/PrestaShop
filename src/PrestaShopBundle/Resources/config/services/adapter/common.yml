@@ -20,6 +20,10 @@ services:
       - "%mail_themes_uri%"
       - '@PrestaShop\PrestaShop\Adapter\Tools'
 
+  PrestaShop\PrestaShop\Adapter\Shipment\OrderShipmentCreator:
+    arguments:
+      - '@PrestaShopBundle\Entity\Repository\ShipmentRepository'
+
   prestashop.adapter.legacy.context:
     alias: PrestaShop\PrestaShop\Adapter\LegacyContext
 
@@ -41,3 +45,13 @@ services:
     alias: PrestaShop\PrestaShop\Adapter\ContextStateManager
 
   PrestaShop\PrestaShop\Adapter\Employee\EmployeeRepository: ~
+
+  prestashop.adapter.employee_language_updater:
+    class: PrestaShop\PrestaShop\Adapter\Employee\EmployeeLanguageUpdater
+    arguments:
+      - '@doctrine.dbal.default_connection'
+      - '%database_prefix%'
+      - '@=service("prestashop.adapter.legacy.configuration").get("PS_LANG_DEFAULT")'
+
+  PrestaShop\PrestaShop\Adapter\Bundle\AssetsInstaller:
+    class: PrestaShop\PrestaShop\Adapter\Bundle\AssetsInstaller

@@ -1,17 +1,14 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import brandsPage from '@pages/BO/catalog/brands';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  boBrandsPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataBrandAddresses,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -36,7 +33,13 @@ describe('BO - Catalog - Brands & Suppliers : Filter and quick edit Addresses ta
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   // Go to brands page
@@ -48,16 +51,16 @@ describe('BO - Catalog - Brands & Suppliers : Filter and quick edit Addresses ta
       boDashboardPage.catalogParentLink,
       boDashboardPage.brandsAndSuppliersLink,
     );
-    await brandsPage.closeSfToolBar(page);
+    await boBrandsPage.closeSfToolBar(page);
 
-    const pageTitle = await brandsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(brandsPage.pageTitle);
+    const pageTitle = await boBrandsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boBrandsPage.pageTitle);
   });
 
   it('should reset all filters and get number of addresses in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilter', baseContext);
 
-    numberOfAddresses = await brandsPage.resetAndGetNumberOfLines(page, tableName);
+    numberOfAddresses = await boBrandsPage.resetAndGetNumberOfLines(page, tableName);
     expect(numberOfAddresses).to.be.above(0);
   });
 
@@ -133,18 +136,18 @@ describe('BO - Catalog - Brands & Suppliers : Filter and quick edit Addresses ta
       it(`should filter by ${test.args.filterBy} '${test.args.filterValue}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        await brandsPage.filterAddresses(
+        await boBrandsPage.filterAddresses(
           page,
           test.args.filterType,
           test.args.filterBy,
           test.args.filterValue,
         );
 
-        const numberOfAddressesAfterFilter = await brandsPage.getNumberOfElementInGrid(page, tableName);
+        const numberOfAddressesAfterFilter = await boBrandsPage.getNumberOfElementInGrid(page, tableName);
         expect(numberOfAddressesAfterFilter).to.be.at.most(numberOfAddresses);
 
         for (let i = 1; i <= numberOfAddressesAfterFilter; i++) {
-          const textColumn = await brandsPage.getTextColumnFromTableAddresses(page, i, test.args.filterBy);
+          const textColumn = await boBrandsPage.getTextColumnFromTableAddresses(page, i, test.args.filterBy);
           expect(textColumn).to.contains(test.args.filterValue);
         }
       });
@@ -152,7 +155,7 @@ describe('BO - Catalog - Brands & Suppliers : Filter and quick edit Addresses ta
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.testIdentifier}Reset`, baseContext);
 
-        const numberOfAddressesAfterReset = await brandsPage.resetAndGetNumberOfLines(page, tableName);
+        const numberOfAddressesAfterReset = await boBrandsPage.resetAndGetNumberOfLines(page, tableName);
         expect(numberOfAddressesAfterReset).to.equal(numberOfAddresses);
       });
     });

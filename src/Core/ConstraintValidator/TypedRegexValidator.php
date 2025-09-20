@@ -49,8 +49,8 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  */
 class TypedRegexValidator extends ConstraintValidator
 {
-    public const CATALOG_CHARS = '<>;=#{}';
-    public const GENERIC_NAME_CHARS = '<>={}';
+    public const CATALOG_CHARS = '<>{}';
+    public const GENERIC_NAME_CHARS = '<>{}';
     public const MESSAGE_CHARS = '<>{}';
     public const NAME_CHARS = '0-9!<>,;?=+()@#"{}_$%:';
 
@@ -117,9 +117,9 @@ class TypedRegexValidator extends ConstraintValidator
             case TypedRegex::TYPE_NAME:
                 return '/^[^0-9!<>,;?=+()@#"°{}_$%:¤|]*$/u';
             case TypedRegex::TYPE_CATALOG_NAME:
-                return '/^[^<>;=#{}]*$/u';
+                return '/^[^<>{}]*$/u';
             case TypedRegex::TYPE_GENERIC_NAME:
-                return '/^[^<>={}]*$/u';
+                return '/^[^<>{}]*$/u';
             case TypedRegex::TYPE_CITY_NAME:
                 return '/^[^!<>;?=+@#"°{}_$%]*$/u';
             case TypedRegex::TYPE_ADDRESS:
@@ -168,6 +168,8 @@ class TypedRegexValidator extends ConstraintValidator
                 return '/^[_a-zA-Z0-9\-]+$/';
             case TypedRegex::TYPE_IMAGE_TYPE_NAME:
                 return '/^[a-zA-Z0-9_ -]+$/';
+            case TypedRegex::TYPE_DISCOUNT_CODE:
+                return '/^[a-zA-Z0-9_-]+$/';
             default:
                 $definedTypes = implode(', ', array_values((new ReflectionClass(TypedRegex::class))->getConstants()));
                 throw new InvalidArgumentException(sprintf('Type "%s" is not defined. Defined types are: %s', $type, $definedTypes));

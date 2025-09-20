@@ -1,22 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import categoriesPage from '@pages/BO/catalog/categories';
-import addCategoryPage from '@pages/BO/catalog/categories/add';
-import createProductsPage from '@pages/BO/catalog/products/add';
-import imageSettingsPage from '@pages/BO/design/imageSettings';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boCategoriesPage,
+  boCategoriesCreatePage,
   boDashboardPage,
+  boImageSettingsPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  type BrowserContext,
   FakerCategory,
   FakerProduct,
+  type Page,
   utilsCore,
   utilsFile,
   utilsPlaywright,
@@ -47,7 +43,6 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
     thumbnailImage: 'thumb.jpg',
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -81,7 +76,13 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
 
   describe('Enable WebP for image generation', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Design > Image Settings\' page', async function () {
@@ -92,42 +93,42 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
         boDashboardPage.designParentLink,
         boDashboardPage.imageSettingsLink,
       );
-      await imageSettingsPage.closeSfToolBar(page);
+      await boImageSettingsPage.closeSfToolBar(page);
 
-      const pageTitle = await imageSettingsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(imageSettingsPage.pageTitle);
+      const pageTitle = await boImageSettingsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boImageSettingsPage.pageTitle);
     });
 
     it('should enable WebP image format', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'enableWebP', baseContext);
 
-      const result = await imageSettingsPage.setImageFormatToGenerateChecked(page, 'webp', true);
-      expect(result).to.be.eq(imageSettingsPage.messageSettingsUpdated);
+      const result = await boImageSettingsPage.setImageFormatToGenerateChecked(page, 'webp', true);
+      expect(result).to.be.eq(boImageSettingsPage.messageSettingsUpdated);
     });
 
     it('should check image generation options', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkImageGenerationOptions', baseContext);
 
       // JPEG/PNG should be checked
-      const jpegChecked = await imageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
+      const jpegChecked = await boImageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
       expect(jpegChecked).to.eq(true);
 
       // JPEG/PNG should be checked
-      const jpegDisabled = await imageSettingsPage.isImageFormatToGenerateDisabled(page, 'jpg');
+      const jpegDisabled = await boImageSettingsPage.isImageFormatToGenerateDisabled(page, 'jpg');
       expect(jpegDisabled).to.eq(true);
 
       // WebP should be checked
-      const webpChecked = await imageSettingsPage.isImageFormatToGenerateChecked(page, 'webp');
+      const webpChecked = await boImageSettingsPage.isImageFormatToGenerateChecked(page, 'webp');
       expect(webpChecked).to.eq(true);
     });
 
     it('should fetch image name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'fetchImageName', baseContext);
 
-      imageTypeProducts = await imageSettingsPage.getRegenerateThumbnailsFormats(page, 'products');
+      imageTypeProducts = await boImageSettingsPage.getRegenerateThumbnailsFormats(page, 'products');
       expect(imageTypeProducts.length).to.gt(0);
 
-      imageTypeCategories = await imageSettingsPage.getRegenerateThumbnailsFormats(page, 'categories');
+      imageTypeCategories = await boImageSettingsPage.getRegenerateThumbnailsFormats(page, 'categories');
       expect(imageTypeCategories.length).to.gt(0);
     });
   });
@@ -167,8 +168,8 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
 
       await boProductsPage.selectProductType(page, productData.type);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to new product page', async function () {
@@ -176,25 +177,25 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      await createProductsPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductsPage.setProduct(page, productData);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, productData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check the product header details', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkProductHeaderDetails', baseContext);
 
-      const taxValue = await utilsCore.percentage(productData.priceTaxExcluded, productData.tax);
+      const taxValue = utilsCore.percentage(productData.priceTaxExcluded, productData.tax);
 
-      const productHeaderSummary = await createProductsPage.getProductHeaderSummary(page);
+      const productHeaderSummary = await boProductsCreatePage.getProductHeaderSummary(page);
       await Promise.all([
         expect(productHeaderSummary.priceTaxExc).to.equal(`€${(productData.priceTaxExcluded.toFixed(2))} tax excl.`),
         expect(productHeaderSummary.priceTaxIncl).to.equal(
@@ -207,10 +208,10 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
     it('should check that the save button is changed to \'Save and publish\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkSaveButton', baseContext);
 
-      const saveButtonName = await createProductsPage.getSaveButtonName(page);
+      const saveButtonName = await boProductsCreatePage.getSaveButtonName(page);
       expect(saveButtonName).to.equal('Save and publish');
 
-      idProduct = await createProductsPage.getProductID(page);
+      idProduct = await boProductsCreatePage.getProductID(page);
       expect(idProduct).to.be.gt(0);
     });
 
@@ -251,50 +252,47 @@ describe('BO - Design - Image Settings - Image Generation on creation', async ()
         boDashboardPage.catalogParentLink,
         boDashboardPage.categoriesLink,
       );
-      await categoriesPage.closeSfToolBar(page);
+      await boCategoriesPage.closeSfToolBar(page);
 
-      const pageTitle = await categoriesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(categoriesPage.pageTitle);
+      const pageTitle = await boCategoriesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCategoriesPage.pageTitle);
     });
 
     it('should go to add new category page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToNewCategoryPage', baseContext);
 
-      await categoriesPage.goToAddNewCategoryPage(page);
+      await boCategoriesPage.goToAddNewCategoryPage(page);
 
-      const pageTitle = await addCategoryPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addCategoryPage.pageTitleCreate);
+      const pageTitle = await boCategoriesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCategoriesCreatePage.pageTitleCreate);
     });
 
     it('should create category', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCategory', baseContext);
 
-      const textResult = await addCategoryPage.createEditCategory(page, categoryData);
-      expect(textResult).to.equal(categoriesPage.successfulCreationMessage);
+      const textResult = await boCategoriesCreatePage.createEditCategory(page, categoryData);
+      expect(textResult).to.equal(boCategoriesPage.successfulCreationMessage);
     });
 
     it('should filter category by Name and fetch the ID', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterCategoryByName', baseContext);
 
-      await categoriesPage.filterCategories(
+      await boCategoriesPage.filterCategories(
         page,
         'input',
         'name',
         categoryData.name,
       );
 
-      const numberOfCategoriesAfterFilter = await categoriesPage.getNumberOfElementInGrid(page);
+      const numberOfCategoriesAfterFilter = await boCategoriesPage.getNumberOfElementInGrid(page);
       expect(numberOfCategoriesAfterFilter).to.be.eq(1);
 
-      idCategory = parseInt(await categoriesPage.getTextColumnFromTableCategories(page, 1, 'id_category'), 10);
+      idCategory = parseInt(await boCategoriesPage.getTextColumnFromTableCategories(page, 1, 'id_category'), 10);
       expect(idCategory).to.be.gt(0);
     });
 
-    // @todo : https://github.com/PrestaShop/PrestaShop/issues/30520
     it('should check that images are generated', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkProductImagesFinal', baseContext);
-
-      this.skip();
 
       // Category Image
       const categoryImageExists = await utilsFile.doesFileExist(`${utilsFile.getRootPath()}/img/c/${idCategory}.jpg`);

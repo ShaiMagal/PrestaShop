@@ -715,6 +715,11 @@ $(function()
       clearTimeout(ajax_running_timeout);
     });
 
+  // Ensure the spinner is hidden if no AJAX requests are running when the page loads
+  if ($.active === 0) {
+    $('#ajax_running').hide();
+  }
+
   //Check filters value on submit filter
   $("[name='submitFilter']").on('click', function(event) {
     var list_id = $(this).data('list-id');
@@ -1089,11 +1094,16 @@ function ajaxStates(id_state_selected)
 }
 
 function dniRequired() {
+  var countryId = $('#id_country').val();
+  if (!countryId) {
+    return;
+  }
+
   $.ajax({
     url: 'index.php',
     dataType: 'json',
     cache: false,
-    data: 'token=' + address_token + '&ajax=1&dni_required=1&controller=AdminAddresses&id_country=' + $('#id_country').val(),
+    data: 'token=' + address_token + '&ajax=1&dni_required=1&controller=AdminAddresses&id_country=' + countryId,
     success: function(resp) {
       if (resp && resp.dni_required) {
         $("#dni_required").fadeIn();

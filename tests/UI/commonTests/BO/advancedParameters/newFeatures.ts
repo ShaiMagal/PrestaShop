@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import featureFlagPage from '@pages/BO/advancedParameters/featureFlag';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boFeatureFlagPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -21,7 +17,10 @@ function setFeatureFlag(featureFlag: string, expectedStatus: boolean, baseContex
   let title: string;
 
   switch (featureFlag) {
-    case featureFlagPage.featureFlagAdminAPI:
+    case boFeatureFlagPage.featureFlagAdminAPIMultistore:
+      title = 'Admin API - Multistore';
+      break;
+    case boFeatureFlagPage.featureFlagAdminAPI:
       title = 'Authorization server';
       break;
     default:
@@ -40,7 +39,13 @@ function setFeatureFlag(featureFlag: string, expectedStatus: boolean, baseContex
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > New & Experimental Features\' page', async function () {
@@ -51,17 +56,17 @@ function setFeatureFlag(featureFlag: string, expectedStatus: boolean, baseContex
         boDashboardPage.advancedParametersLink,
         boDashboardPage.featureFlagLink,
       );
-      await featureFlagPage.closeSfToolBar(page);
+      await boFeatureFlagPage.closeSfToolBar(page);
 
-      const pageTitle = await featureFlagPage.getPageTitle(page);
-      expect(pageTitle).to.contains(featureFlagPage.pageTitle);
+      const pageTitle = await boFeatureFlagPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boFeatureFlagPage.pageTitle);
     });
 
     it(`should ${expectedStatus ? 'enable' : 'disable'} "${title}"`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setFeatureFlag', baseContext);
 
-      const successMessage = await featureFlagPage.setFeatureFlag(page, featureFlag, expectedStatus);
-      expect(successMessage).to.be.contain(featureFlagPage.successfulUpdateMessage);
+      const successMessage = await boFeatureFlagPage.setFeatureFlag(page, featureFlag, expectedStatus);
+      expect(successMessage).to.be.contain(boFeatureFlagPage.successfulUpdateMessage);
     });
   });
 }

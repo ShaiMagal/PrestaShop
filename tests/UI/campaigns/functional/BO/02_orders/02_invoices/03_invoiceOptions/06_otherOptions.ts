@@ -1,29 +1,24 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import login steps
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
-
-// Import BO pages
-import invoicesPage from '@pages/BO/orders/invoices';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boInvoicesPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
   FakerOrderInvoice,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_invoices_invoiceOptions_otherOptions';
 
@@ -75,7 +70,13 @@ describe('BO - Orders - Invoices : Update \'Invoice number, Legal free text and 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('Update the Invoice number, Legal free text and Footer text', async () => {
@@ -87,19 +88,19 @@ describe('BO - Orders - Invoices : Update \'Invoice number, Legal free text and 
         boDashboardPage.ordersParentLink,
         boDashboardPage.invoicesLink,
       );
-      await invoicesPage.closeSfToolBar(page);
+      await boInvoicesPage.closeSfToolBar(page);
 
-      const pageTitle = await invoicesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(invoicesPage.pageTitle);
+      const pageTitle = await boInvoicesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boInvoicesPage.pageTitle);
     });
 
     it('should change the invoice number, the invoice legal free text and the invoice footer text', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateOptions', baseContext);
 
-      await invoicesPage.setInputOptions(page, invoiceData);
+      await boInvoicesPage.setInputOptions(page, invoiceData);
 
-      const textMessage = await invoicesPage.saveInvoiceOptions(page);
-      expect(textMessage).to.contains(invoicesPage.successfulUpdateMessage);
+      const textMessage = await boInvoicesPage.saveInvoiceOptions(page);
+      expect(textMessage).to.contains(boInvoicesPage.successfulUpdateMessage);
     });
   });
 
@@ -107,10 +108,10 @@ describe('BO - Orders - Invoices : Update \'Invoice number, Legal free text and 
     it('should go to \'Orders > Orders\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToOrdersPageUpdatedOptions', baseContext);
 
-      await invoicesPage.goToSubMenu(
+      await boInvoicesPage.goToSubMenu(
         page,
-        invoicesPage.ordersParentLink,
-        invoicesPage.ordersLink,
+        boInvoicesPage.ordersParentLink,
+        boInvoicesPage.ordersLink,
       );
 
       const pageTitle = await boOrdersPage.getPageTitle(page);
@@ -181,17 +182,17 @@ describe('BO - Orders - Invoices : Update \'Invoice number, Legal free text and 
         boOrdersViewBlockTabListPage.invoicesLink,
       );
 
-      const pageTitle = await invoicesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(invoicesPage.pageTitle);
+      const pageTitle = await boInvoicesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boInvoicesPage.pageTitle);
     });
 
     it('should change the Invoice number, legal free text and the footer text to default data', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'backToDefaultData', baseContext);
 
-      await invoicesPage.setInputOptions(page, invoiceDefaultData);
+      await boInvoicesPage.setInputOptions(page, invoiceDefaultData);
 
-      const textMessage = await invoicesPage.saveInvoiceOptions(page);
-      expect(textMessage).to.contains(invoicesPage.successfulUpdateMessage);
+      const textMessage = await boInvoicesPage.saveInvoiceOptions(page);
+      expect(textMessage).to.contains(boInvoicesPage.successfulUpdateMessage);
     });
   });
 });

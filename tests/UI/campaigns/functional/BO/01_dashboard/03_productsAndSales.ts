@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import BO pages
-import {viewOrderBasePage} from '@pages/BO/orders/view/viewOrderBasePage';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boOrdersViewBasePage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -32,7 +28,13 @@ describe('BO - Dashboard : Products and sales', async () => {
 
   describe('Check Online visitor & Active shopping carts', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     describe('Check Recent orders tab', async () => {
@@ -48,14 +50,14 @@ describe('BO - Dashboard : Products and sales', async () => {
 
         await boDashboardPage.clickOnDetailsButtonOfRecentOrdersTable(page, 1);
 
-        const pageTitle = await viewOrderBasePage.getPageTitle(page);
-        expect(pageTitle).to.contains(viewOrderBasePage.pageTitle);
+        const pageTitle = await boOrdersViewBasePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boOrdersViewBasePage.pageTitle);
       });
 
       it('should go back to dashboard page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goBackToDashboard', baseContext);
 
-        await viewOrderBasePage.goToDashboardPage(page);
+        await boOrdersViewBasePage.goToDashboardPage(page);
 
         const pageTitle = await boDashboardPage.getPageTitle(page);
         expect(pageTitle).to.eq(boDashboardPage.pageTitle);
@@ -124,7 +126,60 @@ describe('BO - Dashboard : Products and sales', async () => {
         expect(isConfigureFormVisible).to.eq(true);
       });
 
-      // @todo : https://github.com/PrestaShop/PrestaShop/issues/34326
+      it('should change value to 5 and check all tabs', async function () {
+        await testContext.addContextItem(this, 'testIdentifier', 'checkAllTabsFor5', baseContext);
+
+        await boDashboardPage.setFormProductAndSales(page, 5, 5, 5, 5);
+
+        const titleRecentOrders = await boDashboardPage.getRecentOrdersTitle(page);
+        expect(titleRecentOrders).to.equals('Last 5 orders');
+
+        await boDashboardPage.goToBestSellersTab(page);
+
+        const titleBestSellers = await boDashboardPage.getBestSellersTabTitle(page);
+        expect(titleBestSellers).to.contains('Top 5 products');
+
+        await boDashboardPage.goToMostViewedTab(page);
+
+        const titleMostViewed = await boDashboardPage.getMostViewedTabTitle(page);
+        expect(titleMostViewed).to.contains('Most Viewed');
+
+        await boDashboardPage.goToTopSearchersTab(page);
+
+        const titleTopSearchers = await boDashboardPage.getTopSearchersTabTitle(page);
+        expect(titleTopSearchers).to.contains('Top 5 most search terms');
+      });
+
+      it('should click on configure link', async function () {
+        await testContext.addContextItem(this, 'testIdentifier', 'clickOnConfigureLinkReset', baseContext);
+
+        const isConfigureFormVisible = await boDashboardPage.clickOnConfigureProductsAndSalesLink(page);
+        expect(isConfigureFormVisible).to.eq(true);
+      });
+
+      it('should change value to 10 and check all tabs', async function () {
+        await testContext.addContextItem(this, 'testIdentifier', 'checkAllTabsFor10', baseContext);
+
+        await boDashboardPage.setFormProductAndSales(page, 10, 10, 10, 10);
+
+        const titleRecentOrders = await boDashboardPage.getRecentOrdersTitle(page);
+        expect(titleRecentOrders).to.equals('Last 10 orders');
+
+        await boDashboardPage.goToBestSellersTab(page);
+
+        const titleBestSellers = await boDashboardPage.getBestSellersTabTitle(page);
+        expect(titleBestSellers).to.contains('Top 10 products');
+
+        await boDashboardPage.goToMostViewedTab(page);
+
+        const titleMostViewed = await boDashboardPage.getMostViewedTabTitle(page);
+        expect(titleMostViewed).to.contains('Most Viewed');
+
+        await boDashboardPage.goToTopSearchersTab(page);
+
+        const titleTopSearchers = await boDashboardPage.getTopSearchersTabTitle(page);
+        expect(titleTopSearchers).to.contains('Top 10 most search terms');
+      });
     });
   });
 });

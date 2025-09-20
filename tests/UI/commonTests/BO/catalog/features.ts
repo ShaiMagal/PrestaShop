@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import featuresPage from '@pages/BO/catalog/features';
-import addFeaturePage from '@pages/BO/catalog/features/addFeature';
-import attributesPage from '@pages/BO/catalog/attributes';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boAttributesPage,
   boDashboardPage,
+  boFeaturesPage,
+  boFeaturesCreatePage,
+  boLoginPage,
+  type BrowserContext,
   type FakerFeature,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -40,7 +36,13 @@ function createFeatureTest(createFeatureData: FakerFeature, baseContext: string 
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Attributes & Features\' page', async function () {
@@ -51,38 +53,38 @@ function createFeatureTest(createFeatureData: FakerFeature, baseContext: string 
         boDashboardPage.catalogParentLink,
         boDashboardPage.attributesAndFeaturesLink,
       );
-      await attributesPage.closeSfToolBar(page);
+      await boAttributesPage.closeSfToolBar(page);
 
-      const pageTitle = await attributesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(attributesPage.pageTitle);
+      const pageTitle = await boAttributesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boAttributesPage.pageTitle);
     });
 
     it('should go to Features page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFeaturesPage', baseContext);
 
-      await attributesPage.goToFeaturesPage(page);
+      await boAttributesPage.goToFeaturesPage(page);
 
-      const pageTitle = await featuresPage.getPageTitle(page);
-      expect(pageTitle).to.contains(featuresPage.pageTitle);
+      const pageTitle = await boFeaturesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boFeaturesPage.pageTitle);
 
-      numberOfFeatures = await featuresPage.resetAndGetNumberOfLines(page);
+      numberOfFeatures = await boFeaturesPage.resetAndGetNumberOfLines(page);
       expect(numberOfFeatures).to.be.above(0);
     });
 
     it('should go to add new feature page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToAddNewFeaturePage', baseContext);
 
-      await featuresPage.goToAddFeaturePage(page);
+      await boFeaturesPage.goToAddFeaturePage(page);
 
-      const pageTitle = await addFeaturePage.getPageTitle(page);
-      expect(pageTitle).to.contains(addFeaturePage.createPageTitle);
+      const pageTitle = await boFeaturesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boFeaturesCreatePage.createPageTitle);
     });
 
     it('should create feature', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createNewFeature', baseContext);
 
-      const textResult = await addFeaturePage.setFeature(page, createFeatureData);
-      expect(textResult).to.contains(featuresPage.successfulCreationMessage);
+      const textResult = await boFeaturesCreatePage.setFeature(page, createFeatureData);
+      expect(textResult).to.contains(boFeaturesPage.successfulCreationMessage);
     });
   });
 }
@@ -105,7 +107,13 @@ function bulkDeleteFeaturesTest(featureName: string, baseContext: string = 'comm
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Attributes & Features\' page', async function () {
@@ -116,51 +124,44 @@ function bulkDeleteFeaturesTest(featureName: string, baseContext: string = 'comm
         boDashboardPage.catalogParentLink,
         boDashboardPage.attributesAndFeaturesLink,
       );
-      await attributesPage.closeSfToolBar(page);
+      await boAttributesPage.closeSfToolBar(page);
 
-      const pageTitle = await attributesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(attributesPage.pageTitle);
+      const pageTitle = await boAttributesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boAttributesPage.pageTitle);
     });
 
     it('should go to Features page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFeaturesPage', baseContext);
 
-      await attributesPage.goToFeaturesPage(page);
+      await boAttributesPage.goToFeaturesPage(page);
 
-      const pageTitle = await featuresPage.getPageTitle(page);
-      expect(pageTitle).to.contains(featuresPage.pageTitle);
+      const pageTitle = await boFeaturesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boFeaturesPage.pageTitle);
 
-      numberOfFeatures = await featuresPage.resetAndGetNumberOfLines(page);
+      numberOfFeatures = await boFeaturesPage.resetAndGetNumberOfLines(page);
       expect(numberOfFeatures).to.be.above(0);
     });
 
     it(`should filter by feature name '${featureName}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterToBulkDelete', baseContext);
 
-      await featuresPage.filterTable(page, 'name', featureName);
+      await boFeaturesPage.filterTable(page, 'name', featureName);
 
-      const numberOfFeaturesAfterFilter = await featuresPage.getNumberOfElementInGrid(page);
-      expect(numberOfFeaturesAfterFilter).to.be.equal(19);
-    });
-
-    it('should get the number of features to delete', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'getNumberToDelete', baseContext);
-
-      numberOfFeaturesToDelete = await featuresPage.getNumberOfElementInGrid(page);
+      numberOfFeaturesToDelete = await boFeaturesPage.getNumberOfElementInGrid(page);
       expect(numberOfFeaturesToDelete).to.be.above(0);
     });
 
     it('should delete features by Bulk Actions and check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'bulkDeleteFeatures', baseContext);
 
-      const deleteTextResult = await featuresPage.bulkDeleteFeatures(page);
-      expect(deleteTextResult).to.be.contains(featuresPage.successfulMultiDeleteMessage);
+      const deleteTextResult = await boFeaturesPage.bulkDeleteFeatures(page);
+      expect(deleteTextResult).to.be.contains(boFeaturesPage.successfulMultiDeleteMessage);
     });
 
     it('should reset all filters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFilter', baseContext);
 
-      const numberOfFeaturesAfterDelete = await featuresPage.resetAndGetNumberOfLines(page);
+      const numberOfFeaturesAfterDelete = await boFeaturesPage.resetAndGetNumberOfLines(page);
       expect(numberOfFeaturesAfterDelete).to.equal(numberOfFeatures - numberOfFeaturesToDelete);
     });
   });

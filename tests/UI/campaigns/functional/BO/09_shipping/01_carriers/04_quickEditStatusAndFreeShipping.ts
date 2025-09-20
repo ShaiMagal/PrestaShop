@@ -1,23 +1,22 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {
   boCarriersPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   foClassicCartPage,
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shipping_carriers_quickEditStatusAndFreeShipping';
 
@@ -37,7 +36,13 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
 
   describe('Go to \'Shipping > Carriers\' page', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Shipping > Carriers\' page', async function () {
@@ -62,7 +67,7 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
       const isActionPerformed = await boCarriersPage.setStatus(page, 1, false);
 
       if (isActionPerformed) {
-        const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+        const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
         expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
       }
 
@@ -135,7 +140,7 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
       const isActionPerformed = await boCarriersPage.setStatus(page, 3, true);
 
       if (isActionPerformed) {
-        const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+        const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
         expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
       }
 
@@ -169,7 +174,7 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
       const isActionPerformed = await boCarriersPage.setFreeShippingStatus(page, 2, true);
 
       if (isActionPerformed) {
-        const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+        const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
         expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
       }
 
@@ -221,7 +226,7 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
       const isActionPerformed = await boCarriersPage.setFreeShippingStatus(page, 2, false);
 
       if (isActionPerformed) {
-        const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+        const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
         expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
       }
 
@@ -235,7 +240,7 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
       const isActionPerformed = await boCarriersPage.setStatus(page, 3, false);
 
       if (isActionPerformed) {
-        const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+        const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
         expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
       }
 
@@ -249,7 +254,7 @@ describe('BO - Shipping - Carriers : Quick edit status and free shipping', async
       const isActionPerformed = await boCarriersPage.setStatus(page, 1, true);
 
       if (isActionPerformed) {
-        const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+        const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
         expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
       }
 

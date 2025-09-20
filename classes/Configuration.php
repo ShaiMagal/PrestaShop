@@ -24,6 +24,8 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
+use PrestaShopBundle\Form\Admin\Type\FormattedTextareaType;
+
 /**
  * Class ConfigurationCore.
  */
@@ -57,7 +59,7 @@ class ConfigurationCore extends ObjectModel
             'name' => ['type' => self::TYPE_STRING, 'validate' => 'isConfigName', 'required' => true, 'size' => 254],
             'id_shop_group' => ['type' => self::TYPE_NOTHING, 'validate' => 'isUnsignedId'],
             'id_shop' => ['type' => self::TYPE_NOTHING, 'validate' => 'isUnsignedId'],
-            'value' => ['type' => self::TYPE_STRING, 'size' => 4194303],
+            'value' => ['type' => self::TYPE_STRING, 'size' => FormattedTextareaType::LIMIT_MEDIUMTEXT_UTF8_MB4],
             'date_add' => ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
             'date_upd' => ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
         ],
@@ -376,7 +378,7 @@ class ConfigurationCore extends ObjectModel
     public static function set($key, $values, $idShopGroup = null, $idShop = null)
     {
         if (!Validate::isConfigName($key)) {
-            die(Tools::displayError(Context::getContext()->getTranslator()->trans('[%s] is not a valid configuration key', [Tools::htmlentitiesUTF8($key)], 'Admin.Notifications.Error')));
+            throw new PrestaShopException(Context::getContext()->getTranslator()->trans('[%s] is not a valid configuration key', [Tools::htmlentitiesUTF8($key)], 'Admin.Notifications.Error'));
         }
 
         if ($idShop === null) {
@@ -436,8 +438,16 @@ class ConfigurationCore extends ObjectModel
      */
     public static function updateValue($key, $values, $html = false, $idShopGroup = null, $idShop = null)
     {
+        Hook::exec('actionConfigurationUpdateValueBefore', [
+            'key' => $key,
+            'values' => $values,
+            'html' => $html,
+            'idShopGroup' => $idShopGroup,
+            'idShop' => $idShop,
+        ]);
+
         if (!Validate::isConfigName($key)) {
-            die(Tools::displayError(Context::getContext()->getTranslator()->trans('[%s] is not a valid configuration key', [Tools::htmlentitiesUTF8($key)], 'Admin.Notifications.Error')));
+            throw new PrestaShopException(Context::getContext()->getTranslator()->trans('[%s] is not a valid configuration key', [Tools::htmlentitiesUTF8($key)], 'Admin.Notifications.Error'));
         }
 
         if ($idShop === null || !Shop::isFeatureActive()) {

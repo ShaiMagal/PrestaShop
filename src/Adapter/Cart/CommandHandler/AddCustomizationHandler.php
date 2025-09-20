@@ -112,7 +112,7 @@ final class AddCustomizationHandler extends AbstractCartHandler implements AddCu
                 if (false === $customizationId) {
                     throw new CustomizationException(sprintf('Failed to add customized data for customization field with id "%s"', $customizationFieldId));
                 }
-            } catch (PrestaShopException $e) {
+            } catch (PrestaShopException) {
                 throw new CustomizationException(sprintf('An error occurred while trying to add customized data for customization field with id "%s"', $customizationFieldId));
             }
         }

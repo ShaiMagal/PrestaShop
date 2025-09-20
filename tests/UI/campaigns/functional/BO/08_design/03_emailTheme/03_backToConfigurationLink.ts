@@ -1,17 +1,14 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import previewEmailThemesPage from '@pages/BO/design/emailThemes/preview';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
   boDesignEmailThemesPage,
+  boDesignEmailThemesPreviewPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -31,7 +28,13 @@ describe('BO - Design - Email Theme : Back to configuration link', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Design > Email Theme\' page', async function () {
@@ -53,14 +56,14 @@ describe('BO - Design - Email Theme : Back to configuration link', async () => {
 
     await boDesignEmailThemesPage.previewEmailTheme(page, 'classic');
 
-    const pageTitle = await previewEmailThemesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(`${previewEmailThemesPage.pageTitle} classic`);
+    const pageTitle = await boDesignEmailThemesPreviewPage.getPageTitle(page);
+    expect(pageTitle).to.contains(`${boDesignEmailThemesPreviewPage.pageTitle} classic`);
   });
 
   it('should go back to email themes page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'backToEmailThemePage', baseContext);
 
-    await previewEmailThemesPage.goBackToEmailThemesPage(page);
+    await boDesignEmailThemesPreviewPage.goBackToEmailThemesPage(page);
 
     const pageTitle = await boDesignEmailThemesPage.getPageTitle(page);
     expect(pageTitle).to.contains(boDesignEmailThemesPage.pageTitle);

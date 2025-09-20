@@ -1,18 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  type BrowserContext,
   FakerProduct,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -43,7 +39,13 @@ describe('BO - Catalog - Products : Delete product', async () => {
 
   describe('Create product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -79,8 +81,8 @@ describe('BO - Catalog - Products : Delete product', async () => {
 
       await boProductsPage.selectProductType(page, newProductData.type);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to new product page', async function () {
@@ -88,17 +90,17 @@ describe('BO - Catalog - Products : Delete product', async () => {
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      await createProductsPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductsPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -106,7 +108,7 @@ describe('BO - Catalog - Products : Delete product', async () => {
     it('should click on \'Go to catalog\' button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToCatalogPage', baseContext);
 
-      await createProductsPage.goToCatalogPage(page);
+      await boProductsCreatePage.goToCatalogPage(page);
 
       const pageTitle = await boProductsPage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductsPage.pageTitle);

@@ -1,22 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
-// Import data
 import {
   boCarriersCreatePage,
   boCarriersPage,
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabShippingPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataProducts,
@@ -28,6 +21,7 @@ import {
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -144,7 +138,13 @@ describe('BO - Shipping - Carriers : Size and weight', async () => {
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Shipping > Carriers\' page', async function () {
@@ -181,6 +181,19 @@ describe('BO - Shipping - Carriers : Size and weight', async () => {
 
       const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierData);
       expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+    });
+
+    it('should return to carriers page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriers', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.shippingLink,
+        boDashboardPage.carriersLink,
+      );
+
+      const pageTitle = await boCarriersPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCarriersPage.pageTitle);
 
       const numberCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
       expect(numberCarriersAfterCreation).to.be.equal(numberOfCarriers + 1);
@@ -345,8 +358,8 @@ describe('BO - Shipping - Carriers : Size and weight', async () => {
 
       await boProductsPage.goToProductPage(page, 1);
 
-      const pageTitle: string = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle: string = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to shipping tab and edit package dimension', async function () {
@@ -354,8 +367,8 @@ describe('BO - Shipping - Carriers : Size and weight', async () => {
 
       await boProductsCreateTabShippingPage.setPackageDimension(page, productEditData);
 
-      const message = await createProductsPage.saveProduct(page);
-      expect(message).to.eq(createProductsPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check carriers', async function () {

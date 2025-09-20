@@ -2,20 +2,18 @@
 import testContext from '@utils/testContext';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-// Import BO pages
-import languagesPage from '@pages/BO/international/languages';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLanguagesPage,
   boLocalizationPage,
+  boLoginPage,
+  type BrowserContext,
   dataLanguages,
   foHummingbirdHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -49,7 +47,13 @@ describe('FO - Header and Footer : Change language', async () => {
     // 1 - Disable language
     describe('Disable \'French\' language', async () => {
       it('should login in BO', async function () {
-        await loginCommon.loginBO(this, page);
+        await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+        await boLoginPage.goTo(page, global.BO.URL);
+        await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+        const pageTitle = await boDashboardPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boDashboardPage.pageTitle);
       });
 
       it('should go to \'International > Localization\' page', async function () {
@@ -71,14 +75,14 @@ describe('FO - Header and Footer : Change language', async () => {
 
         await boLocalizationPage.goToSubTabLanguages(page);
 
-        const pageTitle = await languagesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(languagesPage.pageTitle);
+        const pageTitle = await boLanguagesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boLanguagesPage.pageTitle);
       });
 
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst1', baseContext);
 
-        const numberOfLanguages = await languagesPage.resetAndGetNumberOfLines(page);
+        const numberOfLanguages = await boLanguagesPage.resetAndGetNumberOfLines(page);
         expect(numberOfLanguages).to.be.above(0);
       });
 
@@ -86,33 +90,33 @@ describe('FO - Header and Footer : Change language', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'filterToQuickEdit1', baseContext);
 
         // Filter table
-        await languagesPage.filterTable(page, 'input', 'iso_code', dataLanguages.french.isoCode);
+        await boLanguagesPage.filterTable(page, 'input', 'iso_code', dataLanguages.french.isoCode);
 
         // Check number od languages
-        const numberOfLanguagesAfterFilter = await languagesPage.getNumberOfElementInGrid(page);
+        const numberOfLanguagesAfterFilter = await boLanguagesPage.getNumberOfElementInGrid(page);
         expect(numberOfLanguagesAfterFilter).to.be.at.least(1);
 
-        const textColumn = await languagesPage.getTextColumnFromTable(page, 1, 'iso_code');
+        const textColumn = await boLanguagesPage.getTextColumnFromTable(page, 1, 'iso_code');
         expect(textColumn).to.contains(dataLanguages.french.isoCode);
       });
 
       it('should disable language', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'disableLanguage', baseContext);
 
-        const isActionPerformed = await languagesPage.setStatus(page, 1, false);
+        const isActionPerformed = await boLanguagesPage.setStatus(page, 1, false);
 
         if (isActionPerformed) {
-          const resultMessage = await languagesPage.getAlertSuccessBlockParagraphContent(page);
-          expect(resultMessage).to.contains(languagesPage.successfulUpdateStatusMessage);
+          const resultMessage = await boLanguagesPage.getAlertSuccessBlockParagraphContent(page);
+          expect(resultMessage).to.contains(boLanguagesPage.successfulUpdateStatusMessage);
         }
-        const languageStatus = await languagesPage.getStatus(page, 1);
+        const languageStatus = await boLanguagesPage.getStatus(page, 1);
         expect(languageStatus).to.eq(false);
       });
 
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'quickEditReset1', baseContext);
 
-        const numberOfLanguages = await languagesPage.resetAndGetNumberOfLines(page);
+        const numberOfLanguages = await boLanguagesPage.resetAndGetNumberOfLines(page);
         expect(numberOfLanguages).to.be.above(0);
       });
     });
@@ -173,41 +177,41 @@ describe('FO - Header and Footer : Change language', async () => {
 
         await boLocalizationPage.goToSubTabLanguages(page);
 
-        const pageTitle = await languagesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(languagesPage.pageTitle);
+        const pageTitle = await boLanguagesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boLanguagesPage.pageTitle);
       });
 
       it('should filter by iso_code \'fr\'', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'filterToQuickEdit2', baseContext);
 
         // Filter table
-        await languagesPage.filterTable(page, 'input', 'iso_code', dataLanguages.french.isoCode);
+        await boLanguagesPage.filterTable(page, 'input', 'iso_code', dataLanguages.french.isoCode);
 
         // Check number od languages
-        const numberOfLanguagesAfterFilter = await languagesPage.getNumberOfElementInGrid(page);
+        const numberOfLanguagesAfterFilter = await boLanguagesPage.getNumberOfElementInGrid(page);
         expect(numberOfLanguagesAfterFilter).to.be.at.least(1);
 
-        const textColumn = await languagesPage.getTextColumnFromTable(page, 1, 'iso_code');
+        const textColumn = await boLanguagesPage.getTextColumnFromTable(page, 1, 'iso_code');
         expect(textColumn).to.contains(dataLanguages.french.isoCode);
       });
 
       it('should enable language', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'enableLanguage', baseContext);
 
-        const isActionPerformed = await languagesPage.setStatus(page, 1, true);
+        const isActionPerformed = await boLanguagesPage.setStatus(page, 1, true);
 
         if (isActionPerformed) {
-          const resultMessage = await languagesPage.getAlertSuccessBlockParagraphContent(page);
-          expect(resultMessage).to.contains(languagesPage.successfulUpdateStatusMessage);
+          const resultMessage = await boLanguagesPage.getAlertSuccessBlockParagraphContent(page);
+          expect(resultMessage).to.contains(boLanguagesPage.successfulUpdateStatusMessage);
         }
-        const languageStatus = await languagesPage.getStatus(page, 1);
+        const languageStatus = await boLanguagesPage.getStatus(page, 1);
         expect(languageStatus).to.eq(true);
       });
 
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'quickEditReset2', baseContext);
 
-        const numberOfLanguages = await languagesPage.resetAndGetNumberOfLines(page);
+        const numberOfLanguages = await boLanguagesPage.resetAndGetNumberOfLines(page);
         expect(numberOfLanguages).to.be.above(0);
       });
     });

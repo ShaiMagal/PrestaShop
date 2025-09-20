@@ -1,20 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import addProductPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabDescriptionPage,
   boProductSettingsPage,
+  type BrowserContext,
   FakerProduct,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -46,7 +42,13 @@ describe('BO - Shop Parameters - Product Settings : Update max size of short des
 
   describe('Update max size of short description', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     const tests = [
@@ -98,8 +100,8 @@ describe('BO - Shop Parameters - Product Settings : Update max size of short des
         await boProductsPage.selectProductType(page, productData.type);
         await boProductsPage.clickOnAddNewProduct(page);
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       if (test.args.descriptionSize === maxSummarySizeValue) {
@@ -109,17 +111,17 @@ describe('BO - Shop Parameters - Product Settings : Update max size of short des
 
           await boProductsCreateTabDescriptionPage.setProductDescription(page, productData);
 
-          const errorMessage = await addProductPage.getErrorMessageWhenSummaryIsTooLong(page);
+          const errorMessage = await boProductsCreatePage.getErrorMessageWhenSummaryIsTooLong(page);
           expect(errorMessage).to.contains(
-            addProductPage.errorMessageWhenSummaryTooLong(maxSummarySizeValue),
+            boProductsCreatePage.errorMessageWhenSummaryTooLong(maxSummarySizeValue),
           );
         });
       } else {
         it(`should create a product with a summary less than ${test.args.descriptionSize} characters`, async function () {
           await testContext.addContextItem(this, 'testIdentifier', `testSummarySize${index}`, baseContext);
 
-          const successMessage = await addProductPage.setProduct(page, productData);
-          expect(successMessage).to.equal(addProductPage.successfulUpdateMessage);
+          const successMessage = await boProductsCreatePage.setProduct(page, productData);
+          expect(successMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
         });
       }
     });
@@ -127,7 +129,7 @@ describe('BO - Shop Parameters - Product Settings : Update max size of short des
     it('should delete product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteProduct', baseContext);
 
-      const testResult = await addProductPage.deleteProduct(page);
+      const testResult = await boProductsCreatePage.deleteProduct(page);
       expect(testResult).to.equal(boProductsPage.successfulDeleteMessage);
     });
   });

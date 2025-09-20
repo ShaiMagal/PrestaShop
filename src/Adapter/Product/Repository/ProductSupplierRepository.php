@@ -348,7 +348,7 @@ class ProductSupplierRepository extends AbstractObjectModelRepository
         foreach ($productSupplierIds as $productSupplierId) {
             try {
                 $this->delete($productSupplierId);
-            } catch (CannotDeleteProductSupplierException $e) {
+            } catch (CannotDeleteProductSupplierException) {
                 $failedIds[] = $productSupplierId->getValue();
             }
         }

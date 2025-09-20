@@ -31,18 +31,22 @@ namespace PrestaShop\PrestaShop\Core\Context;
 use Employee as LegacyEmployee;
 use PrestaShop\PrestaShop\Adapter\ContextStateManager;
 use PrestaShop\PrestaShop\Adapter\Employee\EmployeeRepository;
+use PrestaShop\PrestaShop\Adapter\Shop\Repository\ShopRepository;
 
 /**
  * @experimental Depends on ADR https://github.com/PrestaShop/ADR/pull/36
  */
 class EmployeeContextBuilder implements LegacyContextBuilderInterface
 {
+    use LegacyObjectCheckerTrait;
+
     private ?int $employeeId = null;
     private ?LegacyEmployee $legacyEmployee = null;
 
     public function __construct(
         private readonly EmployeeRepository $employeeRepository,
         private readonly ContextStateManager $contextStateManager,
+        private readonly ShopRepository $shopRepository,
     ) {
     }
 
@@ -67,15 +71,15 @@ class EmployeeContextBuilder implements LegacyContextBuilderInterface
             );
         }
 
-        return new EmployeeContext($employee);
+        return new EmployeeContext($employee, $this->shopRepository->getAllShopIds());
     }
 
     public function buildLegacyContext(): void
     {
         $legacyEmployee = $this->getLegacyEmployee();
         if (!empty($legacyEmployee)) {
-            $contextEmployee = $this->contextStateManager->getContext()->employee;
-            if (null === $contextEmployee || empty($contextEmployee->id)) {
+            // Only update the legacy context when the employee is not the expected one, if not leave the context unchanged
+            if ($this->legacyObjectNeedsUpdate($this->contextStateManager->getContext()->employee, (int) $legacyEmployee->id)) {
                 $this->contextStateManager->setEmployee($legacyEmployee);
             }
         }
@@ -90,7 +94,7 @@ class EmployeeContextBuilder implements LegacyContextBuilderInterface
 
     private function getLegacyEmployee(): ?LegacyEmployee
     {
-        if (!$this->legacyEmployee && !empty($this->employeeId)) {
+        if ($this->legacyObjectNeedsUpdate($this->legacyEmployee, $this->employeeId)) {
             $this->legacyEmployee = $this->employeeRepository->get($this->employeeId);
         }
 

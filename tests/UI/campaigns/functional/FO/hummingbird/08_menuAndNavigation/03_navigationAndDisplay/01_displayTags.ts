@@ -1,27 +1,23 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-
-// Import BO pages
-import addProductPage from '@pages/BO/catalog/products/add';
-import pricingTab from '@pages/BO/catalog/products/add/pricingTab';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabPricingPage,
   boProductsCreateTabStocksPage,
   boProductSettingsPage,
+  type BrowserContext,
   dataProducts,
   FakerProduct,
   foHummingbirdHomePage,
   foHummingbirdProductPage,
   foHummingbirdSearchResultsPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -147,7 +143,13 @@ describe('FO - Navigation and display : Display tags', async () => {
 
   describe('BO - Edit \'Number of days for which the product is considered \'New\'\'', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Shop parameters > Product Settings\' page', async function () {
@@ -240,24 +242,24 @@ describe('FO - Navigation and display : Display tags', async () => {
       await boProductsPage.selectProductType(page, newProductData.type);
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      const createProductMessage = await addProductPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should add a specific price', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addSpecificPrice', baseContext);
 
-      await pricingTab.clickOnAddSpecificPriceButton(page);
+      await boProductsCreateTabPricingPage.clickOnAddSpecificPriceButton(page);
 
-      const message = await pricingTab.setSpecificPrice(page, specificPriceData.specificPrice);
-      expect(message).to.equal(addProductPage.successfulCreationMessage);
+      const message = await boProductsCreateTabPricingPage.setSpecificPrice(page, specificPriceData.specificPrice);
+      expect(message).to.equal(boProductsCreatePage.successfulCreationMessage);
     });
   });
 
@@ -265,7 +267,7 @@ describe('FO - Navigation and display : Display tags', async () => {
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToShopFO2', baseContext);
 
-      page = await addProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(newProductData.name);
@@ -285,8 +287,8 @@ describe('FO - Navigation and display : Display tags', async () => {
 
       page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
-      const pageTitle = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -311,8 +313,8 @@ describe('FO - Navigation and display : Display tags', async () => {
 
       await boProductsPage.selectProductType(page, packOfProducts.type);
 
-      const pageTitle: string = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle: string = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to new product page', async function () {
@@ -320,15 +322,15 @@ describe('FO - Navigation and display : Display tags', async () => {
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle: string = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle: string = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it(`create product '${packOfProducts.name}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createProduct', baseContext);
 
-      const createProductMessage = await addProductPage.setProduct(page, packOfProducts);
-      expect(createProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, packOfProducts);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -336,7 +338,7 @@ describe('FO - Navigation and display : Display tags', async () => {
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToShopFO3', baseContext);
 
-      page = await addProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(packOfProducts.name);
@@ -356,8 +358,8 @@ describe('FO - Navigation and display : Display tags', async () => {
 
       page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
-      const pageTitle = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should edit the quantity', async function () {
@@ -365,8 +367,8 @@ describe('FO - Navigation and display : Display tags', async () => {
 
       await boProductsCreateTabStocksPage.setProductQuantity(page, 0);
 
-      const message = await addProductPage.saveProduct(page);
-      expect(message).to.equal(addProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -374,7 +376,7 @@ describe('FO - Navigation and display : Display tags', async () => {
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToShopFO4', baseContext);
 
-      page = await addProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(packOfProducts.name);
@@ -396,8 +398,8 @@ describe('FO - Navigation and display : Display tags', async () => {
 
       page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
-      const pageTitle = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to \'Shop parameters > Product Settings\' page', async function () {

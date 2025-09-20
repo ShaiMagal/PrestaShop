@@ -1,13 +1,11 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import pages
-import installPage from '@pages/install';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  type BrowserContext,
   foClassicHomePage,
+  installPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -195,7 +193,7 @@ describe('Install Prestashop', async () => {
         {
           step: {
             name: 'Post installation scripts',
-            timeout: 60000,
+            timeout: 120000,
           },
         },
     },

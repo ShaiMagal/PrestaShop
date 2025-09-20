@@ -1,26 +1,25 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 import {bulkDeleteProductsTest} from '@commonTests/BO/catalog/product';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {enableEcoTaxTest, disableEcoTaxTest} from '@commonTests/BO/international/ecoTax';
-import loginCommon from '@commonTests/BO/loginBO';
 import {createOrderByGuestTest} from '@commonTests/FO/classic/order';
 
-// Import BO pages
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import addCartRulePage from '@pages/BO/catalog/discounts/add';
-import combinationsTab from '@pages/BO/catalog/products/add/combinationsTab';
-import pricingTab from '@pages/BO/catalog/products/add/pricingTab';
-import addProductPage from '@pages/BO/catalog/products/add';
-
 import {
+  boCartRulesPage,
+  boCartRulesCreatePage,
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockProductsPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabCombinationsPage,
+  boProductsCreateTabPricingPage,
+  type BrowserContext,
   dataPaymentMethods,
   dataProducts,
   FakerAddress,
@@ -28,11 +27,9 @@ import {
   FakerCustomer,
   FakerOrder,
   FakerProduct,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_orders_viewAndEditOrder_productBlock';
 
@@ -222,7 +219,13 @@ describe('BO - Orders - View and edit order : Check product block in view order 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   // Pre-condition: Create 9 products, Enable ecoTax, Create cart rule
@@ -269,8 +272,8 @@ describe('BO - Orders - View and edit order : Check product block in view order 
 
             await boProductsPage.selectProductType(page, product.type);
 
-            const pageTitle = await addProductPage.getPageTitle(page);
-            expect(pageTitle).to.contains(addProductPage.pageTitle);
+            const pageTitle = await boProductsCreatePage.getPageTitle(page);
+            expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
           });
         }
 
@@ -278,47 +281,50 @@ describe('BO - Orders - View and edit order : Check product block in view order 
           await testContext.addContextItem(this, 'testIdentifier', `goToNewProductPage${index}`, baseContext);
 
           if (index !== 0) {
-            await addProductPage.clickOnNewProductButton(page);
+            await boProductsCreatePage.clickOnNewProductButton(page);
           } else {
             await boProductsPage.clickOnAddNewProduct(page);
           }
 
-          const pageTitle = await addProductPage.getPageTitle(page);
-          expect(pageTitle).to.contains(addProductPage.pageTitle);
+          const pageTitle = await boProductsCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
         });
 
         if (index !== 0) {
           it(`should choose '${product.type} product'`, async function () {
             await testContext.addContextItem(this, 'testIdentifier', `chooseProductType${index}`, baseContext);
 
-            await addProductPage.chooseProductType(page, product.type);
+            await boProductsCreatePage.chooseProductType(page, product.type);
 
-            const pageTitle = await addProductPage.getPageTitle(page);
-            expect(pageTitle).to.contains(addProductPage.pageTitle);
+            const pageTitle = await boProductsCreatePage.getPageTitle(page);
+            expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
           });
         }
 
         it(`create product '${product.name}'`, async function () {
           await testContext.addContextItem(this, 'testIdentifier', `createProduct${index}`, baseContext);
 
-          createProductMessage = await addProductPage.setProduct(page, product);
-          expect(createProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+          createProductMessage = await boProductsCreatePage.setProduct(page, product);
+          expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
 
           // Add specific price
           if (product === productWithSpecificPrice) {
-            await addProductPage.goToTab(page, 'pricing');
-            await pricingTab.clickOnAddSpecificPriceButton(page);
+            await boProductsCreatePage.goToTab(page, 'pricing');
+            await boProductsCreateTabPricingPage.clickOnAddSpecificPriceButton(page);
 
-            createProductMessage = await pricingTab.setSpecificPrice(page, productWithSpecificPrice.specificPrice);
-            expect(createProductMessage).to.equal(addProductPage.successfulCreationMessage);
+            createProductMessage = await boProductsCreateTabPricingPage.setSpecificPrice(
+              page,
+              productWithSpecificPrice.specificPrice,
+            );
+            expect(createProductMessage).to.equal(boProductsCreatePage.successfulCreationMessage);
           }
           // Add eco tax
           if (product === productWithEcoTax) {
-            await addProductPage.goToTab(page, 'pricing');
-            await pricingTab.addEcoTax(page, productWithEcoTax.ecoTax);
+            await boProductsCreatePage.goToTab(page, 'pricing');
+            await boProductsCreateTabPricingPage.addEcoTax(page, productWithEcoTax.ecoTax);
 
-            updateProductMessage = await addProductPage.saveProduct(page);
-            expect(updateProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+            updateProductMessage = await boProductsCreatePage.saveProduct(page);
+            expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
           }
         });
 
@@ -326,33 +332,33 @@ describe('BO - Orders - View and edit order : Check product block in view order 
           it('should create combinations and check generate combinations button', async function () {
             await testContext.addContextItem(this, 'testIdentifier', 'createCombinations', baseContext);
 
-            const generateCombinationsButton = await combinationsTab.setProductAttributes(
+            const generateCombinationsButton = await boProductsCreateTabCombinationsPage.setProductAttributes(
               page,
               product.attributes,
             );
-            expect(generateCombinationsButton).to.equal(combinationsTab.generateCombinationsMessage(4));
+            expect(generateCombinationsButton).to.equal(boProductsCreateTabCombinationsPage.generateCombinationsMessage(4));
           });
 
           it('should click on generate combinations button', async function () {
             await testContext.addContextItem(this, 'testIdentifier', 'generateCombinations', baseContext);
 
-            const successMessage = await combinationsTab.generateCombinations(page);
-            expect(successMessage).to.equal(combinationsTab.successfulGenerateCombinationsMessage(4));
+            const successMessage = await boProductsCreateTabCombinationsPage.generateCombinations(page);
+            expect(successMessage).to.equal(boProductsCreateTabCombinationsPage.successfulGenerateCombinationsMessage(4));
           });
 
           it('should close combinations generation modal', async function () {
             await testContext.addContextItem(this, 'testIdentifier', 'generateCombinationsModalIsClosed2', baseContext);
 
-            const isModalClosed = await combinationsTab.generateCombinationModalIsClosed(page);
+            const isModalClosed = await boProductsCreateTabCombinationsPage.generateCombinationModalIsClosed(page);
             expect(isModalClosed).to.be.eq(true);
 
-            await combinationsTab.editCombinationRowQuantity(page, 1, combinationProduct.quantity);
+            await boProductsCreateTabCombinationsPage.editCombinationRowQuantity(page, 1, combinationProduct.quantity);
 
-            const successMessage = await combinationsTab.saveCombinationsForm(page);
-            expect(successMessage).to.equal(combinationsTab.successfulUpdateMessage);
+            const successMessage = await boProductsCreateTabCombinationsPage.saveCombinationsForm(page);
+            expect(successMessage).to.equal(boProductsCreateTabCombinationsPage.successfulUpdateMessage);
 
-            updateProductMessage = await addProductPage.saveProduct(page);
-            expect(updateProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+            updateProductMessage = await boProductsCreatePage.saveProduct(page);
+            expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
           });
         }
       });
@@ -368,24 +374,24 @@ describe('BO - Orders - View and edit order : Check product block in view order 
           boDashboardPage.discountsLink,
         );
 
-        const pageTitle = await cartRulesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+        const pageTitle = await boCartRulesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
       });
 
       it('should go to new cart rule page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage', baseContext);
 
-        await cartRulesPage.goToAddNewCartRulesPage(page);
+        await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-        const pageTitle = await addCartRulePage.getPageTitle(page);
-        expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+        const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
       });
 
       it('should create new cart rule', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'createCartRule', baseContext);
 
-        const validationMessage = await addCartRulePage.createEditCartRules(page, newCartRuleData);
-        expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+        const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, newCartRuleData);
+        expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
       });
     });
   });

@@ -42,7 +42,7 @@ class ProductListingLazyArray extends ProductLazyArray
             return null;
         }
 
-        if ($this->product['customizable'] == ProductCustomizabilitySettings::REQUIRES_CUSTOMIZATION || !empty($this->product['customization_required'])) {
+        if ($this->product['customizable'] == ProductCustomizabilitySettings::REQUIRES_CUSTOMIZATION || $this->getCustomizationRequired()) {
             return null;
         }
 
@@ -58,7 +58,7 @@ class ProductListingLazyArray extends ProductLazyArray
     protected function shouldEnableAddToCartButton(array $product, ProductPresentationSettings $settings)
     {
         if (isset($product['attributes'])
-            && count($product['attributes']) > 0
+            && !empty($product['attributes'])
             && !$settings->allow_add_variant_to_cart_from_listing) {
             return false;
         }

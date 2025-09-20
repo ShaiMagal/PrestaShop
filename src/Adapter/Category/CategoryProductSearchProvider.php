@@ -132,6 +132,9 @@ class CategoryProductSearchProvider implements ProductSearchProviderInterface
                         (new SortOrder('product', 'position', 'asc'))->setLabel(
                             $this->translator->trans('Relevance', [], 'Shop.Theme.Catalog')
                         ),
+                        (new SortOrder('product', 'sales', 'desc'))->setLabel(
+                            $this->translator->trans('Best sales', [], 'Shop.Theme.Catalog')
+                        ),
                     ],
                     $this->sortOrdersCollection->getDefaults())
             );

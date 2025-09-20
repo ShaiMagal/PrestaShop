@@ -127,7 +127,7 @@ class FeatureRepository extends AbstractMultiShopObjectModelRepository
      */
     public function getFeaturesByLang(int $langId): array
     {
-        $qb = $this->getFeaturesQueryBuilder(['id_lang' => $langId])
+        $qb = $this->getFeaturesQueryBuilder()
             ->leftJoin('f', $this->dbPrefix . 'feature_lang', 'fl', 'fl.id_feature = f.id_feature AND fl.id_lang = :languageId')
             ->setParameter('languageId', $langId)
             ->select('f.*, fl.*')
@@ -183,7 +183,7 @@ class FeatureRepository extends AbstractMultiShopObjectModelRepository
      */
     public function getFeatures(?int $limit = null, ?int $offset = null, ?array $filters = []): array
     {
-        $qb = $this->getFeaturesQueryBuilder($filters)
+        $qb = $this->getFeaturesQueryBuilder()
             ->select('f.*, fl.*')
             ->setFirstResult($offset ?? 0)
             ->addOrderBy('f.position', 'ASC')
@@ -200,7 +200,7 @@ class FeatureRepository extends AbstractMultiShopObjectModelRepository
      */
     public function getFeaturesCount(?array $filters = []): int
     {
-        $qb = $this->getFeaturesQueryBuilder($filters)
+        $qb = $this->getFeaturesQueryBuilder()
             ->select('COUNT(f.id_feature_value) AS total_feature_values')
             ->addGroupBy('f.id_feature_value')
         ;
@@ -286,11 +286,9 @@ class FeatureRepository extends AbstractMultiShopObjectModelRepository
     }
 
     /**
-     * @param array|null $filters
-     *
      * @return QueryBuilder
      */
-    private function getFeaturesQueryBuilder(?array $filters): QueryBuilder
+    private function getFeaturesQueryBuilder(): QueryBuilder
     {
         // Filters not handled yet
         $qb = $this->connection->createQueryBuilder();

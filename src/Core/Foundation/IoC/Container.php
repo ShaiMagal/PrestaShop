@@ -92,7 +92,7 @@ class Container
 
         try {
             $refl = new ReflectionClass($className);
-        } catch (ReflectionException $re) {
+        } catch (ReflectionException) {
             throw new Exception(sprintf('This doesn\'t seem to be a class name: `%s`.', $className));
         }
 

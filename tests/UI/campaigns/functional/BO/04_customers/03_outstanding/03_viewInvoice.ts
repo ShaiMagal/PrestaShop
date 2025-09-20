@@ -1,28 +1,24 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {disableB2BTest, enableB2BTest} from '@commonTests/BO/shopParameters/b2b';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
 
-// Import pages
-import outstandingPage from '@pages/BO/customers/outstanding';
-
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  boOutstandingPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_customers_outstanding_viewInvoice';
 
@@ -75,7 +71,13 @@ describe('BO - Customers - Outstanding : View invoice', async () => {
   // Pre-condition: Update order status to payment accepted
   describe('PRE-TEST: Update order status to payment accepted', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Orders > Orders\' page', async function () {
@@ -125,19 +127,19 @@ describe('BO - Customers - Outstanding : View invoice', async () => {
         boDashboardPage.customersParentLink,
         boDashboardPage.outstandingLink,
       );
-      await outstandingPage.closeSfToolBar(page);
+      await boOutstandingPage.closeSfToolBar(page);
 
-      const pageTitle = await outstandingPage.getPageTitle(page);
-      expect(pageTitle).to.contains(outstandingPage.pageTitle);
+      const pageTitle = await boOutstandingPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boOutstandingPage.pageTitle);
     });
 
     it('should reset filter and get the last outstanding ID', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFilterOutstanding', baseContext);
 
-      await outstandingPage.resetFilter(page);
+      await boOutstandingPage.resetFilter(page);
 
       const outstandingId = parseInt(
-        await outstandingPage.getTextColumn(page, 'id_invoice', 1),
+        await boOutstandingPage.getTextColumn(page, 'id_invoice', 1),
         10,
       );
       expect(outstandingId).to.be.at.least(1);
@@ -146,7 +148,7 @@ describe('BO - Customers - Outstanding : View invoice', async () => {
     it('should view the Invoice and check the order reference', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'viewInvoice', baseContext);
 
-      filePath = await outstandingPage.viewInvoice(page, 'invoice', 1);
+      filePath = await boOutstandingPage.viewInvoice(page, 'invoice', 1);
 
       const doesFileExist = await utilsFile.doesFileExist(filePath, 5000);
       expect(doesFileExist, 'The file is not existing!').to.eq(true);

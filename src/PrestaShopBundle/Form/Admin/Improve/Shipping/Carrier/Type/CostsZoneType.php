@@ -64,6 +64,7 @@ class CostsZoneType extends TranslatorAwareType
                 'label' => false,
                 'required' => false,
                 'allow_add' => true,
+                'allow_delete' => true,
                 'block_prefix' => 'carrier_ranges_costs_zone_ranges_collection',
             ])
         ;

@@ -13,9 +13,15 @@ services:
     class: 'PrestaShop\PrestaShop\Core\Configuration\PhpExtensionChecker'
     public: true
 
+  PrestaShop\PrestaShop\Core\Configuration\PhpExtensionCheckerInterface: '@prestashop.core.configuration.php_extension_checker'
+
   prestashop.core.configuration.upload_size_configuration:
     class: 'PrestaShop\PrestaShop\Core\Configuration\UploadSizeConfiguration'
     arguments:
       - '@prestashop.core.configuration.ini_configuration'
 
   PrestaShop\PrestaShop\Core\ConfigurationInterface: '@PrestaShop\PrestaShop\Adapter\Configuration'
+
+  PrestaShop\PrestaShop\Core\Configuration\UploadSizeConfigurationInterface:
+    alias: 'prestashop.core.configuration.upload_size_configuration'
+    public: false

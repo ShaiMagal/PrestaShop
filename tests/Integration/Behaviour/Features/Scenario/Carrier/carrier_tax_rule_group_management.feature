@@ -34,6 +34,11 @@ Feature: Carrier Tax Rule Group management
     Then carrier "carrier1" should have the following properties:
       | name         | Carrier 1         |
       | taxRuleGroup | US-AZ Rate (6.6%) |
+    # Remove associated taw rule
+    When I set no tax rule for carrier "carrier1"
+    Then carrier "carrier1" should have the following properties:
+      | name         | Carrier 1 |
+      | taxRuleGroup |           |
 
   Scenario: Partially editing carrier with wrong tax rule group
     When I create carrier "carrier1" with specified properties:

@@ -30,9 +30,14 @@ declare(strict_types=1);
 namespace PrestaShopBundle\ApiPlatform\Metadata;
 
 use ApiPlatform\Metadata\CollectionOperationInterface;
+use ApiPlatform\Metadata\Parameters;
+use ApiPlatform\OpenApi\Attributes\Webhook;
+use ApiPlatform\OpenApi\Model\Operation as OpenApiOperation;
+use ApiPlatform\State\OptionsInterface;
 use Attribute;
 use PrestaShop\PrestaShop\Core\Search\Filters;
 use PrestaShopBundle\ApiPlatform\Provider\QueryListProvider;
+use Stringable;
 
 /**
  * Class PaginatedList is a custom operation that provides extra parameters
@@ -63,12 +68,16 @@ class PaginatedList extends AbstractCQRSOperation implements CollectionOperation
         ?array $schemes = null,
         ?string $condition = null,
         ?string $controller = null,
+        ?array $headers = null,
         ?array $cacheHeaders = null,
+        ?array $paginationViaCursor = null,
         ?array $hydraContext = null,
         ?array $openapiContext = null,
-        ?bool $openapi = null,
+        bool|OpenApiOperation|Webhook|null $openapi = null,
         ?array $exceptionToStatus = null,
-        ?bool $queryParameterValidationEnabled = null,
+        ?array $links = null,
+        ?array $errors = null,
+
         ?string $shortName = null,
         ?string $class = null,
         ?bool $paginationEnabled = null,
@@ -81,16 +90,16 @@ class PaginatedList extends AbstractCQRSOperation implements CollectionOperation
         ?bool $paginationClientPartial = null,
         ?bool $paginationFetchJoinCollection = null,
         ?bool $paginationUseOutputWalkers = null,
-        ?array $paginationViaCursor = null,
         ?array $order = null,
         ?string $description = null,
         ?array $normalizationContext = null,
         ?array $denormalizationContext = null,
-        ?string $security = null,
+        ?bool $collectDenormalizationErrors = null,
+        string|Stringable|null $security = null,
         ?string $securityMessage = null,
-        ?string $securityPostDenormalize = null,
+        string|Stringable|null $securityPostDenormalize = null,
         ?string $securityPostDenormalizeMessage = null,
-        ?string $securityPostValidation = null,
+        string|Stringable|null $securityPostValidation = null,
         ?string $securityPostValidationMessage = null,
         ?string $deprecationReason = null,
         ?array $filters = null,
@@ -112,6 +121,9 @@ class PaginatedList extends AbstractCQRSOperation implements CollectionOperation
         ?string $name = null,
         $provider = null,
         $processor = null,
+        ?OptionsInterface $stateOptions = null,
+        array|Parameters|null $parameters = null,
+        ?bool $queryParameterValidationEnabled = null,
         array $extraProperties = [],
         array $scopes = [],
         ?array $ApiResourceMapping = null,

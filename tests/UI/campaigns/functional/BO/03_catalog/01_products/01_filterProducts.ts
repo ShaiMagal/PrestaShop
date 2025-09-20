@@ -1,17 +1,16 @@
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  type BrowserContext,
   dataProducts,
   dataCategories,
+  type Page,
   type ProductFilterMinMax,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -35,7 +34,13 @@ describe('BO - Catalog - Products : Filter in Products Page', async () => {
 
   describe('Filter products table : Go to BO', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {

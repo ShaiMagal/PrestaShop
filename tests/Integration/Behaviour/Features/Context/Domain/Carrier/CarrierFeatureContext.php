@@ -33,19 +33,24 @@ use Carrier;
 use Exception;
 use Group;
 use PHPUnit\Framework\Assert;
+use PrestaShop\PrestaShop\Core\Domain\Address\ValueObject\AddressId;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\AddCarrierCommand;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\EditCarrierCommand;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Exception\CarrierConstraintException;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetAvailableCarriers;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetCarrierForEditing;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\QueryResult\EditableCarrier;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\CarrierId;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\OutOfRangeBehavior;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingMethod;
+use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
+use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductQuantity;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use Tests\Integration\Behaviour\Features\Context\Domain\AbstractDomainFeatureContext;
 use Tests\Integration\Behaviour\Features\Context\Domain\TaxRulesGroupFeatureContext;
 use Tests\Resources\DummyFileUploader;
 use Tests\Resources\Resetter\CarrierResetter;
+use Tests\Resources\Resetter\ProductResetter;
 use Zone;
 
 class CarrierFeatureContext extends AbstractDomainFeatureContext
@@ -56,6 +61,7 @@ class CarrierFeatureContext extends AbstractDomainFeatureContext
     public static function restoreCarrierTablesAfterSuite(): void
     {
         CarrierResetter::resetCarrier();
+        ProductResetter::resetProducts();
     }
 
     /**
@@ -404,6 +410,63 @@ class CarrierFeatureContext extends AbstractDomainFeatureContext
             CarrierConstraintException::class,
             constant(CarrierConstraintException::class . '::' . $errorCode)
         );
+    }
+
+    /**
+     * @Then the products :products should have the following carriers with address :address:
+     */
+    public function assertCarriersWithState(string $products, string $address, TableNode $table)
+    {
+        $expectedRows = $table->getColumnsHash();
+
+        $expectedAvailable = [];
+        $expectedFiltered = [];
+
+        foreach ($expectedRows as $row) {
+            $carrier = ['name' => $row['carrier']];
+
+            if (strtolower($row['state']) === 'available') {
+                $expectedAvailable[] = $carrier;
+            } elseif (strtolower($row['state']) === 'filtered') {
+                $expectedFiltered[] = [
+                    'carrier' => $row['carrier'],
+                    'products' => $row['products'] ?? '',
+                ];
+            }
+        }
+
+        $productNames = explode(',', $products);
+        $productQuantities = [];
+
+        foreach ($productNames as $productName) {
+            $productQuantity = new ProductQuantity(new ProductId($this->referenceToId(trim($productName))), 1);
+            $productQuantities[] = $productQuantity;
+        }
+
+        $carriersResult = $this->getQueryBus()->handle(
+            new GetAvailableCarriers($productQuantities, new AddressId($this->referenceToId($address))
+            ));
+
+        $actualAvailable = array_map(function ($carrierSummary) {
+            return ['name' => $carrierSummary->getName()];
+        }, $carriersResult->getAvailableCarriers());
+
+        $actualFiltered = [];
+
+        foreach ($carriersResult->getFilteredOutCarriers() as $removedCarrier) {
+            $carrierName = $removedCarrier->getCarrier()->getName();
+            $productNames = array_map(function ($productSummary) {
+                return $productSummary->getName();
+            }, $removedCarrier->getProducts());
+
+            $actualFiltered[] = [
+                'carrier' => $carrierName,
+                'products' => implode(', ', $productNames),
+            ];
+        }
+
+        Assert::assertEqualsCanonicalizing($expectedAvailable, $actualAvailable, 'Available carriers do not match expected.');
+        Assert::assertEqualsCanonicalizing($expectedFiltered, $actualFiltered, 'Filtered carriers do not match expected.');
     }
 
     private function createCarrierUsingCommand(

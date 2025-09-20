@@ -1,25 +1,20 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import preferencesPage from '@pages/BO/shipping/preferences';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
-// Import data
 import {
   boCarriersPage,
   boDashboardPage,
+  boLoginPage,
+  boShippingPreferencesPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   foClassicCartPage,
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
+  utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -29,7 +24,6 @@ describe('BO - Shipping - Carriers : Change carrier position', async () => {
   let browserContext: BrowserContext;
   let page: Page;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -89,12 +83,20 @@ describe('BO - Shipping - Carriers : Change carrier position', async () => {
     });
 
     it('should open the back office in new tab', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'resetCarriersFilters', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'goToBO', baseContext);
 
       page = await utilsPlaywright.newTab(browserContext);
-      await foClassicCheckoutPage.goToBO(page);
 
-      await loginCommon.loginBO(this, page);
+      await boLoginPage.goTo(page, global.BO.URL);
+
+      const pageTitle = await boLoginPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLoginPage.pageTitle);
+    });
+
+    it('should connect to the backoffice', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'connectBO', baseContext);
+
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
 
       const pageTitle = await boDashboardPage.getPageTitle(page);
       expect(pageTitle).to.contains(boDashboardPage.pageTitle);
@@ -108,17 +110,17 @@ describe('BO - Shipping - Carriers : Change carrier position', async () => {
         boDashboardPage.shippingLink,
         boDashboardPage.shippingPreferencesLink,
       );
-      await preferencesPage.closeSfToolBar(page);
+      await boShippingPreferencesPage.closeSfToolBar(page);
 
-      const pageTitle = await preferencesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(preferencesPage.pageTitle);
+      const pageTitle = await boShippingPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boShippingPreferencesPage.pageTitle);
     });
 
     it('should set sort by \'Position\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setSortByPosition', baseContext);
 
-      const textResult = await preferencesPage.setCarrierSortOrderBy(page, 'Position', 'Ascending');
-      expect(textResult).to.contain(preferencesPage.successfulUpdateMessage);
+      const textResult = await boShippingPreferencesPage.setCarrierSortOrderBy(page, 'Position', 'Ascending');
+      expect(textResult).to.contain(boShippingPreferencesPage.successfulUpdateMessage);
     });
 
     it('should go to \'Shipping > Carriers\' page', async function () {
@@ -132,6 +134,22 @@ describe('BO - Shipping - Carriers : Change carrier position', async () => {
 
       const pageTitle = await boCarriersPage.getPageTitle(page);
       expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+    });
+
+    it('should sort by \'position\' \'asc\' and check result', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'sortByPosition', baseContext);
+
+      const nonSortedTable = await boCarriersPage.getAllRowsColumnContent(page, 'a!position');
+
+      await boCarriersPage.sortTable(page, 'a!position', 'asc');
+
+      const sortedTable = await boCarriersPage.getAllRowsColumnContent(page, 'a!position');
+
+      const nonSortedTableFloat = nonSortedTable.map((text: string): number => parseFloat(text));
+      const sortedTableFloat = sortedTable.map((text: string): number => parseFloat(text));
+
+      const expectedResult = await utilsCore.sortArrayNumber(nonSortedTableFloat);
+      expect(sortedTableFloat).to.deep.equal(expectedResult);
     });
 
     it('should change first carrier position to 2', async function () {
@@ -194,17 +212,17 @@ describe('BO - Shipping - Carriers : Change carrier position', async () => {
         boDashboardPage.shippingLink,
         boDashboardPage.shippingPreferencesLink,
       );
-      await preferencesPage.closeSfToolBar(page);
+      await boShippingPreferencesPage.closeSfToolBar(page);
 
-      const pageTitle = await preferencesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(preferencesPage.pageTitle);
+      const pageTitle = await boShippingPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boShippingPreferencesPage.pageTitle);
     });
 
     it('should set sort by \'Price\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setSortByPrice', baseContext);
 
-      const textResult = await preferencesPage.setCarrierSortOrderBy(page, 'Price', 'Ascending');
-      expect(textResult).to.contain(preferencesPage.successfulUpdateMessage);
+      const textResult = await boShippingPreferencesPage.setCarrierSortOrderBy(page, 'Price', 'Ascending');
+      expect(textResult).to.contain(boShippingPreferencesPage.successfulUpdateMessage);
     });
   });
 });

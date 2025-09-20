@@ -280,6 +280,14 @@ services:
       - '@prestashop.core.grid.filter.form_factory'
       - '@prestashop.core.hook.dispatcher'
 
+  prestashop.core.grid.grid_factory.discount:
+    class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
+    arguments:
+      - '@prestashop.core.grid.definition.factory.discount'
+      - '@prestashop.core.grid.data.factory.discount'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
   prestashop.core.grid.grid_factory.catalog_price_rule:
     class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
     arguments:
@@ -492,7 +500,7 @@ services:
     class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
     arguments:
       - '@PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AliasGridDefinitionFactory'
-      - '@prestashop.core.grid.data.factory.alias'
+      - '@prestashop.core.grid.data_provider.alias_decorator'
       - '@prestashop.core.grid.filter.form_factory'
       - '@prestashop.core.hook.dispatcher'
 
@@ -540,5 +548,21 @@ services:
     arguments:
       - '@PrestaShop\PrestaShop\Core\Grid\Definition\Factory\ImageTypeGridDefinitionFactory'
       - '@prestashop.core.grid.data_factory.image_type'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
+  PrestaShop\PrestaShop\Core\Grid\Factory\ShipmentFactory:
+    class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Definition\Factory\ShipmentGridDefinitionFactory'
+      - '@PrestaShop\PrestaShop\Core\Grid\Data\Factory\ShipmentGridDataFactory'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
+  PrestaShop\PrestaShop\Core\Grid\Factory\TagFactory:
+    class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Definition\Factory\TagGridDefinitionFactory'
+      - '@PrestaShop\PrestaShop\Core\Grid\Data\Factory\TagGridDataFactory'
       - '@prestashop.core.grid.filter.form_factory'
       - '@prestashop.core.hook.dispatcher'

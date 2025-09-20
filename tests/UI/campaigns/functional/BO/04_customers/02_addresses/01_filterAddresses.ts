@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import addressesPage from '@pages/BO/customers/addresses';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boAddressesPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataAddresses,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -36,7 +32,13 @@ describe('BO - Customers - Addresses : Filter Addresses table', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Customer > Addresses\' page', async function () {
@@ -48,14 +50,14 @@ describe('BO - Customers - Addresses : Filter Addresses table', async () => {
       boDashboardPage.addressesLink,
     );
 
-    const pageTitle = await addressesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(addressesPage.pageTitle);
+    const pageTitle = await boAddressesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boAddressesPage.pageTitle);
   });
 
   it('should reset all filters and get number of addresses in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFirst', baseContext);
 
-    numberOfAddresses = await addressesPage.resetAndGetNumberOfLines(page);
+    numberOfAddresses = await boAddressesPage.resetAndGetNumberOfLines(page);
     expect(numberOfAddresses).to.be.above(0);
   });
 
@@ -131,18 +133,18 @@ describe('BO - Customers - Addresses : Filter Addresses table', async () => {
       it(`should filter by ${test.args.filterBy} '${test.args.filterValue}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.testIdentifier}`, baseContext);
 
-        await addressesPage.filterAddresses(
+        await boAddressesPage.filterAddresses(
           page,
           test.args.filterType,
           test.args.filterBy,
           test.args.filterValue,
         );
 
-        const numberOfAddressesAfterFilter = await addressesPage.getNumberOfElementInGrid(page);
+        const numberOfAddressesAfterFilter = await boAddressesPage.getNumberOfElementInGrid(page);
         expect(numberOfAddressesAfterFilter).to.be.at.most(numberOfAddresses);
 
         for (let i = 1; i <= numberOfAddressesAfterFilter; i++) {
-          const textColumn = await addressesPage.getTextColumnFromTableAddresses(
+          const textColumn = await boAddressesPage.getTextColumnFromTableAddresses(
             page,
             i,
             test.args.filterBy === 'id_country' ? 'country_name' : test.args.filterBy,
@@ -154,7 +156,7 @@ describe('BO - Customers - Addresses : Filter Addresses table', async () => {
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.testIdentifier}Reset`, baseContext);
 
-        const numberOfAddressesAfterReset = await addressesPage.resetAndGetNumberOfLines(page);
+        const numberOfAddressesAfterReset = await boAddressesPage.resetAndGetNumberOfLines(page);
         expect(numberOfAddressesAfterReset).to.equal(numberOfAddresses);
       });
     });

@@ -1,24 +1,20 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-// Import commonTests
 import {createCartRuleTest, deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
 import {
+  type BrowserContext,
   dataProducts,
   FakerCartRule,
   foHummingbirdCartPage,
   foHummingbirdCheckoutPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   foHummingbirdSearchResultsPage,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -55,6 +51,7 @@ describe('FO - cart : Display discount', async () => {
     applyDiscountTo: 'Specific product',
     product: dataProducts.demo_9.name,
   });
+  const secondCartRuleDiscount: number = parseFloat(secondCartRuleData.discountAmount!.value.toString());
 
   // Pre-condition: Create first cart rule
   createCartRuleTest(firstCartRuleData, `${baseContext}_PreTest_1`);
@@ -108,7 +105,7 @@ describe('FO - cart : Display discount', async () => {
 
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
 
@@ -134,7 +131,7 @@ describe('FO - cart : Display discount', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'addProductToCart2', baseContext);
 
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);
@@ -159,16 +156,16 @@ describe('FO - cart : Display discount', async () => {
     it('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue1', baseContext);
 
-      const discount = await utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.discountPercent!);
+      const discount = utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.getDiscountPercent());
 
-      const discountValue = await foHummingbirdCartPage.getDiscountValue(page);
-      expect(discountValue).to.equal(-discount.toFixed(2));
+      const discountValue = await foHummingbirdCartPage.getCartRuleValue(page);
+      expect(discountValue).to.equal(`-€${discount.toFixed(2)}`);
     });
 
     it('should check the total after the discount', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount1', baseContext);
 
-      const discount = await utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.discountPercent!);
+      const discount = utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.getDiscountPercent());
 
       const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
       expect(totalAfterDiscount.toString()).to.equal((dataProducts.demo_9.finalPrice * 2 - discount).toFixed(2));
@@ -186,18 +183,18 @@ describe('FO - cart : Display discount', async () => {
     it('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue2', baseContext);
 
-      const discountValue = await foHummingbirdCartPage.getDiscountValue(page, 2);
-      expect(discountValue).to.equal(-secondCartRuleData.discountAmount!.value.toFixed(2));
+      const discountValue = await foHummingbirdCartPage.getCartRuleValue(page, 2);
+      expect(discountValue).to.equal(`-€${secondCartRuleDiscount.toFixed(2)}`);
     });
 
     it('should check the total after the discount', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount', baseContext);
 
-      const firstDiscount = await utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.discountPercent!);
+      const firstDiscount = utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.getDiscountPercent());
 
       const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
       expect(totalAfterDiscount.toString())
-        .to.equal((dataProducts.demo_9.finalPrice * 2 - (firstDiscount + secondCartRuleData.discountAmount!.value))
+        .to.equal((dataProducts.demo_9.finalPrice * 2 - (firstDiscount + secondCartRuleDiscount))
           .toFixed(2));
     });
 
@@ -211,7 +208,7 @@ describe('FO - cart : Display discount', async () => {
     it('should check the total', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTotal3', baseContext);
 
-      const discount = await utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.discountPercent!);
+      const discount = utilsCore.percentage(dataProducts.demo_9.finalPrice, firstCartRuleData.getDiscountPercent());
 
       const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
       expect(totalAfterDiscount.toString()).to.equal((dataProducts.demo_9.finalPrice * 2 - discount).toFixed(2));

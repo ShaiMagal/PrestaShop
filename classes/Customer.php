@@ -27,6 +27,7 @@ use PrestaShop\PrestaShop\Adapter\CoreException;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\Domain\Shop\Exception\InvalidShopConstraintException;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShopBundle\Form\Admin\Type\FormattedTextareaType;
 
 /***
  * Class CustomerCore
@@ -200,7 +201,7 @@ class CustomerCore extends ObjectModel
             'max_payment_days' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt', 'copy_post' => false],
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool', 'copy_post' => false],
             'deleted' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool', 'copy_post' => false],
-            'note' => ['type' => self::TYPE_HTML, 'size' => 4194303, 'copy_post' => false],
+            'note' => ['type' => self::TYPE_HTML, 'size' => FormattedTextareaType::LIMIT_MEDIUMTEXT_UTF8_MB4, 'copy_post' => false],
             'is_guest' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool', 'copy_post' => false],
             'id_shop' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'copy_post' => false],
             'id_shop_group' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'copy_post' => false],
@@ -332,14 +333,7 @@ class CustomerCore extends ObjectModel
             }
         }
 
-        try {
-            return parent::update(true);
-        } catch (PrestaShopException $exception) {
-            $message = $exception->getMessage();
-            error_log($message);
-
-            return false;
-        }
+        return parent::update(true);
     }
 
     /**
@@ -383,6 +377,10 @@ class CustomerCore extends ObjectModel
      */
     public function delete()
     {
+        if (empty((int) $this->id)) {
+            return false;
+        }
+
         if (!count(Order::getCustomerOrders((int) $this->id))) {
             $addresses = $this->getAddresses((int) Configuration::get('PS_LANG_DEFAULT'));
             foreach ($addresses as $address) {
@@ -394,7 +392,7 @@ class CustomerCore extends ObjectModel
         Db::getInstance()->execute('DELETE FROM ' . _DB_PREFIX_ . 'message WHERE id_customer=' . (int) $this->id);
         Db::getInstance()->execute('DELETE FROM ' . _DB_PREFIX_ . 'specific_price WHERE id_customer=' . (int) $this->id);
 
-        $carts = Db::getInstance()->executeS('SELECT id_cart FROM ' . _DB_PREFIX_ . 'cart WHERE id_customer=' . (int) $this->id);
+        $carts = Db::getInstance()->executeS('SELECT id_cart FROM ' . _DB_PREFIX_ . 'cart WHERE id_customer=' . (int) $this->id . ' AND id_cart NOT IN (SELECT id_cart FROM `' . _DB_PREFIX_ . 'orders`)');
         if ($carts) {
             foreach ($carts as $cart) {
                 Db::getInstance()->execute('DELETE FROM ' . _DB_PREFIX_ . 'cart WHERE id_cart=' . (int) $cart['id_cart']);
@@ -828,7 +826,7 @@ class CustomerCore extends ObjectModel
     public static function checkPassword($idCustomer, $passwordHash)
     {
         if (!Validate::isUnsignedId($idCustomer)) {
-            die(Tools::displayError('Customer ID is invalid.'));
+            throw new PrestaShopException('Customer ID is invalid.');
         }
 
         // Check that customers password hasn't changed since last login
@@ -1354,8 +1352,6 @@ class CustomerCore extends ObjectModel
     /**
      * Check customer information and return customer validity.
      *
-     * @since 1.5.0
-     *
      * @param bool $withGuest
      *
      * @return bool customer validity
@@ -1378,8 +1374,6 @@ class CustomerCore extends ObjectModel
 
     /**
      * Logout.
-     *
-     * @since 1.5.0
      */
     public function logout()
     {
@@ -1398,8 +1392,6 @@ class CustomerCore extends ObjectModel
     /**
      * Soft logout, delete everything that links to the customer
      * but leave there affiliate's information.
-     *
-     * @since 1.5.0
      */
     public function mylogout()
     {

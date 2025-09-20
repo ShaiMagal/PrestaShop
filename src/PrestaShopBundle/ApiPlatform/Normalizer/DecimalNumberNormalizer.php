@@ -64,13 +64,10 @@ class DecimalNumberNormalizer implements DenormalizerInterface, NormalizerInterf
         return $data instanceof DecimalNumber;
     }
 
-    /**
-     * Set higher priority than ObjectDenormalizer.
-     *
-     * @return int
-     */
-    public static function getNormalizerPriority(): int
+    public function getSupportedTypes(?string $format): array
     {
-        return 10;
+        return [
+            DecimalNumber::class => true,
+        ];
     }
 }

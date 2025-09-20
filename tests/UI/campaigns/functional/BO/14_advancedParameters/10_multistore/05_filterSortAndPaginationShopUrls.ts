@@ -1,20 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import setMultiStoreStatus from '@commonTests/BO/advancedParameters/multistore';
 
-// Import pages
-import multiStorePage from '@pages/BO/advancedParameters/multistore';
-import addShopUrlPage from '@pages/BO/advancedParameters/multistore/url/addURL';
-import shopUrlPage from '@pages/BO/advancedParameters/multistore/url';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
+  boMultistorePage,
+  boMultistoreShopUrlPage,
+  boMultistoreShopUrlCreatePage,
+  type BrowserContext,
   FakerShop,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -50,7 +48,13 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
   // 2 : Go to multistore page
   describe('Go to \'Multistore\' page', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > Multistore\' page', async function () {
@@ -62,17 +66,17 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
         boDashboardPage.multistoreLink,
       );
 
-      const pageTitle = await multiStorePage.getPageTitle(page);
-      expect(pageTitle).to.contains(multiStorePage.pageTitle);
+      const pageTitle = await boMultistorePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boMultistorePage.pageTitle);
     });
 
     it('should go to \'Shop Urls\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToShopUrlsPage', baseContext);
 
-      await multiStorePage.goToShopURLPage(page, 1);
+      await boMultistorePage.goToShopURLPage(page, 1);
 
-      const pageTitle = await multiStorePage.getPageTitle(page);
-      expect(pageTitle).to.contains(multiStorePage.pageTitle);
+      const pageTitle = await boMultistorePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boMultistorePage.pageTitle);
     });
   });
 
@@ -87,17 +91,17 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
       it('should go to add shop URL', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToAddURL${index}`, baseContext);
 
-        await shopUrlPage.goToAddNewUrl(page);
+        await boMultistoreShopUrlPage.goToAddNewUrl(page);
 
-        const pageTitle = await addShopUrlPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addShopUrlPage.pageTitleCreate);
+        const pageTitle = await boMultistoreShopUrlCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boMultistoreShopUrlCreatePage.pageTitleCreate);
       });
 
       it(`should create shop URl n°${index + 1}`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `addURL${index}`, baseContext);
 
-        const textResult = await addShopUrlPage.setVirtualUrl(page, shopUrlData.name);
-        expect(textResult).to.contains(addShopUrlPage.successfulCreationMessage);
+        const textResult = await boMultistoreShopUrlCreatePage.setVirtualUrl(page, shopUrlData.name);
+        expect(textResult).to.contains(boMultistoreShopUrlCreatePage.successfulCreationMessage);
       });
     });
   });
@@ -117,12 +121,12 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
       it(`should filter list by ${test.args.filterBy}`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `filterBy_${test.args.filterBy}`, baseContext);
 
-        await shopUrlPage.filterTable(page, test.args.filterType, test.args.filterBy, test.args.filterValue);
+        await boMultistoreShopUrlPage.filterTable(page, test.args.filterType, test.args.filterBy, test.args.filterValue);
 
-        const numberOfElementAfterFilter = await shopUrlPage.getNumberOfElementInGrid(page);
+        const numberOfElementAfterFilter = await boMultistoreShopUrlPage.getNumberOfElementInGrid(page);
 
         for (let i = 1; i <= numberOfElementAfterFilter; i++) {
-          const textColumn = await shopUrlPage.getTextColumn(page, i, test.args.filterBy);
+          const textColumn = await boMultistoreShopUrlPage.getTextColumn(page, i, test.args.filterBy);
 
           if (test.expected !== undefined) {
             expect(textColumn).to.contains(test.expected);
@@ -135,7 +139,7 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
       it('should reset filter and check the number of shops', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `resetFilter_${index}`, baseContext);
 
-        const numberOfElement = await shopUrlPage.resetAndGetNumberOfLines(page);
+        const numberOfElement = await boMultistoreShopUrlPage.resetAndGetNumberOfLines(page);
         expect(numberOfElement).to.be.above(20);
       });
     });
@@ -146,28 +150,28 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
     it('should change the items number to 20 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo20', baseContext);
 
-      const paginationNumber = await shopUrlPage.selectPaginationLimit(page, 20);
+      const paginationNumber = await boMultistoreShopUrlPage.selectPaginationLimit(page, 20);
       expect(paginationNumber).to.equal('1');
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await shopUrlPage.paginationNext(page);
+      const paginationNumber = await boMultistoreShopUrlPage.paginationNext(page);
       expect(paginationNumber).to.equal('2');
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await shopUrlPage.paginationPrevious(page);
+      const paginationNumber = await boMultistoreShopUrlPage.paginationPrevious(page);
       expect(paginationNumber).to.equal('1');
     });
 
     it('should change the items number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo50', baseContext);
 
-      const paginationNumber = await shopUrlPage.selectPaginationLimit(page, 50);
+      const paginationNumber = await boMultistoreShopUrlPage.selectPaginationLimit(page, 50);
       expect(paginationNumber).to.equal('1');
     });
   });
@@ -215,10 +219,10 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await shopUrlPage.getAllRowsColumnContent(page, test.args.sortBy);
-        await shopUrlPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        const nonSortedTable = await boMultistoreShopUrlPage.getAllRowsColumnContent(page, test.args.sortBy);
+        await boMultistoreShopUrlPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await shopUrlPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const sortedTable = await boMultistoreShopUrlPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat = nonSortedTable.map((text: string): number => parseFloat(text));
@@ -250,10 +254,10 @@ describe('BO - Advanced Parameters - Multistore : Filter, sort and pagination sh
       it(`should delete the shop url contains 'ToDelete${index + 1}Shop'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `deleteShopUrl${index}_`, baseContext);
 
-        await shopUrlPage.filterTable(page, 'input', 'url', `ToDelete${index + 1}Shop`);
+        await boMultistoreShopUrlPage.filterTable(page, 'input', 'url', `ToDelete${index + 1}Shop`);
 
-        const textResult = await shopUrlPage.deleteShopURL(page, 1);
-        expect(textResult).to.contains(shopUrlPage.successfulDeleteMessage);
+        const textResult = await boMultistoreShopUrlPage.deleteShopURL(page, 1);
+        expect(textResult).to.contains(boMultistoreShopUrlPage.successfulDeleteMessage);
       });
     });
   });

@@ -1,22 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import FO pages
-import {contactUsPage} from '@pages/FO/classic/contactUs';
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
+import {expect} from 'chai';
 
 import {
+  type BrowserContext,
   dataCustomers,
   foClassicCartPage,
+  foClassicContactUsPage,
   foClassicHomePage,
   foClassicLoginPage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
   foClassicMyAccountPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_classic_headerAndFooter_checkLinksInHeader';
 
@@ -59,8 +56,8 @@ describe('FO - Header and Footer : Check links in header page', async () => {
     // Check Contact us
     await foClassicHomePage.clickOnHeaderLink(page, 'Contact us');
 
-    const pageTitle = await contactUsPage.getPageTitle(page);
-    expect(pageTitle, 'Fail to open FO login page').to.contains(contactUsPage.pageTitle);
+    const pageTitle = await foClassicContactUsPage.getPageTitle(page);
+    expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicContactUsPage.pageTitle);
   });
 
   it('should check \'sign in\' link', async function () {
@@ -101,7 +98,7 @@ describe('FO - Header and Footer : Check links in header page', async () => {
     await foClassicModalQuickViewPage.setQuantityAndAddToCart(page, 3);
 
     // Close block cart modal
-    const isQuickViewModalClosed = await blockCartModal.closeBlockCartModal(page);
+    const isQuickViewModalClosed = await foClassicModalBlockCartPage.closeBlockCartModal(page);
     expect(isQuickViewModalClosed).to.eq(true);
   });
 

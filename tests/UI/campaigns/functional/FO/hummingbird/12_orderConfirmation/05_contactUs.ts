@@ -1,20 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-// BO pages
-import customerServiceMainPage from '@pages/BO/customerService/customerService';
-import customerServiceMessageViewPage from '@pages/BO/customerService/customerService/view';
-// FO pages
-import contactUsPage from '@pages/FO/hummingbird/contactUs';
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
 import {
+  boCustomerServicePage,
+  boCustomerServiceViewPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   dataProducts,
@@ -22,18 +16,17 @@ import {
   foHummingbirdCartPage,
   foHummingbirdCheckoutPage,
   foHummingbirdCheckoutOrderConfirmationPage,
+  foHummingbirdContactUsPage,
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   foHummingbirdMyAccountPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_hummingbird_orderConfirmation_contactUs';
 
 /*
@@ -121,7 +114,7 @@ describe('FO - Order confirmation : Contact us', async () => {
 
       await foHummingbirdHomePage.quickViewProduct(page, 1);
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);
@@ -193,8 +186,8 @@ describe('FO - Order confirmation : Contact us', async () => {
 
       await foHummingbirdCheckoutOrderConfirmationPage.goToContactUsPage(page);
 
-      const pageTitle = await contactUsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(contactUsPage.pageTitle);
+      const pageTitle = await foHummingbirdContactUsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(foHummingbirdContactUsPage.pageTitle);
     });
   });
 
@@ -202,23 +195,29 @@ describe('FO - Order confirmation : Contact us', async () => {
     it('should check the pre-filled email field', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTheFormInfos', baseContext);
 
-      const emailFieldValue = await contactUsPage.getEmailFieldValue(page);
+      const emailFieldValue = await foHummingbirdContactUsPage.getEmailFieldValue(page);
       expect(emailFieldValue).to.contains(dataCustomers.johnDoe.email);
     });
 
     it('should send the message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sendTheMessage', baseContext);
 
-      await contactUsPage.sendMessage(page, contactUsData, filename);
+      await foHummingbirdContactUsPage.sendMessage(page, contactUsData, filename);
 
-      const sendMessageSuccessAlert = await contactUsPage.getAlertSuccess(page);
-      expect(sendMessageSuccessAlert).to.contains(contactUsPage.validationMessage);
+      const sendMessageSuccessAlert = await foHummingbirdContactUsPage.getAlertSuccess(page);
+      expect(sendMessageSuccessAlert).to.contains(foHummingbirdContactUsPage.validationMessage);
     });
   });
 
   describe('Go to BO and check if the message is visible and the information are correct', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to customer service page', async function () {
@@ -230,23 +229,23 @@ describe('FO - Order confirmation : Contact us', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServiceMainPage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServiceMainPage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should go to the message detailed view', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToMessageView', baseContext);
 
-      await customerServiceMainPage.goToViewMessagePage(page);
+      await boCustomerServicePage.goToViewMessagePage(page);
 
-      const pageTitle = await customerServiceMessageViewPage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServiceMessageViewPage.pageTitle);
+      const pageTitle = await boCustomerServiceViewPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServiceViewPage.pageTitle);
     });
 
     it('should check the message content and uploaded file', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkMessageContentAndFile', baseContext);
 
-      const messageContent = await customerServiceMessageViewPage.getCustomerMessage(page);
+      const messageContent = await boCustomerServiceViewPage.getCustomerMessage(page);
       expect(messageContent).to.contains(contactUsData.message);
       expect(messageContent).to.contains('Attachment');
     });
@@ -260,15 +259,15 @@ describe('FO - Order confirmation : Contact us', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServiceMainPage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServiceMainPage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should delete the message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteMessage', baseContext);
 
-      const deleteMessageSuccessText = await customerServiceMainPage.deleteMessage(page, 1);
-      expect(deleteMessageSuccessText).to.contains(customerServiceMainPage.deleteMessageSuccessAlertText);
+      const deleteMessageSuccessText = await boCustomerServicePage.deleteMessage(page, 1);
+      expect(deleteMessageSuccessText).to.contains(boCustomerServicePage.deleteMessageSuccessAlertText);
     });
   });
 

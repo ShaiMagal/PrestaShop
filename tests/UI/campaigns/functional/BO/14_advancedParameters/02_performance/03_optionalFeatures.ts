@@ -1,16 +1,15 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {
   boCustomerGroupsPage,
   boCustomerGroupsCreatePage,
   boCustomerSettingsPage,
   boDashboardPage,
+  boLoginPage,
   boPerformancePage,
   boProductsPage,
+  type BrowserContext,
   dataCustomers,
   dataGroups,
   dataProducts,
@@ -19,12 +18,12 @@ import {
   foClassicLoginPage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_advancedParameters_performance_optionalFeatures';
 
@@ -57,7 +56,13 @@ describe('BO - Advanced Parameters - Performance : Optional features', async () 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop Parameters > Customer Settings\' page', async function () {
@@ -183,7 +188,7 @@ describe('BO - Advanced Parameters - Performance : Optional features', async () 
     expect(pageTitle).to.contains(dataProducts.demo_6.name);
 
     const productPrice = await foClassicProductPage.getProductPrice(page);
-    const discountValue = await utilsCore.percentage(dataProducts.demo_6.combinations[0].price, groupDiscount);
+    const discountValue = utilsCore.percentage(dataProducts.demo_6.combinations[0].price, groupDiscount);
     expect(productPrice).to.contains((dataProducts.demo_6.combinations[0].price - discountValue).toFixed(2));
   });
 

@@ -34,7 +34,7 @@ Feature: Update product basic information from Back Office (BO)
       | locale | value              |
       | en-US  | photo of funny mug |
     When I update product "product1" with following values:
-      | name[en-US] | #hashtagmug |
+      | name[en-US] | lovemug<3 |
     Then I should get error that product name is invalid
     And product "product1" localized "name" should be:
       | locale | value              |

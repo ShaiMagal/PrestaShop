@@ -1,21 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-import combinationsTab from '@pages/BO/catalog/products/add/combinationsTab';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabCombinationsPage,
+  type BrowserContext,
   FakerProduct,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -66,7 +61,13 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
 
   describe('Create product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -96,8 +97,8 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
 
       await boProductsPage.selectProductType(page, newProductData.type);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to new product page', async function () {
@@ -105,30 +106,30 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createProduct', baseContext);
 
-      await createProductsPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductsPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check that the save button is changed to \'Save and publish\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkSaveButton', baseContext);
 
-      const saveButtonName = await createProductsPage.getSaveButtonName(page);
+      const saveButtonName = await boProductsCreatePage.getSaveButtonName(page);
       expect(saveButtonName).to.equal('Save and publish');
     });
 
     it('should create combinations and check generate combinations button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCombinations', baseContext);
 
-      const generateCombinationsButton = await combinationsTab.setProductAttributes(
+      const generateCombinationsButton = await boProductsCreateTabCombinationsPage.setProductAttributes(
         page,
         newProductData.attributes,
       );
@@ -138,29 +139,29 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
     it('should click on generate combinations button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'generateCombinations', baseContext);
 
-      const successMessage = await combinationsTab.generateCombinations(page);
+      const successMessage = await boProductsCreateTabCombinationsPage.generateCombinations(page);
       expect(successMessage).to.equal('Successfully generated 4 combinations.');
     });
 
     it('should check that combinations generation modal is closed', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'generateCombinationsModalIsClosed', baseContext);
 
-      const isModalClosed = await combinationsTab.generateCombinationModalIsClosed(page);
+      const isModalClosed = await boProductsCreateTabCombinationsPage.generateCombinationModalIsClosed(page);
       expect(isModalClosed).to.eq(true);
     });
 
     it('should save the product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'saveProduct', baseContext);
 
-      const updateProductMessage = await createProductsPage.saveProduct(page);
-      expect(updateProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const updateProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct', baseContext);
 
       // Click on preview button
-      page = await createProductsPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       await foClassicProductPage.changeLanguage(page, 'en');
 
@@ -194,8 +195,8 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
       // Go back to BO
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
   });
 
@@ -203,14 +204,14 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
     it('should edit the created product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'editProduct', baseContext);
 
-      const createProductMessage = await createProductsPage.setProduct(page, editProductData);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, editProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should add combinations and check generate combinations button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addCombinations', baseContext);
 
-      const generateCombinationsButton = await combinationsTab.setProductAttributes(
+      const generateCombinationsButton = await boProductsCreateTabCombinationsPage.setProductAttributes(
         page,
         editProductData.attributes,
       );
@@ -220,29 +221,29 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
     it('should click on generate combinations button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'generateCombinations2', baseContext);
 
-      const successMessage = await combinationsTab.generateCombinations(page);
+      const successMessage = await boProductsCreateTabCombinationsPage.generateCombinations(page);
       expect(successMessage).to.equal('Successfully generated 6 combinations.');
     });
 
     it('should check that combinations generation modal is closed', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'generateCombinationsModalIsClosed2', baseContext);
 
-      const isModalClosed = await combinationsTab.generateCombinationModalIsClosed(page);
+      const isModalClosed = await boProductsCreateTabCombinationsPage.generateCombinationModalIsClosed(page);
       expect(isModalClosed).to.eq(true);
     });
 
     it('should save the product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'saveProduct2', baseContext);
 
-      const updateProductMessage = await createProductsPage.saveProduct(page);
-      expect(updateProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const updateProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewEditedProduct', baseContext);
 
       // Click on preview button
-      page = await createProductsPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       await foClassicProductPage.changeLanguage(page, 'en');
 
@@ -274,8 +275,8 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
       // Go back to BO
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
   });
 
@@ -283,7 +284,7 @@ describe('BO - Catalog - Products : CRUD product with combinations', async () =>
     it('should delete product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteProduct', baseContext);
 
-      const createProductMessage = await createProductsPage.deleteProduct(page);
+      const createProductMessage = await boProductsCreatePage.deleteProduct(page);
       expect(createProductMessage).to.equal(boProductsPage.successfulDeleteMessage);
     });
   });

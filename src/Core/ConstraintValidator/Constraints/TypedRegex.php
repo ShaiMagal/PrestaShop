@@ -26,12 +26,14 @@
 
 namespace PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints;
 
+use Attribute;
 use PrestaShop\PrestaShop\Core\ConstraintValidator\TypedRegexValidator;
 use Symfony\Component\Validator\Constraint;
 
 /**
  * Provides regex validation by type
  */
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 class TypedRegex extends Constraint
 {
     /**
@@ -65,6 +67,7 @@ class TypedRegex extends Constraint
     public const TYPE_LINK_REWRITE = 'link_rewrite';
     public const TYPE_ZIP_CODE_FORMAT = 'zip_code_format';
     public const TYPE_IMAGE_TYPE_NAME = 'image_type_name';
+    public const TYPE_DISCOUNT_CODE = 'discount_code';
     public const CLEAN_HTML_NO_IFRAME = 'clean_html_no_iframe';
     public const CLEAN_HTML_ALLOW_IFRAME = 'clean_html_allow_iframe';
 

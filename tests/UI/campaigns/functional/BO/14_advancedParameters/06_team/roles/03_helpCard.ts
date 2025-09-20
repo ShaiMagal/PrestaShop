@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import employeesPage from '@pages/BO/advancedParameters/team';
-import rolesPage from '@pages/BO/advancedParameters/team/roles';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boEmployeesPage,
+  boLoginPage,
+  boRolesPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -33,7 +29,13 @@ describe('BO - Advanced Parameters - Team : Help card in Roles page', async () =
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Advanced Parameters > Team\' page', async function () {
@@ -44,35 +46,35 @@ describe('BO - Advanced Parameters - Team : Help card in Roles page', async () =
       boDashboardPage.advancedParametersLink,
       boDashboardPage.teamLink,
     );
-    await employeesPage.closeSfToolBar(page);
+    await boEmployeesPage.closeSfToolBar(page);
 
-    const pageTitle = await employeesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(employeesPage.pageTitle);
+    const pageTitle = await boEmployeesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boEmployeesPage.pageTitle);
   });
 
   it('should go to \'Roles\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToRolesPage', baseContext);
 
-    await employeesPage.goToRolesPage(page);
+    await boEmployeesPage.goToRolesPage(page);
 
-    const pageTitle = await rolesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(rolesPage.pageTitle);
+    const pageTitle = await boRolesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boRolesPage.pageTitle);
   });
 
   it('should open the help side bar and check the document language', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'openHelpSidebar', baseContext);
 
-    const isHelpSidebarVisible = await rolesPage.openHelpSideBar(page);
+    const isHelpSidebarVisible = await boRolesPage.openHelpSideBar(page);
     expect(isHelpSidebarVisible).to.eq(true);
 
-    const documentURL = await rolesPage.getHelpDocumentURL(page);
+    const documentURL = await boRolesPage.getHelpDocumentURL(page);
     expect(documentURL).to.contains('country=en');
   });
 
   it('should close the help side bar', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'closeHelpSidebar', baseContext);
 
-    const isHelpSidebarVisible = await rolesPage.closeHelpSideBar(page);
+    const isHelpSidebarVisible = await boRolesPage.closeHelpSideBar(page);
     expect(isHelpSidebarVisible).to.eq(true);
   });
 });

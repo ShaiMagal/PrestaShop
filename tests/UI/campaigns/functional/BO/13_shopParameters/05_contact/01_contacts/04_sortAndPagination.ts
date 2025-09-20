@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import contactsPage from '@pages/BO/shopParameters/contact';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boContactsPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -34,7 +30,13 @@ describe('BO - Shop Parameters - Contact : Sort Contacts list', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop parameters > Contact\' page', async function () {
@@ -45,16 +47,16 @@ describe('BO - Shop Parameters - Contact : Sort Contacts list', async () => {
       boDashboardPage.shopParametersParentLink,
       boDashboardPage.contactLink,
     );
-    await contactsPage.closeSfToolBar(page);
+    await boContactsPage.closeSfToolBar(page);
 
-    const pageTitle = await contactsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(contactsPage.pageTitle);
+    const pageTitle = await boContactsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boContactsPage.pageTitle);
   });
 
   it('should reset all filters and get number of contacts in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfContacts = await contactsPage.resetAndGetNumberOfLines(page);
+    numberOfContacts = await boContactsPage.resetAndGetNumberOfLines(page);
     expect(numberOfContacts).to.be.above(0);
   });
 
@@ -84,11 +86,11 @@ describe('BO - Shop Parameters - Contact : Sort Contacts list', async () => {
     it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' And check result`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-      const nonSortedTable = await contactsPage.getAllRowsColumnContent(page, test.args.sortBy);
+      const nonSortedTable = await boContactsPage.getAllRowsColumnContent(page, test.args.sortBy);
 
-      await contactsPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+      await boContactsPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-      const sortedTable = await contactsPage.getAllRowsColumnContent(page, test.args.sortBy);
+      const sortedTable = await boContactsPage.getAllRowsColumnContent(page, test.args.sortBy);
 
       if (test.args.isFloat) {
         const nonSortedTableFloat = nonSortedTable.map((text: string): number => parseFloat(text));

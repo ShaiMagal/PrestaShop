@@ -42,17 +42,21 @@ export default class PriceReductionManager {
 
   private readonly currencySymbolUpdater: CurrencySymbolUpdater;
 
+  private readonly toggleCurrencySelector: string | null;
+
   constructor(
     reductionTypeSelector: string,
     taxInclusionInputs: string,
     currencySelect: string,
     reductionValueSymbolSelector: string,
+    toggleCurrencySelector: string | null = null,
   ) {
     this.reductionTypeSelector = reductionTypeSelector;
     this.$reductionTypeSelect = $(reductionTypeSelector);
     this.$taxInclusionInputs = $(taxInclusionInputs);
     this.currencySelect = currencySelect;
     this.reductionValueSymbolSelector = reductionValueSymbolSelector;
+    this.toggleCurrencySelector = toggleCurrencySelector;
     this.currencySymbolUpdater = new CurrencySymbolUpdater(
       this.currencySelect,
       ((symbol: string): void => {
@@ -74,8 +78,14 @@ export default class PriceReductionManager {
   private handle(): void {
     if (this.$reductionTypeSelect.val() === 'percentage') {
       this.$taxInclusionInputs.fadeOut();
+      if (this.toggleCurrencySelector) {
+        $(this.toggleCurrencySelector).fadeOut();
+      }
     } else {
       this.$taxInclusionInputs.fadeIn();
+      if (this.toggleCurrencySelector) {
+        $(this.toggleCurrencySelector).fadeIn();
+      }
     }
 
     this.updateSymbol(this.currencySymbolUpdater.getSymbol());

@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import imageSettingsPage from '@pages/BO/design/imageSettings';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boImageSettingsPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -35,7 +31,13 @@ describe('BO - Design - Image Settings : Image Generation options', async () => 
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Design > Image Settings\' page', async function () {
@@ -46,27 +48,27 @@ describe('BO - Design - Image Settings : Image Generation options', async () => 
         boDashboardPage.designParentLink,
         boDashboardPage.imageSettingsLink,
       );
-      await imageSettingsPage.closeSfToolBar(page);
+      await boImageSettingsPage.closeSfToolBar(page);
 
-      const pageTitle = await imageSettingsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(imageSettingsPage.pageTitle);
+      const pageTitle = await boImageSettingsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boImageSettingsPage.pageTitle);
     });
 
     it('should check image generation options', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkImageGenerationOptions', baseContext);
 
       // JPEG/PNG should be checked
-      const jpegChecked = await imageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
+      const jpegChecked = await boImageSettingsPage.isImageFormatToGenerateChecked(page, 'jpg');
       expect(jpegChecked).to.eq(true);
 
       // JPEG/PNG should be greyed
       // You can't uncheck the JPEG/PNG format
-      const jpegDisabled = await imageSettingsPage.isImageFormatToGenerateDisabled(page, 'jpg');
+      const jpegDisabled = await boImageSettingsPage.isImageFormatToGenerateDisabled(page, 'jpg');
       expect(jpegDisabled).to.eq(true);
 
       // >= PHP 8.1 : The checkbox of AVIF should be enabled
       // <  PHP 8.1 : The checkbox of AVIF should be disabled
-      const avifDisabled = await imageSettingsPage.isImageFormatToGenerateDisabled(page, 'avif');
+      const avifDisabled = await boImageSettingsPage.isImageFormatToGenerateDisabled(page, 'avif');
       expect(avifDisabled).to.eq(true);
     });
   });

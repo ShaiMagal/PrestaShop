@@ -281,10 +281,8 @@ class LoginController extends PrestaShopAdminController
         }
 
         // Warning actions are not blocking but should still be indicated to the user
-        if (!empty($warningActions)) {
-            foreach ($warningActions as $warningAction) {
-                $this->addFlash('warning', $warningAction);
-            }
+        foreach ($warningActions as $warningAction) {
+            $this->addFlash('warning', $warningAction);
         }
 
         return null;

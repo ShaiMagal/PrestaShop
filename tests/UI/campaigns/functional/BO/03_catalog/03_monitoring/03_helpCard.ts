@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import monitoringPage from '@pages/BO/catalog/monitoring';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boMonitoringPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -32,7 +28,13 @@ describe('BO - Catalog - Monitoring : Help card in monitoring page', async () =>
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Monitoring\' page', async function () {
@@ -43,26 +45,26 @@ describe('BO - Catalog - Monitoring : Help card in monitoring page', async () =>
       boDashboardPage.catalogParentLink,
       boDashboardPage.monitoringLink,
     );
-    await monitoringPage.closeSfToolBar(page);
+    await boMonitoringPage.closeSfToolBar(page);
 
-    const pageTitle = await monitoringPage.getPageTitle(page);
-    expect(pageTitle).to.contains(monitoringPage.pageTitle);
+    const pageTitle = await boMonitoringPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boMonitoringPage.pageTitle);
   });
 
   it('should open the help side bar and check the document language', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'openHelpSidebar', baseContext);
 
-    const isHelpSidebarVisible = await monitoringPage.openHelpSideBar(page);
+    const isHelpSidebarVisible = await boMonitoringPage.openHelpSideBar(page);
     expect(isHelpSidebarVisible).to.eq(true);
 
-    const documentURL = await monitoringPage.getHelpDocumentURL(page);
+    const documentURL = await boMonitoringPage.getHelpDocumentURL(page);
     expect(documentURL).to.contains('country=en');
   });
 
   it('should close the help side bar', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'closeHelpSidebar', baseContext);
 
-    const isHelpSidebarClosed = await monitoringPage.closeHelpSideBar(page);
+    const isHelpSidebarClosed = await boMonitoringPage.closeHelpSideBar(page);
     expect(isHelpSidebarClosed).to.eq(true);
   });
 });

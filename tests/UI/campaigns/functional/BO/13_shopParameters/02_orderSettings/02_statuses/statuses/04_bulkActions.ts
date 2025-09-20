@@ -1,23 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Common commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import orderSettingsPage from '@pages/BO/shopParameters/orderSettings';
-import statusesPage from '@pages/BO/shopParameters/orderSettings/statuses';
-import addOrderStatusPage from '@pages/BO/shopParameters/orderSettings/statuses/add';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boLoginPage,
+  boOrderSettingsPage,
+  boOrderStatusesPage,
+  boOrderStatusesCreatePage,
+  type BrowserContext,
   FakerOrderStatus,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_orderSettings_statuses_statuses_bulkActions';
 
@@ -48,7 +43,13 @@ describe('BO - Shop Parameters - Order Settings - Statuses : Bulk actions in ord
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop Parameters > Order Settings\' page', async function () {
@@ -60,30 +61,30 @@ describe('BO - Shop Parameters - Order Settings - Statuses : Bulk actions in ord
       boDashboardPage.orderSettingsLink,
     );
 
-    const pageTitle = await orderSettingsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(orderSettingsPage.pageTitle);
+    const pageTitle = await boOrderSettingsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boOrderSettingsPage.pageTitle);
   });
 
   it('should go to \'Statuses\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToStatusesPage', baseContext);
 
-    await orderSettingsPage.goToStatusesPage(page);
+    await boOrderSettingsPage.goToStatusesPage(page);
 
-    const pageTitle = await statusesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(statusesPage.pageTitle);
+    const pageTitle = await boOrderStatusesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boOrderStatusesPage.pageTitle);
   });
 
   it('should reset all filters and get number of order statuses', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfOrderStatuses = await statusesPage.resetAndGetNumberOfLines(page, tableName);
+    numberOfOrderStatuses = await boOrderStatusesPage.resetAndGetNumberOfLines(page, tableName);
     expect(numberOfOrderStatuses).to.be.above(0);
   });
 
   it('should change the items number to 20 per page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo20', baseContext);
 
-    const paginationNumber = await statusesPage.selectPaginationLimit(page, tableName, 20);
+    const paginationNumber = await boOrderStatusesPage.selectPaginationLimit(page, tableName, 20);
     expect(paginationNumber).to.contains('(page 1 / 1)');
   });
 
@@ -97,19 +98,19 @@ describe('BO - Shop Parameters - Order Settings - Statuses : Bulk actions in ord
       it('should go to add new order status group page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToAddOrderStatusPage${index}`, baseContext);
 
-        await statusesPage.goToNewOrderStatusPage(page);
+        await boOrderStatusesPage.goToNewOrderStatusPage(page);
 
-        const pageTitle = await addOrderStatusPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addOrderStatusPage.pageTitleCreate);
+        const pageTitle = await boOrderStatusesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boOrderStatusesCreatePage.pageTitleCreate);
       });
 
       it('should create order status and check result', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `createOrderStatus${index}`, baseContext);
 
-        const textResult = await addOrderStatusPage.setOrderStatus(page, orderStatusData);
-        expect(textResult).to.contains(statusesPage.successfulCreationMessage);
+        const textResult = await boOrderStatusesCreatePage.setOrderStatus(page, orderStatusData);
+        expect(textResult).to.contains(boOrderStatusesPage.successfulCreationMessage);
 
-        const numberOfLinesAfterCreation = await statusesPage.getNumberOfElementInGrid(page, tableName);
+        const numberOfLinesAfterCreation = await boOrderStatusesPage.getNumberOfElementInGrid(page, tableName);
         expect(numberOfLinesAfterCreation).to.be.equal(numberOfOrderStatuses + index + 1);
       });
 
@@ -122,7 +123,7 @@ describe('BO - Shop Parameters - Order Settings - Statuses : Bulk actions in ord
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterForBulkDelete', baseContext);
 
-      await statusesPage.filterTable(
+      await boOrderStatusesPage.filterTable(
         page,
         tableName,
         'input',
@@ -130,10 +131,10 @@ describe('BO - Shop Parameters - Order Settings - Statuses : Bulk actions in ord
         'todelete',
       );
 
-      const numberOfLinesAfterFilter = await statusesPage.getNumberOfElementInGrid(page, tableName);
+      const numberOfLinesAfterFilter = await boOrderStatusesPage.getNumberOfElementInGrid(page, tableName);
 
       for (let i = 1; i <= numberOfLinesAfterFilter; i++) {
-        const textColumn = await statusesPage.getTextColumn(page, tableName, i, 'name');
+        const textColumn = await boOrderStatusesPage.getTextColumn(page, tableName, i, 'name');
         expect(textColumn).to.contains('todelete');
       }
     });
@@ -141,14 +142,14 @@ describe('BO - Shop Parameters - Order Settings - Statuses : Bulk actions in ord
     it('should delete order statuses with Bulk Actions and check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'bulkDeleteStatus', baseContext);
 
-      const deleteTextResult = await statusesPage.bulkDeleteOrderStatuses(page, tableName);
-      expect(deleteTextResult).to.be.contains(statusesPage.successfulDeleteMessage);
+      const deleteTextResult = await boOrderStatusesPage.bulkDeleteOrderStatuses(page, tableName);
+      expect(deleteTextResult).to.be.contains(boOrderStatusesPage.successfulDeleteMessage);
     });
 
     it('should reset all filters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFilterAfterDelete', baseContext);
 
-      const numberOfLinesAfterReset = await statusesPage.resetAndGetNumberOfLines(page, tableName);
+      const numberOfLinesAfterReset = await boOrderStatusesPage.resetAndGetNumberOfLines(page, tableName);
       expect(numberOfLinesAfterReset).to.be.equal(numberOfOrderStatuses);
     });
   });

@@ -128,7 +128,7 @@ class SearchCore
     public const PS_SEARCH_ORDINATE_MAX = -1;
     public const PS_SEARCH_ABSCISSA_MIN = 0.5;
     public const PS_SEARCH_ABSCISSA_MAX = 2;
-    public const PS_DISTANCE_MAX = 8;
+    public const PS_DISTANCE_MAX = 5;
 
     /**
      * Method that takes a raw string (sentence) and extract all keywords it can find.
@@ -196,8 +196,17 @@ class SearchCore
         $string = Tools::strtolower(strip_tags($string));
         $string = html_entity_decode($string, ENT_NOQUOTES, 'utf-8');
         $string = preg_replace('/([' . PREG_CLASS_NUMBERS . ']+)[' . PREG_CLASS_PUNCTUATION . ']+(?=[' . PREG_CLASS_NUMBERS . '])/u', '\1', $string);
-        $string = preg_replace('/[' . PREG_CLASS_SEARCH_EXCLUDE . ']+/u', ' ', $string);
+
+        $terms = explode(' ', $string);
+        // Sanitize terms made up of special characters only
+        foreach ($terms as &$term) {
+            if (preg_match('/^[' . PREG_CLASS_SEARCH_EXCLUDE . ']+$/u', $term)) {
+                $term = preg_replace('/[' . PREG_CLASS_SEARCH_EXCLUDE . ']+/u', ' ', $term);
+            }
+        }
+
         // Now, our string looks something like "prestashop test a-1000".
+        $string = implode(' ', $terms);
 
         if ($indexation) {
             if (!$keepHyphens) {
@@ -214,22 +223,22 @@ class SearchCore
             $query = '
 				SELECT a.alias, a.search
 				FROM `' . _DB_PREFIX_ . 'alias` a
-				WHERE \'' . pSQL($string) . '\' %s AND `active` = 1
+				WHERE \'TERM\' %s AND `active` = 1
             ';
 
             // Check if we can we use '\b' (faster)
             $useICU = (bool) Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->getValue(
                 'SELECT 1 FROM DUAL WHERE \'icu regex\' REGEXP \'\\\\bregex\''
             );
-            $aliases = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS(
-                sprintf(
-                    $query,
-                    $useICU
-                        ? 'REGEXP CONCAT(\'\\\\b\', alias, \'\\\\b\')'
-                        : 'REGEXP CONCAT(\'(^|[[:space:]]|[[:<:]])\', alias, \'([[:space:]]|[[:>:]]|$)\')'
-                )
-            );
 
+            $query = sprintf(
+                $query,
+                $useICU
+                    ? 'REGEXP CONCAT(\'\\\\b\', alias, \'\\\\b\')'
+                    : 'REGEXP CONCAT(\'(^|[[:space:]]|[[:<:]])\', alias, \'([[:space:]]|[[:>:]]|$)\')'
+            );
+            $query = str_replace('/TERM/', pSQL($string), $query);
+            $aliases = Db::getInstance((bool) _PS_USE_SQL_SLAVE_)->executeS($query);
             $words = explode(' ', $string);
             $processed_words = [];
             foreach ($aliases as $alias) {
@@ -1175,6 +1184,7 @@ class SearchCore
         $distance = []; // cache levenshtein distance
         $searchMinWordLength = (int) Configuration::get('PS_SEARCH_MINWORDLEN');
         $psSearchMaxWordLength = (int) Configuration::get('PS_SEARCH_MAX_WORD_LENGTH');
+        $levenshteinMaxWordDifference = (int) Configuration::get('PS_SEARCH_FUZZY_MAX_DIFFERENCE');
 
         if (!self::$totalWordInSearchWordTable) {
             $sql = 'SELECT count(*) FROM `' . _DB_PREFIX_ . 'search_word`;';
@@ -1263,7 +1273,7 @@ class SearchCore
             ['word' => 'initial', 'weight' => 0, 'levenshtein' => 100]
         );
 
-        return $closestWord['levenshtein'] < static::PS_DISTANCE_MAX ? $closestWord['word'] : '';
+        return $closestWord['levenshtein'] <= $levenshteinMaxWordDifference ? $closestWord['word'] : '';
     }
 
     /**

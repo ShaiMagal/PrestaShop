@@ -1,23 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import titlesPage from '@pages/BO/shopParameters/customerSettings/titles';
-import addTitlePage from '@pages/BO/shopParameters/customerSettings/titles/add';
+import {expect} from 'chai';
 
 import {
   boCustomerSettingsPage,
   boDashboardPage,
+  boLoginPage,
+  boTitlesPage,
+  boTitlesCreatePage,
+  type BrowserContext,
   FakerTitle,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_customerSettings_titles_CRUDTitles';
 
@@ -51,7 +46,13 @@ describe('BO - Shop Parameters - Customer Settings : Create, update and delete t
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop Parameters > Customer Settings\' page', async function () {
@@ -73,14 +74,14 @@ describe('BO - Shop Parameters - Customer Settings : Create, update and delete t
 
     await boCustomerSettingsPage.goToTitlesPage(page);
 
-    const pageTitle = await titlesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(titlesPage.pageTitle);
+    const pageTitle = await boTitlesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boTitlesPage.pageTitle);
   });
 
   it('should reset all filters and get number of titles in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfTitles = await titlesPage.resetAndGetNumberOfLines(page);
+    numberOfTitles = await boTitlesPage.resetAndGetNumberOfLines(page);
     expect(numberOfTitles).to.be.above(0);
   });
 
@@ -88,19 +89,19 @@ describe('BO - Shop Parameters - Customer Settings : Create, update and delete t
     it('should go to add new title page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToAddNewTitle', baseContext);
 
-      await titlesPage.goToAddNewTitle(page);
+      await boTitlesPage.goToAddNewTitle(page);
 
-      const pageTitle = await addTitlePage.getPageTitle(page);
-      expect(pageTitle).to.eq(addTitlePage.pageTitleCreate);
+      const pageTitle = await boTitlesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.eq(boTitlesCreatePage.pageTitleCreate);
     });
 
     it('should create title and check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createTitle', baseContext);
 
-      const textResult = await addTitlePage.createEditTitle(page, createTitleData);
-      expect(textResult).to.contains(titlesPage.successfulCreationMessage);
+      const textResult = await boTitlesCreatePage.createEditTitle(page, createTitleData);
+      expect(textResult).to.contains(boTitlesPage.successfulCreationMessage);
 
-      const numberOfTitlesAfterCreation = await titlesPage.getNumberOfElementInGrid(page);
+      const numberOfTitlesAfterCreation = await boTitlesPage.getNumberOfElementInGrid(page);
       expect(numberOfTitlesAfterCreation).to.be.equal(numberOfTitles + 1);
     });
   });
@@ -109,29 +110,29 @@ describe('BO - Shop Parameters - Customer Settings : Create, update and delete t
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterForUpdate', baseContext);
 
-      await titlesPage.resetFilter(page);
-      await titlesPage.filterTitles(page, 'input', 'name', createTitleData.name);
+      await boTitlesPage.resetFilter(page);
+      await boTitlesPage.filterTitles(page, 'input', 'name', createTitleData.name);
 
-      const textEmail = await titlesPage.getTextColumn(page, 1, 'name');
+      const textEmail = await boTitlesPage.getTextColumn(page, 1, 'name');
       expect(textEmail).to.contains(createTitleData.name);
     });
 
     it('should go to edit title page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToEditTitlePage', baseContext);
 
-      await titlesPage.gotoEditTitlePage(page, 1);
+      await boTitlesPage.gotoEditTitlePage(page, 1);
 
-      const pageTitle = await addTitlePage.getPageTitle(page);
-      expect(pageTitle).to.contains(addTitlePage.pageTitleEdit(createTitleData.name));
+      const pageTitle = await boTitlesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boTitlesCreatePage.pageTitleEdit(createTitleData.name));
     });
 
     it('should update title', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateTitle', baseContext);
 
-      const textResult = await addTitlePage.createEditTitle(page, editTitleData);
-      expect(textResult).to.contains(titlesPage.successfulUpdateMessage);
+      const textResult = await boTitlesCreatePage.createEditTitle(page, editTitleData);
+      expect(textResult).to.contains(boTitlesPage.successfulUpdateMessage);
 
-      const numberOfTitlesAfterUpdate = await titlesPage.resetAndGetNumberOfLines(page);
+      const numberOfTitlesAfterUpdate = await boTitlesPage.resetAndGetNumberOfLines(page);
       expect(numberOfTitlesAfterUpdate).to.be.equal(numberOfTitles + 1);
     });
   });
@@ -140,20 +141,20 @@ describe('BO - Shop Parameters - Customer Settings : Create, update and delete t
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterForDelete', baseContext);
 
-      await titlesPage.resetFilter(page);
-      await titlesPage.filterTitles(page, 'input', 'name', editTitleData.name);
+      await boTitlesPage.resetFilter(page);
+      await boTitlesPage.filterTitles(page, 'input', 'name', editTitleData.name);
 
-      const textEmail = await titlesPage.getTextColumn(page, 1, 'name');
+      const textEmail = await boTitlesPage.getTextColumn(page, 1, 'name');
       expect(textEmail).to.contains(editTitleData.name);
     });
 
     it('should delete title', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteTitle', baseContext);
 
-      const textResult = await titlesPage.deleteTitle(page, 1);
-      expect(textResult).to.contains(titlesPage.successfulDeleteMessage);
+      const textResult = await boTitlesPage.deleteTitle(page, 1);
+      expect(textResult).to.contains(boTitlesPage.successfulDeleteMessage);
 
-      const numberOfTitlesAfterDelete = await titlesPage.resetAndGetNumberOfLines(page);
+      const numberOfTitlesAfterDelete = await boTitlesPage.resetAndGetNumberOfLines(page);
       expect(numberOfTitlesAfterDelete).to.be.equal(numberOfTitles);
     });
   });

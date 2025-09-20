@@ -60,7 +60,7 @@ class BulkToggleCarrierStatusHandler implements BulkToggleCarrierStatusHandlerIn
                 if (!$carrier->save()) {
                     throw new CannotToggleCarrierStatusException(sprintf('Cannot toggle status of carrier with id "%d"', $carrierId->getValue()), CannotToggleCarrierStatusException::BULK_TOGGLE);
                 }
-            } catch (PrestaShopException $e) {
+            } catch (PrestaShopException) {
                 throw new CarrierException(sprintf('An error occurred when updating status of carrier with id "%d"', $carrierId->getValue()));
             }
         }

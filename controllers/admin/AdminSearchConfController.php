@@ -41,29 +41,6 @@ class AdminSearchConfControllerCore extends AdminController
 
         parent::__construct();
 
-        // Alias fields
-        $this->addRowAction('edit');
-        $this->addRowAction('delete');
-
-        if (!Tools::getValue('realedit')) {
-            $this->deleted = false;
-        }
-
-        $this->bulk_actions = [
-            'delete' => [
-                'text' => $this->trans('Delete selected', [], 'Admin.Actions'),
-                'confirm' => $this->trans('Delete selected items?', [], 'Admin.Notifications.Info'),
-                'icon' => 'icon-trash',
-            ],
-        ];
-
-        $this->fields_list = [
-            'alias' => ['title' => $this->trans('Aliases', [], 'Admin.Shopparameters.Feature')],
-            // Search is a noum here.
-            'search' => ['title' => $this->trans('Search', [], 'Admin.Shopparameters.Feature')],
-            'active' => ['title' => $this->trans('Status', [], 'Admin.Global'), 'class' => 'fixed-width-sm', 'align' => 'center', 'active' => 'status', 'type' => 'bool', 'orderby' => false],
-        ];
-
         $params = [
             'action' => 'searchCron',
             'ajax' => 1,
@@ -213,6 +190,21 @@ class AdminSearchConfControllerCore extends AdminController
                         ),
                         'hint' => $this->trans(
                             'Note that this option is resource-consuming: the more you search, the longer it takes.',
+                            [],
+                            'Admin.Shopparameters.Help'
+                        ),
+                        'validation' => 'isUnsignedInt',
+                        'type' => 'text',
+                        'cast' => 'intval',
+                    ],
+                    'PS_SEARCH_FUZZY_MAX_DIFFERENCE' => [
+                        'title' => $this->trans(
+                            'Maximum acceptable word difference',
+                            [],
+                            'Admin.Shopparameters.Feature'
+                        ),
+                        'desc' => $this->trans(
+                            'This option defines how much different can the alternative words found by fuzzy search be. Or, how many characters can be different/missing/added. The default value is 5.',
                             [],
                             'Admin.Shopparameters.Help'
                         ),
@@ -423,7 +415,7 @@ class AdminSearchConfControllerCore extends AdminController
                     'required' => true,
                     'hint' => [
                         $this->trans('Enter each alias separated by a comma (e.g. \'prestshop,preztashop,prestasohp\').', [], 'Admin.Shopparameters.Help'),
-                        $this->trans('Forbidden characters: &lt;&gt;;=#{}', [], 'Admin.Shopparameters.Help'),
+                        $this->trans('Forbidden characters: &lt;&gt;{}', [], 'Admin.Shopparameters.Help'),
                     ],
                 ],
                 [

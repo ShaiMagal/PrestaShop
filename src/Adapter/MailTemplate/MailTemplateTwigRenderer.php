@@ -136,7 +136,7 @@ class MailTemplateTwigRenderer implements MailTemplateRendererInterface
 
         try {
             $renderedTemplate = $this->twig->render($layoutPath, $layoutVariables);
-        } catch (LoaderError $e) {
+        } catch (LoaderError) {
             throw new FileNotFoundException(sprintf('Could not find layout file: %s', $layoutPath));
         }
 

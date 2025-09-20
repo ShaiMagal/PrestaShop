@@ -92,7 +92,11 @@ class PriceReductionType extends TranslatorAwareType
         ;
 
         if ($options['currency_select']) {
-            $builder->add('currency', CurrencyChoiceType::class);
+            $builder->add('currency', CurrencyChoiceType::class, [
+                'row_attr' => [
+                    'class' => 'price-reduction-currency-selector',
+                ],
+            ]);
         }
 
         $builder->add('include_tax', TaxInclusionChoiceType::class);

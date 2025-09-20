@@ -1,16 +1,13 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import emailPage from '@pages/BO/advancedParameters/email';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boEmailPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -34,7 +31,13 @@ describe('BO - Advanced Parameters - Email : Send test email', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Advanced Parameters > E-mail\' page', async function () {
@@ -46,14 +49,14 @@ describe('BO - Advanced Parameters - Email : Send test email', async () => {
       boDashboardPage.emailLink,
     );
 
-    const pageTitle = await emailPage.getPageTitle(page);
-    expect(pageTitle).to.contains(emailPage.pageTitle);
+    const pageTitle = await boEmailPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boEmailPage.pageTitle);
   });
 
   it('should check successful message after sending test email', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'sendTestEmail', baseContext);
 
-    const textResult = await emailPage.sendTestEmail(page, global.BO.EMAIL);
-    expect(textResult).to.contains(emailPage.sendTestEmailSuccessfulMessage);
+    const textResult = await boEmailPage.sendTestEmail(page, global.BO.EMAIL);
+    expect(textResult).to.contains(boEmailPage.sendTestEmailSuccessfulMessage);
   });
 });

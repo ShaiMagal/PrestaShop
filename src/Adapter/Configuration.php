@@ -426,11 +426,6 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
      */
     private function buildShopConstraintFromContext(): ShopConstraint
     {
-        @trigger_error(
-            'Not specifying the optional ShopConstraint parameter is deprecated since version 1.7.8.0',
-            E_USER_DEPRECATED
-        );
-
         if (Shop::getContext() === Shop::CONTEXT_SHOP) {
             return ShopConstraint::shop(Shop::getContextShopID());
         } elseif (Shop::getContext() === Shop::CONTEXT_GROUP) {

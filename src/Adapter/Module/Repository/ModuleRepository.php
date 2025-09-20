@@ -59,6 +59,11 @@ class ModuleRepository extends AbstractObjectModelRepository
     private $installedModulesPaths;
 
     /**
+     * @var array
+     */
+    private $presentModulesPaths;
+
+    /**
      * @var string
      */
     protected $rootDir;
@@ -126,6 +131,21 @@ class ModuleRepository extends AbstractObjectModelRepository
         }
 
         return $activeModules;
+    }
+
+    /**
+     * Return present modules (even if those not installed in DB).
+     *
+     * @return array
+     */
+    public function getPresentModules(): array
+    {
+        $presentModules = [];
+        foreach ($this->getModulesFromFolder() as $moduleName => $modulePath) {
+            $presentModules[] = $moduleName;
+        }
+
+        return $presentModules;
     }
 
     /**
@@ -206,6 +226,24 @@ class ModuleRepository extends AbstractObjectModelRepository
         }
 
         return $this->activeModulesPaths;
+    }
+
+    /**
+     * Returns present module file paths.
+     *
+     * @return array<string, string> File paths indexed by module name
+     */
+    public function getPresentModulesPaths(): array
+    {
+        if (null === $this->presentModulesPaths) {
+            $this->presentModulesPaths = [];
+
+            foreach ($this->getModulesFromFolder() as $moduleName => $modulePath) {
+                $this->presentModulesPaths[$moduleName] = $modulePath;
+            }
+        }
+
+        return $this->presentModulesPaths;
     }
 
     /**

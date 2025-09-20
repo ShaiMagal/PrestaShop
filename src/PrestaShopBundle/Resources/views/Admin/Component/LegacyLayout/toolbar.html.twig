@@ -1,4 +1,4 @@
-{#**
+{# **
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
@@ -21,7 +21,7 @@
  * @author    PrestaShop SA and Contributors <contact@prestashop.com>
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- *#}
+ * #}
 <div class="bootstrap">
   <div class="page-head {% if this.currentTabLevel >= 3 %}with-tabs{% endif %}">
     <div class="wrapper clearfix">
@@ -30,6 +30,7 @@
         {# Container #}
         {% if this.breadcrumbs.container is defined and this.breadcrumbs.container.name != '' %}
         <li class="breadcrumb-container">
+          {% if this.breadcrumbs.container.icon is not empty %}<i class="material-icons">{{ this.breadcrumbs.container.icon }}</i>{% endif %}
           {{ this.breadcrumbs.container.name|escape }}
         </li>
         {% endif %}
@@ -37,6 +38,7 @@
         {# Current Tab #}
         {% if this.breadcrumbs.tab is defined and this.breadcrumbs.tab.name != '' %}
         <li class="breadcrumb-current">
+          {% if this.breadcrumbs.tab.icon is not empty %}<i class="material-icons">{{ this.breadcrumbs.tab.icon }}</i>{% endif %}
           {% if this.breadcrumbs.tab.href != '' %}<a href="{{ this.breadcrumbs.tab.href|escape }}">{% endif %}
             {{ this.breadcrumbs.tab.name|escape }}
           {% if this.breadcrumbs.tab.href != '' %}</a>{% endif %}
@@ -106,6 +108,13 @@
         </div>
       </div>
       {% endblock %}
+      {% block pageSubTitle %}
+        {% if this.subTitle is not empty %}
+          <h4 class="page-subtitle">
+            {{ this.subTitle }}
+          </h4>
+        {% endif %}
+      {% endblock %}
   </div>
 
     {% if this.currentTabLevel >= 3 %}
@@ -119,7 +128,7 @@
               id="subtab-{{ tab.attributes.class_name }}"
               {% if tab.attributes.current %}class="current"{% endif %}
               data-submenu="{{ tab.attributes.id_tab }}">
-              {{ tab.name}}
+              {{ tab.name }}
               <span class="notification-container">
                 <span class="notification-counter"></span>
               </span>

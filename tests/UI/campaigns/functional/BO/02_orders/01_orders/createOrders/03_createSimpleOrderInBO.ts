@@ -1,18 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import addOrderPage from '@pages/BO/orders/add';
-import orderPageCustomerBlock from '@pages/BO/orders/view/customerBlock';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  boOrdersCreatePage,
+  boOrdersViewBlockCustomersPage,
   boOrdersViewBlockProductsPage,
+  type BrowserContext,
   dataAddresses,
   dataCarriers,
   dataCustomers,
@@ -20,11 +19,9 @@ import {
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_orders_createOrders_createSimpleOrderInBO';
 
@@ -77,7 +74,13 @@ describe('BO - Orders - Create order : Create simple order in BO', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Orders > Orders\' page', async function () {
@@ -99,15 +102,15 @@ describe('BO - Orders - Create order : Create simple order in BO', async () => {
 
     await boOrdersPage.goToCreateOrderPage(page);
 
-    const pageTitle = await addOrderPage.getPageTitle(page);
-    expect(pageTitle).to.contains(addOrderPage.pageTitle);
+    const pageTitle = await boOrdersCreatePage.getPageTitle(page);
+    expect(pageTitle).to.contains(boOrdersCreatePage.pageTitle);
   });
 
   describe('Create order and check result', async () => {
     it('should create the order', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createOrder', baseContext);
 
-      await addOrderPage.createOrder(page, orderToMake);
+      await boOrdersCreatePage.createOrder(page, orderToMake);
 
       const pageTitle = await boOrdersViewBlockProductsPage.getPageTitle(page);
       expect(pageTitle).to.contain(boOrdersViewBlockProductsPage.pageTitle);
@@ -130,7 +133,7 @@ describe('BO - Orders - Create order : Create simple order in BO', async () => {
     it('should check order shipping address', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkShippingAddress', baseContext);
 
-      const shippingAddress = await orderPageCustomerBlock.getShippingAddress(page);
+      const shippingAddress = await boOrdersViewBlockCustomersPage.getShippingAddress(page);
       expect(shippingAddress)
         .to.contain(orderToMake.deliveryAddress.firstName)
         .and.to.contain(orderToMake.deliveryAddress.lastName)
@@ -143,7 +146,7 @@ describe('BO - Orders - Create order : Create simple order in BO', async () => {
     it('should check order invoice address', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkInvoiceAddress', baseContext);
 
-      const invoiceAddress = await orderPageCustomerBlock.getInvoiceAddress(page);
+      const invoiceAddress = await boOrdersViewBlockCustomersPage.getInvoiceAddress(page);
       expect(invoiceAddress)
         .to.contain(orderToMake.deliveryAddress.firstName)
         .and.to.contain(orderToMake.deliveryAddress.lastName)

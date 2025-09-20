@@ -84,7 +84,7 @@ class BulkDeleteCartHandler extends AbstractBulkCommandHandler implements BulkDe
         try {
             $this->orderRepository->getByCartId($id);
             throw new CannotDeleteOrderedCartException(sprintf('Cart "%s" with order cannot be deleted.', $id->getValue()));
-        } catch (OrderNotFoundException $e) {
+        } catch (OrderNotFoundException) {
             // Cart is not linked to any order, we can safely delete it
             $this->cartRepository->delete($id);
         }

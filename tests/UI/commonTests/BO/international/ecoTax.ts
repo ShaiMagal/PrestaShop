@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import taxesPage from '@pages/BO/international/taxes';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boTaxesPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -34,23 +30,29 @@ function enableEcoTaxTest(baseContext: string = 'commonTests-enableEcoTaxTest'):
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'International > Taxes\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToTaxesPage', baseContext);
 
       await boDashboardPage.goToSubMenu(page, boDashboardPage.internationalParentLink, boDashboardPage.taxesLink);
-      await taxesPage.closeSfToolBar(page);
+      await boTaxesPage.closeSfToolBar(page);
 
-      const pageTitle = await taxesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(taxesPage.pageTitle);
+      const pageTitle = await boTaxesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boTaxesPage.pageTitle);
     });
 
     it('should enable ecotax', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'enableEcoTax', baseContext);
 
-      const textResult = await taxesPage.enableEcoTax(page, true);
+      const textResult = await boTaxesPage.enableEcoTax(page, true);
       expect(textResult).to.be.equal('Update successful');
     });
   });
@@ -73,23 +75,29 @@ function disableEcoTaxTest(baseContext: string = 'commonTests-disableEcoTaxTest'
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'International > Taxes\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToTaxesPage', baseContext);
 
       await boDashboardPage.goToSubMenu(page, boDashboardPage.internationalParentLink, boDashboardPage.taxesLink);
-      await taxesPage.closeSfToolBar(page);
+      await boTaxesPage.closeSfToolBar(page);
 
-      const pageTitle = await taxesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(taxesPage.pageTitle);
+      const pageTitle = await boTaxesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boTaxesPage.pageTitle);
     });
 
     it('should disable Ecotax', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'disableEcoTax', baseContext);
 
-      const textResult = await taxesPage.enableEcoTax(page, false);
+      const textResult = await boTaxesPage.enableEcoTax(page, false);
       expect(textResult).to.be.equal('Update successful');
     });
   });

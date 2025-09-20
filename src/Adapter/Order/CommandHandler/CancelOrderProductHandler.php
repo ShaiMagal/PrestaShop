@@ -127,7 +127,7 @@ final class CancelOrderProductHandler extends AbstractOrderCommandHandler implem
             throw new InvalidCancelProductException(InvalidCancelProductException::NO_REFUNDS);
         }
 
-        foreach ($command->getCancelledProducts() as $orderDetailId => $quantity) {
+        foreach ($command->getCancelledProducts() as $quantity) {
             if ((int) $quantity <= 0) {
                 throw new InvalidCancelProductException(InvalidCancelProductException::INVALID_QUANTITY);
             }

@@ -39,7 +39,7 @@ class CarrierLogoFileUploader implements CarrierLogoFileUploaderInterface
     {
         try {
             move_uploaded_file($filePath, _PS_SHIP_IMG_DIR_ . $id . '.jpg');
-        } catch (FileException $e) {
+        } catch (FileException) {
             throw new CarrierLogoUploadFailedException(sprintf('Failed to copy the file %s.', $filePath));
         }
     }

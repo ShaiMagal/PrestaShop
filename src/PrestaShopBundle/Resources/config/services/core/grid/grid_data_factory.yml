@@ -95,8 +95,6 @@ services:
 
   prestashop.core.grid.data_provider.customer_discount:
     class: 'PrestaShop\PrestaShop\Core\Grid\Data\Factory\CustomerDiscountGridDataFactory'
-    arguments:
-      - "@=service('prestashop.adapter.legacy.context').getContext().customer"
 
   prestashop.core.grid.data_provider.customer_address:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
@@ -343,6 +341,14 @@ services:
       - '@prestashop.core.hook.dispatcher'
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'catalog_price_rule'
+
+  prestashop.core.grid.data.factory.discount:
+    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
+    arguments:
+      - '@prestashop.core.grid.query_builder.discount'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'discount'
 
   prestashop.core.grid.data.factory.catalog_price_rule:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
@@ -630,6 +636,12 @@ services:
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'search_aliases'
 
+  prestashop.core.grid.data_provider.alias_decorator:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Data\Factory\AliasGridDataFactoryDecorator'
+    arguments:
+      - '@prestashop.core.grid.data.factory.alias'
+      - '@PrestaShop\PrestaShop\Adapter\Alias\Repository\AliasRepository'
+
   prestashop.core.grid.data.factory.feature:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
     arguments:
@@ -693,3 +705,34 @@ services:
       - '@prestashop.core.hook.dispatcher'
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'image_type'
+
+  PrestaShop\PrestaShop\Core\Grid\Data\Factory\Shipment:
+    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Query\ShipmentQueryBuilder'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'shipment'
+
+
+  PrestaShop\PrestaShop\Core\Grid\Data\Factory\ShipmentGridDataFactory:
+    autowire: true
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Data\Factory\Shipment'
+      - '@prestashop.core.localization.locale.context_locale'
+      - '@PrestaShop\PrestaShop\Core\Context\CurrencyContext'
+      - '@prestashop.adapter.legacy.configuration'
+
+
+  PrestaShop\PrestaShop\Core\Grid\Data\Factory\Tag:
+    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Query\TagQueryBuilder'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'tag'
+
+  PrestaShop\PrestaShop\Core\Grid\Data\Factory\TagGridDataFactory:
+    autowire: true
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Data\Factory\Tag'

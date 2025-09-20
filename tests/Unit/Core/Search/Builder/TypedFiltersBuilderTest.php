@@ -190,9 +190,9 @@ class TypedFiltersBuilderTest extends TestCase
         $builderMock
             ->expects(null === $expectedConfig ? $this->never() : $this->once())
             ->method('setConfig')
-            ->withConsecutive(
-                [$this->equalTo($expectedConfig)]
-            )
+            ->willReturnCallback(function (array $config) use ($expectedConfig) {
+                $this->assertEquals($expectedConfig, $config);
+            })
         ;
 
         return $builderMock;

@@ -89,7 +89,6 @@ class AddressFormatCore extends ObjectModel
         'short_description',
         'link_rewrite',
         'meta_title',
-        'meta_keywords',
         'display_tax_label',
         'need_zip_code',
         'contains_states',
@@ -643,8 +642,6 @@ class AddressFormatCore extends ObjectModel
      * @param int $idCountry Country ID
      *
      * @return false|string|null Address format
-     *
-     * @since 1.7.0
      */
     protected function getFormatDB($idCountry)
     {

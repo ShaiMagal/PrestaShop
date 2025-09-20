@@ -1,28 +1,22 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import preferencesPage from '@pages/BO/shipping/preferences';
+import {expect} from 'chai';
 
 import {
   boCarriersPage,
   boDashboardPage,
+  boLoginPage,
+  boShippingPreferencesPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   foClassicCartPage,
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shipping_preferences_carrierOptions_updateCarriersSortOption';
 
@@ -53,7 +47,13 @@ describe('BO - Shipping - Preferences : Update \'sort carriers by\' and \'Order 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shipping > Carriers\' page', async function () {
@@ -98,7 +98,7 @@ describe('BO - Shipping - Preferences : Update \'sort carriers by\' and \'Order 
         const isActionPerformed = await boCarriersPage.setStatus(page, 1, true);
 
         if (isActionPerformed) {
-          const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+          const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
           expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
         }
 
@@ -124,10 +124,10 @@ describe('BO - Shipping - Preferences : Update \'sort carriers by\' and \'Order 
         boDashboardPage.shippingLink,
         boDashboardPage.shippingPreferencesLink,
       );
-      await preferencesPage.closeSfToolBar(page);
+      await boShippingPreferencesPage.closeSfToolBar(page);
 
-      const pageTitle = await preferencesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(preferencesPage.pageTitle);
+      const pageTitle = await boShippingPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boShippingPreferencesPage.pageTitle);
     });
 
     const sortByPosition: string[] = [
@@ -145,15 +145,15 @@ describe('BO - Shipping - Preferences : Update \'sort carriers by\' and \'Order 
       it(`should set sort by '${test.args.sortBy}' and order by '${test.args.orderBy}' in BO`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `setDefaultCarrier${index}`, baseContext);
 
-        const textResult = await preferencesPage.setCarrierSortOrderBy(page, test.args.sortBy, test.args.orderBy);
-        expect(textResult).to.contain(preferencesPage.successfulUpdateMessage);
+        const textResult = await boShippingPreferencesPage.setCarrierSortOrderBy(page, test.args.sortBy, test.args.orderBy);
+        expect(textResult).to.contain(boShippingPreferencesPage.successfulUpdateMessage);
       });
 
       it('should view my shop', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${index}`, baseContext);
 
         // Click on view my shop
-        page = await preferencesPage.viewMyShop(page);
+        page = await boShippingPreferencesPage.viewMyShop(page);
         // Change FO language
         await foClassicHomePage.changeLanguage(page, 'en');
 
@@ -210,8 +210,8 @@ describe('BO - Shipping - Preferences : Update \'sort carriers by\' and \'Order 
 
         page = await foClassicCheckoutPage.closePage(browserContext, page, 0);
 
-        const pageTitle = await preferencesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(preferencesPage.pageTitle);
+        const pageTitle = await boShippingPreferencesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boShippingPreferencesPage.pageTitle);
       });
     });
   });
@@ -246,7 +246,7 @@ describe('BO - Shipping - Preferences : Update \'sort carriers by\' and \'Order 
         const isActionPerformed = await boCarriersPage.setStatus(page, 1, false);
 
         if (isActionPerformed) {
-          const resultMessage = await boCarriersPage.getAlertSuccessBlockContent(page);
+          const resultMessage = await boCarriersPage.getAlertSuccessBlockParagraphContent(page);
           expect(resultMessage).to.contains(boCarriersPage.successfulUpdateStatusMessage);
         }
 

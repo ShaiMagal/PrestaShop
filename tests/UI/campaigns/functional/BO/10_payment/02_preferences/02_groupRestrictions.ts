@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import login steps
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import addCustomerPage from '@pages/BO/customers/add';
-import preferencesPage from '@pages/BO/payment/preferences';
+import {expect} from 'chai';
 
 import {
   boCustomersPage,
+  boCustomersCreatePage,
   boDashboardPage,
+  boLoginPage,
+  boPaymentPreferencesPage,
+  type BrowserContext,
   dataCustomers,
   FakerAddress,
   FakerCustomer,
@@ -19,11 +15,9 @@ import {
   foClassicCheckoutPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_payment_preferences_groupRestrictions';
 
@@ -48,7 +42,13 @@ describe('BO - Payment - Preferences : Configure group restrictions', async () =
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('Create two customers in visitor and guest groups', async () => {
@@ -82,15 +82,15 @@ describe('BO - Payment - Preferences : Configure group restrictions', async () =
 
         await boCustomersPage.goToAddNewCustomerPage(page);
 
-        const pageTitle = await addCustomerPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addCustomerPage.pageTitleCreate);
+        const pageTitle = await boCustomersCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCustomersCreatePage.pageTitleCreate);
       });
 
       it(`should create customer n°${index + 1} and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `createCustomer${index}`, baseContext);
 
         // Create customer
-        const textResult = await addCustomerPage.createEditCustomer(page, test.args.customerData);
+        const textResult = await boCustomersCreatePage.createEditCustomer(page, test.args.customerData);
         expect(textResult).to.equal(boCustomersPage.successfulCreationMessage);
 
         // Check number of customers
@@ -110,8 +110,8 @@ describe('BO - Payment - Preferences : Configure group restrictions', async () =
         boCustomersPage.preferencesLink,
       );
 
-      const pageTitle = await preferencesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(preferencesPage.pageTitle);
+      const pageTitle = await boPaymentPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boPaymentPreferencesPage.pageTitle);
     });
 
     [
@@ -172,20 +172,20 @@ describe('BO - Payment - Preferences : Configure group restrictions', async () =
               baseContext,
             );
 
-            const result = await preferencesPage.setGroupRestrictions(
+            const result = await boPaymentPreferencesPage.setGroupRestrictions(
               page,
               group.args.id,
               test.args.paymentModuleToEdit,
               test.args.check,
             );
-            expect(result).to.contains(preferencesPage.successfulUpdateMessage);
+            expect(result).to.contains(boPaymentPreferencesPage.successfulUpdateMessage);
           });
 
           it('should view my shop', async function () {
             await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${index}${groupIndex}`, baseContext);
 
             // Click on view my shop
-            page = await preferencesPage.viewMyShop(page);
+            page = await boPaymentPreferencesPage.viewMyShop(page);
             // Logout if already login
             if (index === 0 && groupIndex !== 0) {
               await foClassicHomePage.logout(page);
@@ -291,8 +291,8 @@ describe('BO - Payment - Preferences : Configure group restrictions', async () =
             // Close current tab
             page = await foClassicHomePage.closePage(browserContext, page, 0);
 
-            const pageTitle = await preferencesPage.getPageTitle(page);
-            expect(pageTitle).to.contains(preferencesPage.pageTitle);
+            const pageTitle = await boPaymentPreferencesPage.getPageTitle(page);
+            expect(pageTitle).to.contains(boPaymentPreferencesPage.pageTitle);
           });
         });
       });
@@ -303,10 +303,10 @@ describe('BO - Payment - Preferences : Configure group restrictions', async () =
     it('should go to \'Customers > Customers\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToCustomersPageToDelete', baseContext);
 
-      await preferencesPage.goToSubMenu(
+      await boPaymentPreferencesPage.goToSubMenu(
         page,
-        preferencesPage.customersParentLink,
-        preferencesPage.customersLink,
+        boPaymentPreferencesPage.customersParentLink,
+        boPaymentPreferencesPage.customersLink,
       );
 
       const pageTitle = await boCustomersPage.getPageTitle(page);

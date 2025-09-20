@@ -111,7 +111,7 @@ class EmployeeSessionRepository extends AbstractObjectModelRepository
         foreach ($employeeSessionIds as $employeeSessionId) {
             try {
                 $this->delete($employeeSessionId);
-            } catch (CannotDeleteEmployeeSessionException $e) {
+            } catch (CannotDeleteEmployeeSessionException) {
                 $failedIds[] = $employeeSessionId->getValue();
             }
         }
@@ -145,7 +145,7 @@ class EmployeeSessionRepository extends AbstractObjectModelRepository
                 ->setParameter('dateUpdated', $date->format('Y-m-d H:i:s'));
 
             $qb->executeStatement();
-        } catch (CoreException $e) {
+        } catch (CoreException) {
             throw new CannotClearEmployeeSessionException();
         }
     }

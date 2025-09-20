@@ -112,13 +112,13 @@ final class DoctrinePositionUpdateHandler implements PositionUpdateHandlerInterf
 
                 try {
                     $qb->executeStatement();
-                } catch (Exception $e) {
+                } catch (Exception) {
                     throw new PositionUpdateException('Could not update #%i', 'Admin.Catalog.Notification', [$rowId]);
                 }
                 ++$positionIndex;
             }
             $this->connection->commit();
-        } catch (ConnectionException $e) {
+        } catch (ConnectionException) {
             $this->connection->rollBack();
 
             throw new PositionUpdateException('Could not update.', 'Admin.Catalog.Notification');

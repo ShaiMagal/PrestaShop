@@ -1,16 +1,13 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import emailPage from '@pages/BO/advancedParameters/email';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boEmailPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -35,7 +32,13 @@ describe('BO - Advanced Parameters - E-mail : Enable/Disable log emails', async 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Advanced Parameters > E-mail\' page', async function () {
@@ -47,8 +50,8 @@ describe('BO - Advanced Parameters - E-mail : Enable/Disable log emails', async 
       boDashboardPage.emailLink,
     );
 
-    const pageTitle = await emailPage.getPageTitle(page);
-    expect(pageTitle).to.contains(emailPage.pageTitle);
+    const pageTitle = await boEmailPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boEmailPage.pageTitle);
   });
 
   const tests = [
@@ -60,14 +63,14 @@ describe('BO - Advanced Parameters - E-mail : Enable/Disable log emails', async 
     it(`should ${test.args.action} log emails`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}LogEmails`, baseContext);
 
-      const result = await emailPage.setLogEmails(page, test.args.exist);
-      expect(result).to.contains(emailPage.successfulUpdateMessage);
+      const result = await boEmailPage.setLogEmails(page, test.args.exist);
+      expect(result).to.contains(boEmailPage.successfulUpdateMessage);
     });
 
     it('should check the existence of E-mail table', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `checkEmailTable${index}`, baseContext);
 
-      const isVisible = await emailPage.isLogEmailsTableVisible(page);
+      const isVisible = await boEmailPage.isLogEmailsTableVisible(page);
       expect(isVisible).to.equal(test.args.exist);
     });
   });

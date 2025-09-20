@@ -4,16 +4,15 @@ import testContext from '@utils/testContext';
 // Import commonTests
 import importFileTest from '@commonTests/BO/advancedParameters/importFile';
 import {bulkDeleteCustomersTest} from '@commonTests/BO/customers/customer';
-import loginCommon from '@commonTests/BO/loginBO';
 
-// Import data
-import ImportCustomers from '@data/import/customers';
-
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
 import {
   boCustomersPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
+  dataImportCustomers,
+  type Page,
   utilsCore,
   utilsFile,
   utilsPlaywright,
@@ -39,14 +38,14 @@ describe('BO - Customers - Customers : Pagination and sort customers table', asy
   const fileName: string = 'customers.csv';
 
   // Pre-condition: Import list of categories
-  importFileTest(fileName, ImportCustomers.entity, `${baseContext}_preTest_1`);
+  importFileTest(fileName, dataImportCustomers.entity, `${baseContext}_preTest_1`);
 
   // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
     // Create csv file with all customers data
-    await utilsFile.createCSVFile('.', fileName, ImportCustomers);
+    await utilsFile.createCSVFile('.', fileName, dataImportCustomers);
   });
 
   after(async () => {
@@ -58,7 +57,13 @@ describe('BO - Customers - Customers : Pagination and sort customers table', asy
   // 1 : Go to customers page
   describe('Go to \'Customers > Customers\' page', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Customers > Customers\' page', async function () {

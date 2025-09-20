@@ -49,6 +49,18 @@ class CarrierTaxRuleGroupFeatureContext extends AbstractDomainFeatureContext
     }
 
     /**
+     * @When I set no tax rule for carrier :reference
+     */
+    public function removeTaxRule(string $reference): void
+    {
+        $initialCarrierId = $this->getSharedStorage()->get($reference);
+        $carrierId = $this->editCarrierTaxRule($reference, null, null);
+        if ($carrierId) {
+            Assert::assertEquals($initialCarrierId, $carrierId->getValue(), 'Carrier ID was expected the remain the same');
+        }
+    }
+
+    /**
      * @When I set tax rule :taxRulesGroupReference for carrier :reference I get a new carrier referenced as :newReference
      */
     public function editTaxRuleWithIdUpdate(string $reference, string $newReference, string $taxRulesGroupReference): void
@@ -60,14 +72,19 @@ class CarrierTaxRuleGroupFeatureContext extends AbstractDomainFeatureContext
         }
     }
 
-    protected function editCarrierTaxRule(string $reference, ?string $newReference, string $taxRulesGroupReference): ?CarrierId
+    protected function editCarrierTaxRule(string $reference, ?string $newReference, ?string $taxRulesGroupReference): ?CarrierId
     {
         $carrierId = $this->referenceToId($reference);
 
         try {
+            if (null === $taxRulesGroupReference) {
+                $taxRulesGroupId = 0;
+            } else {
+                $taxRulesGroupId = 'wrong-tax-rules' === $taxRulesGroupReference ? 4242 : $this->referenceToId($taxRulesGroupReference);
+            }
             $command = new SetCarrierTaxRuleGroupCommand(
                 $carrierId,
-                'wrong-tax-rules' === $taxRulesGroupReference ? 4242 : $this->referenceToId($taxRulesGroupReference),
+                $taxRulesGroupId,
                 ShopConstraint::allShops()
             );
 

@@ -105,7 +105,7 @@ final class ManufacturerImageUploader extends AbstractImageUploader implements I
                     unlink($currentLogo);
                 }
             }
-        } catch (PrestaShopException $e) {
+        } catch (PrestaShopException) {
             throw new ImageOptimizationException('Unable to resize one or more of your pictures.');
         }
 

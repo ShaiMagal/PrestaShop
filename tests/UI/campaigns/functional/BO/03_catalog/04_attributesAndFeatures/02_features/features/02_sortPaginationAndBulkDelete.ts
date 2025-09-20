@@ -1,19 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {createFeatureTest, bulkDeleteFeaturesTest} from '@commonTests/BO/catalog/features';
 
-// Import pages
-import attributesPage from '@pages/BO/catalog/attributes';
-import featuresPage from '@pages/BO/catalog/features';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  boAttributesPage,
   boDashboardPage,
+  boFeaturesPage,
+  boLoginPage,
+  type BrowserContext,
   FakerFeature,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -55,7 +53,13 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
   // 2 : Pagination
   describe('Pagination next and previous', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Attributes & Features\' page', async function () {
@@ -66,49 +70,49 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
         boDashboardPage.catalogParentLink,
         boDashboardPage.attributesAndFeaturesLink,
       );
-      await attributesPage.closeSfToolBar(page);
+      await boAttributesPage.closeSfToolBar(page);
 
-      const pageTitle = await attributesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(attributesPage.pageTitle);
+      const pageTitle = await boAttributesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boAttributesPage.pageTitle);
     });
 
     it('should go to Features page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFeaturesPage', baseContext);
 
-      await attributesPage.goToFeaturesPage(page);
+      await boAttributesPage.goToFeaturesPage(page);
 
-      const pageTitle = await featuresPage.getPageTitle(page);
-      expect(pageTitle).to.contains(featuresPage.pageTitle);
+      const pageTitle = await boFeaturesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boFeaturesPage.pageTitle);
 
-      numberOfFeatures = await featuresPage.resetAndGetNumberOfLines(page);
+      numberOfFeatures = await boFeaturesPage.resetAndGetNumberOfLines(page);
       expect(numberOfFeatures).to.be.above(0);
     });
 
     it('should change the items number to 20 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo20', baseContext);
 
-      const paginationNumber = await featuresPage.selectPaginationLimit(page, 20);
+      const paginationNumber = await boFeaturesPage.selectPaginationLimit(page, 20);
       expect(paginationNumber).to.equal(1);
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await featuresPage.paginationNext(page);
+      const paginationNumber = await boFeaturesPage.paginationNext(page);
       expect(paginationNumber).to.equal(2);
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await featuresPage.paginationPrevious(page);
+      const paginationNumber = await boFeaturesPage.paginationPrevious(page);
       expect(paginationNumber).to.equal(1);
     });
 
     it('should change the items number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo50', baseContext);
 
-      const paginationNumber = await featuresPage.selectPaginationLimit(page, 50);
+      const paginationNumber = await boFeaturesPage.selectPaginationLimit(page, 50);
       expect(paginationNumber).to.equal(1);
     });
   });
@@ -152,11 +156,11 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await featuresPage.getAllRowsColumnContent(page, test.args.sortBy, sortColumnName);
+        const nonSortedTable = await boFeaturesPage.getAllRowsColumnContent(page, test.args.sortBy, sortColumnName);
 
-        await featuresPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        await boFeaturesPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await featuresPage.getAllRowsColumnContent(page, test.args.sortBy, test.args.sortBy);
+        const sortedTable = await boFeaturesPage.getAllRowsColumnContent(page, test.args.sortBy, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));

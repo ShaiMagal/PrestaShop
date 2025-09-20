@@ -195,7 +195,6 @@ class TaxRulesGroupCore extends ObjectModel
 
         $sql .= Shop::addSqlAssociation('tax_rules_group', 'g') . ' WHERE g.deleted = 0'
             . ($onlyActive ? ' AND g.`active` = 1' : '')
-            . ($onlyActive ? ' AND g.`active` = 1' : '')
             . ' ORDER BY name ASC';
 
         return Db::getInstance()->executeS($sql);

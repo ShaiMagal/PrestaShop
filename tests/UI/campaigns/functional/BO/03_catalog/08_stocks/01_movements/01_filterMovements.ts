@@ -1,16 +1,9 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {createEmployeeTest, deleteEmployeeTest} from '@commonTests/BO/advancedParameters/employee';
 import cleanTableStockMovements from '@commonTests/BO/catalog/stock';
-
-// Import pages
-// Import BO pages
-import addProductPage from '@pages/BO/catalog/products/add';
-import combinationsTab from '@pages/BO/catalog/products/add/combinationsTab';
-import movementsPage from '@pages/BO/catalog/stocks/movements';
 
 import {
   boDashboardPage,
@@ -18,7 +11,11 @@ import {
   boOrdersPage,
   boOrdersViewBlockProductsPage,
   boProductsPage,
+  boProductsCreatePage,
+  boProductsCreateTabCombinationsPage,
   boStockPage,
+  boStockMovementsPage,
+  type BrowserContext,
   dataCategories,
   dataCustomers,
   dataOrderStatuses,
@@ -30,13 +27,11 @@ import {
   foClassicCheckoutOrderConfirmationPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   type ProductCombinationBulk,
   utilsDate,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_catalog_stocks_movements_filterMovements';
 
@@ -87,7 +82,13 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
   describe('Check all filters', async () => {
     describe('BO - Bulk edit quantity by setting input value', async () => {
       it('should login in BO', async function () {
-        await loginCommon.loginBO(this, page);
+        await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+        await boLoginPage.goTo(page, global.BO.URL);
+        await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+        const pageTitle = await boDashboardPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boDashboardPage.pageTitle);
       });
 
       it('should go to \'Catalog > Stocks\' page', async function () {
@@ -118,19 +119,19 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boStockPage.goToSubTabMovements(page);
 
-        const pageTitle = await movementsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(movementsPage.pageTitle);
+        const pageTitle = await boStockMovementsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
       });
 
       it('should check the filter "Movement Type"', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkFilterMovementType', baseContext);
 
-        await movementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
 
-        const isAdvancedFiltersVisible = await movementsPage.isAdvancedFiltersVisible(page);
+        const isAdvancedFiltersVisible = await boStockMovementsPage.isAdvancedFiltersVisible(page);
         expect(isAdvancedFiltersVisible).to.be.eq(true);
 
-        const choices = await movementsPage.getAdvancedFiltersMovementTypeChoices(page);
+        const choices = await boStockMovementsPage.getAdvancedFiltersMovementTypeChoices(page);
         expect(choices).to.be.length(2);
         expect(choices).to.contains('None');
         expect(choices).to.contains('Employee Edition');
@@ -141,7 +142,7 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it('should go to FO', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToFo', baseContext);
 
-        page = await movementsPage.viewMyShop(page);
+        page = await boStockMovementsPage.viewMyShop(page);
         await foClassicHomePage.changeLanguage(page, 'en');
 
         const pageTitle = await foClassicHomePage.getPageTitle(page);
@@ -212,8 +213,8 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
         // Close tab and init other page objects with new current tab
         page = await foClassicCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
 
-        const pageTitle = await movementsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(movementsPage.pageTitle);
+        const pageTitle = await boStockMovementsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
       });
     });
 
@@ -269,16 +270,16 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boStockPage.goToSubTabMovements(page);
 
-        const pageTitle = await movementsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(movementsPage.pageTitle);
+        const pageTitle = await boStockMovementsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
       });
 
       it('should check the filter "Movement Type"', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkFilterMovementTypeAfterFOOrder', baseContext);
 
-        await movementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
 
-        const choices = await movementsPage.getAdvancedFiltersMovementTypeChoices(page);
+        const choices = await boStockMovementsPage.getAdvancedFiltersMovementTypeChoices(page);
         expect(choices).to.be.length(3);
         expect(choices).to.contains('None');
         expect(choices).to.contains('Employee Edition');
@@ -290,30 +291,30 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it('should set the filter "Movement Type" to "Customer Order', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'setFilterMovementTypeCustomerOrder', baseContext);
 
-        await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersMovementType(page, 'Customer Order');
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersMovementType(page, 'Customer Order');
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.equal(1);
       });
 
       it('should check the filtered row', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkFilteredRow', baseContext);
 
-        const name = await movementsPage.getTextColumnFromTable(page, 1, 'product_name');
+        const name = await boStockMovementsPage.getTextColumnFromTable(page, 1, 'product_name');
         expect(name).to.contains(dataProducts.demo_1.name);
 
-        const reference = await movementsPage.getTextColumnFromTable(page, 1, 'reference');
+        const reference = await boStockMovementsPage.getTextColumnFromTable(page, 1, 'reference');
         expect(reference).to.be.equal(`${dataProducts.demo_1.reference} ${dataProducts.demo_1.reference}`);
 
-        const quantity = await movementsPage.getTextColumnFromTable(page, 1, 'quantity');
+        const quantity = await boStockMovementsPage.getTextColumnFromTable(page, 1, 'quantity');
         expect(quantity).to.be.equal('-1');
       });
 
       it('should click on the link from the Column Type', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'clickLinkColumnType', baseContext);
 
-        page = await movementsPage.clickOnMovementTypeLink(page, 1);
+        page = await boStockMovementsPage.clickOnMovementTypeLink(page, 1);
 
         const pageTitle = await boOrdersViewBlockProductsPage.getPageTitle(page);
         expect(pageTitle).to.contains(boOrdersViewBlockProductsPage.pageTitle);
@@ -324,16 +325,16 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         page = await boOrdersViewBlockProductsPage.closePage(browserContext, page, 0);
 
-        const pageTitle = await movementsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(movementsPage.pageTitle);
+        const pageTitle = await boStockMovementsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
       });
 
       it('should reset the filter "Movement Type"', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'resetFilterMovementType', baseContext);
 
-        await movementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.resetAdvancedFilter(page);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.gt(1);
       });
     });
@@ -342,7 +343,7 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it(`should logout from the employee "${global.BO.EMAIL}"`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'logoutFromBOPage', baseContext);
 
-        await loginCommon.logoutBO(this, page);
+        await boDashboardPage.logoutBO(page);
 
         const pageTitle = await boLoginPage.getPageTitle(page);
         expect(pageTitle).to.contains(boLoginPage.pageTitle);
@@ -351,7 +352,8 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it(`should login from the employee "${employeeData.email}`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'loginBOPageWithEmployee', baseContext);
 
-        await loginCommon.loginBO(this, page, employeeData.email, employeeData.password);
+        await boLoginPage.goTo(page, global.BO.URL);
+        await boLoginPage.successLogin(page, employeeData.email, employeeData.password);
 
         const pageTitle = await boDashboardPage.getPageTitle(page);
         expect(pageTitle).to.contains(boDashboardPage.pageTitle);
@@ -385,36 +387,39 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boProductsPage.goToProductPage(page, 1);
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should go to the Combinations tab', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToCombinationsTab', baseContext);
 
-        await addProductPage.goToTab(page, 'combinations');
+        await boProductsCreatePage.goToTab(page, 'combinations');
 
-        const isTabActive = await addProductPage.isTabActive(page, 'combinations');
+        const isTabActive = await boProductsCreatePage.isTabActive(page, 'combinations');
         expect(isTabActive).to.eq(true);
       });
 
       it(`should add ${editCombinationsData.stocks.quantity} to 4 combinations`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'addQuantityToAllCombinations', baseContext);
 
-        const isBulkActionsButtonVisible = await combinationsTab.selectAllCombinations(page);
+        const isBulkActionsButtonVisible = await boProductsCreateTabCombinationsPage.selectAllCombinations(page);
         expect(isBulkActionsButtonVisible).to.be.eq(true);
 
-        const modalTitle = await combinationsTab.clickOnEditCombinationsByBulkActions(page);
-        expect(modalTitle).to.equal(combinationsTab.editCombinationsModalTitle(4));
+        const modalTitle = await boProductsCreateTabCombinationsPage.clickOnEditCombinationsByBulkActions(page);
+        expect(modalTitle).to.equal(boProductsCreateTabCombinationsPage.editCombinationsModalTitle(4));
 
-        const successMessage = await combinationsTab.editCombinationsByBulkActions(page, editCombinationsData);
-        expect(successMessage).to.equal(combinationsTab.editCombinationsModalMessage(4));
+        const successMessage = await boProductsCreateTabCombinationsPage.editCombinationsByBulkActions(
+          page,
+          editCombinationsData,
+        );
+        expect(successMessage).to.equal(boProductsCreateTabCombinationsPage.editCombinationsModalMessage(4));
       });
 
       it(`should logout from the employee "${employeeData.email}"`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'logoutFromBOPageWithEmployee', baseContext);
 
-        await loginCommon.logoutBO(this, page);
+        await boDashboardPage.logoutBO(page);
 
         const pageTitle = await boLoginPage.getPageTitle(page);
         expect(pageTitle).to.contains(boLoginPage.pageTitle);
@@ -423,7 +428,8 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it(`should login from the employee "${global.BO.EMAIL}"`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'loginBOPage', baseContext);
 
-        await loginCommon.loginBO(this, page);
+        await boLoginPage.goTo(page, global.BO.URL);
+        await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
 
         const pageTitle = await boDashboardPage.getPageTitle(page);
         expect(pageTitle).to.contains(boDashboardPage.pageTitle);
@@ -450,8 +456,8 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boStockPage.goToSubTabMovements(page);
 
-        const pageTitle = await movementsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(movementsPage.pageTitle);
+        const pageTitle = await boStockMovementsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
       });
 
       // @todo : https://github.com/PrestaShop/PrestaShop/issues/34337
@@ -460,14 +466,14 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         this.skip();
 
-        /*await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
+        /*await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.gt(0);
 
         for (let i = 1; i <= numElements; i++) {
-          const textColumn = await movementsPage.getTextColumnFromTable(page, i, 'product_name');
+          const textColumn = await boStockMovementsPage.getTextColumnFromTable(page, i, 'product_name');
           expect(textColumn).to.contains(dataProducts.demo_8.name);
         }*/
       });
@@ -475,9 +481,9 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it('should reset the filter "Employee"', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'resetFilterEmployee', baseContext);
 
-        await movementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.resetAdvancedFilter(page);
 
-        numElementsBeforeFilter = await movementsPage.getNumberOfElementInGrid(page);
+        numElementsBeforeFilter = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElementsBeforeFilter).to.be.gt(0);
       });
     });
@@ -486,44 +492,44 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
       it(`should set the filter "Period" to "${dateYesterday}"`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'setFilterPeriodToYesterday', baseContext);
 
-        await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
-        await movementsPage.setAdvancedFiltersDate(page, 'inf', dateYesterday, true);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
+        await boStockMovementsPage.setAdvancedFiltersDate(page, 'inf', dateYesterday, true);
 
-        const textContent = await movementsPage.getTextForEmptyTable(page);
-        expect(textContent).to.be.eq(movementsPage.emptyTableMessage);
+        const textContent = await boStockMovementsPage.getTextForEmptyTable(page);
+        expect(textContent).to.be.eq(boStockMovementsPage.emptyTableMessage);
       });
 
       it(`should set the filter "Period" to "${dateToday}"`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'setFilterPeriodToToday', baseContext);
 
-        await movementsPage.resetAdvancedFilter(page);
-        await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
-        await movementsPage.setAdvancedFiltersDate(page, 'sup', dateToday, true);
+        await boStockMovementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
+        await boStockMovementsPage.setAdvancedFiltersDate(page, 'sup', dateToday, true);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.eq(numElementsBeforeFilter);
       });
 
       it(`should set the filter "Period" to "${dateTomorrow}"`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'setFilterPeriodToTomorrow', baseContext);
 
-        await movementsPage.resetAdvancedFilter(page);
-        await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
-        await movementsPage.setAdvancedFiltersDate(page, 'sup', dateTomorrow, true);
+        await boStockMovementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
+        await boStockMovementsPage.setAdvancedFiltersDate(page, 'sup', dateTomorrow, true);
 
-        const textContent = await movementsPage.getTextForEmptyTable(page);
-        expect(textContent).to.be.eq(movementsPage.emptyTableMessage);
+        const textContent = await boStockMovementsPage.getTextForEmptyTable(page);
+        expect(textContent).to.be.eq(boStockMovementsPage.emptyTableMessage);
       });
 
       it('should reset the filter "Period"', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'resetFilterPeriod', baseContext);
 
-        await movementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.resetAdvancedFilter(page);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.eq(numElementsBeforeFilter);
       });
     });
@@ -535,12 +541,12 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         this.skip();
 
-        await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
-        await movementsPage.setAdvancedFiltersCategory(page, dataCategories.clothes.name, true);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersEmployee(page, `${employeeData.lastName} ${employeeData.firstName}`);
+        await boStockMovementsPage.setAdvancedFiltersCategory(page, dataCategories.clothes.name, true);
 
-        const textContent = await movementsPage.getTextForEmptyTable(page);
-        expect(textContent).to.be.eq(movementsPage.emptyTableMessage);
+        const textContent = await boStockMovementsPage.getTextForEmptyTable(page);
+        expect(textContent).to.be.eq(boStockMovementsPage.emptyTableMessage);
       });
 
       it('should reset the filter "Categories"', async function () {
@@ -548,9 +554,9 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         this.skip();
 
-        await movementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.resetAdvancedFilter(page);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.eq(numElementsBeforeFilter);
       });
     });
@@ -585,17 +591,17 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boProductsPage.goToProductPage(page, 1);
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should disable the product', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'disableProduct', baseContext);
 
-        await addProductPage.setProductStatus(page, false);
+        await boProductsCreatePage.setProductStatus(page, false);
 
-        const updateProductMessage = await addProductPage.saveProduct(page);
-        expect(updateProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+        const updateProductMessage = await boProductsCreatePage.saveProduct(page);
+        expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
       });
     });
 
@@ -624,8 +630,8 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boStockPage.goToSubTabMovements(page);
 
-        const pageTitle = await movementsPage.getPageTitle(page);
-        expect(pageTitle).to.contains(movementsPage.pageTitle);
+        const pageTitle = await boStockMovementsPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boStockMovementsPage.pageTitle);
       });
 
       it('should set the filter "Status" to "Disabled"', async function () {
@@ -633,10 +639,10 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         this.skip();
 
-        await movementsPage.setAdvancedFiltersVisible(page);
-        await movementsPage.setAdvancedFiltersStatus(page, false);
+        await boStockMovementsPage.setAdvancedFiltersVisible(page);
+        await boStockMovementsPage.setAdvancedFiltersStatus(page, false);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.eq(4);
       });
 
@@ -645,9 +651,9 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         this.skip();
 
-        await movementsPage.resetAdvancedFilter(page);
+        await boStockMovementsPage.resetAdvancedFilter(page);
 
-        const numElements = await movementsPage.getNumberOfElementInGrid(page);
+        const numElements = await boStockMovementsPage.getNumberOfElementInGrid(page);
         expect(numElements).to.be.eq(numElementsBeforeFilter);
       });
     });
@@ -682,17 +688,17 @@ describe('BO - Stocks - Movements : Filter by category, movement type, employee 
 
         await boProductsPage.goToProductPage(page, 1);
 
-        const pageTitle = await addProductPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addProductPage.pageTitle);
+        const pageTitle = await boProductsCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
       });
 
       it('should enable the product', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'enableProduct', baseContext);
 
-        await addProductPage.setProductStatus(page, true);
+        await boProductsCreatePage.setProductStatus(page, true);
 
-        const updateProductMessage = await addProductPage.saveProduct(page);
-        expect(updateProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+        const updateProductMessage = await boProductsCreatePage.saveProduct(page);
+        expect(updateProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
       });
     });
   });

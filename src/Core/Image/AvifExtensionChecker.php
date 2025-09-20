@@ -63,7 +63,7 @@ class AvifExtensionChecker
             try {
                 $image = imagecreatetruecolor(250, 250);
                 imageavif($image, 'test-avif-support.avif');
-            } catch (AvifUnavailableException $e) {
+            } catch (AvifUnavailableException) {
                 $this->isAvailable = false;
             } finally {
                 @unlink('test-avif-support.avif');

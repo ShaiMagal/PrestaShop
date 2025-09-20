@@ -1,31 +1,23 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import {moduleConfigurationPage} from '@pages/BO/modules/moduleConfiguration';
-// Import FO pages
-import {accountIdentityPage} from '@pages/FO/classic/myAccount/identity';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boLoginPage,
+  boModuleConfigurationPage,
   boModuleManagerPage,
+  type BrowserContext,
   dataCustomers,
   FakerModule,
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
+  foClassicMyInformationsPage,
   modPsEmailSubscriptionBoMain,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_classic_newsletter_subscribeNewsletter';
 
 /*
@@ -99,21 +91,27 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
       await foClassicHomePage.goToMyAccountPage(page);
       await foClassicMyAccountPage.goToInformationPage(page);
 
-      const pageTitle = await accountIdentityPage.getPageTitle(page);
-      expect(pageTitle).to.equal(accountIdentityPage.pageTitle);
+      const pageTitle = await foClassicMyInformationsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foClassicMyInformationsPage.pageTitle);
     });
 
     it('should unsubscribe from newsletter', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'unsubscribeFromNewsLetter', baseContext);
 
-      const unsubscribeAlertText = await accountIdentityPage.unsubscribeNewsletter(page, dataCustomers.johnDoe.password);
-      expect(unsubscribeAlertText).to.contains(accountIdentityPage.successfulUpdateMessage);
+      const unsubscribeAlertText = await foClassicMyInformationsPage.unsubscribeNewsletter(page, dataCustomers.johnDoe.password);
+      expect(unsubscribeAlertText).to.contains(foClassicMyInformationsPage.successfulUpdateMessage);
     });
   });
 
   describe('Go to BO to check if correctly unsubscribed', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to module manager page', async function () {
@@ -143,8 +141,8 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
       await boModuleManagerPage.searchModule(page, moduleInformation);
       await boModuleManagerPage.goToConfigurationPage(page, moduleInformation.tag);
 
-      const moduleConfigurationPageSubtitle = await moduleConfigurationPage.getPageSubtitle(page);
-      expect(moduleConfigurationPageSubtitle).to.contains(moduleInformation.name);
+      const boModuleConfigurationPageSubtitle = await boModuleConfigurationPage.getPageSubtitle(page);
+      expect(boModuleConfigurationPageSubtitle).to.contains(moduleInformation.name);
     });
 
     it('should check if user is unsubscribed from newsletter', async function () {
@@ -155,7 +153,12 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
     });
 
     it('should logout from BO', async function () {
-      await loginCommon.logoutBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'logoutBO', baseContext);
+
+      await boDashboardPage.logoutBO(page);
+
+      const pageTitle = await boLoginPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLoginPage.pageTitle);
     });
   });
 
@@ -179,7 +182,13 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
 
   describe('Go to BO to check if correctly subscribed', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to module manager page', async function () {
@@ -202,8 +211,8 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
       await boModuleManagerPage.searchModule(page, moduleInformation);
       await boModuleManagerPage.goToConfigurationPage(page, moduleInformation.tag);
 
-      const moduleConfigurationPageSubtitle = await moduleConfigurationPage.getPageSubtitle(page);
-      expect(moduleConfigurationPageSubtitle).to.contains(moduleInformation.name);
+      const boModuleConfigurationPageSubtitle = await boModuleConfigurationPage.getPageSubtitle(page);
+      expect(boModuleConfigurationPageSubtitle).to.contains(moduleInformation.name);
     });
 
     it('should check if previous customer subscription is visible in table', async function () {
@@ -214,7 +223,12 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
     });
 
     it('should logout from BO', async function () {
-      await loginCommon.logoutBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'logoutBO', baseContext);
+
+      await boDashboardPage.logoutBO(page);
+
+      const pageTitle = await boLoginPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLoginPage.pageTitle);
     });
   });
 });

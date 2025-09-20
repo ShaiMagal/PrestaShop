@@ -2,19 +2,18 @@
 import testContext from '@utils/testContext';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import hookModule from '@commonTests/BO/design/positions';
-
-// Import pages
-import positionsPage from '@pages/BO/design/positions';
 
 import {
   boDashboardPage,
+  boDesignPositionsPage,
+  boLoginPage,
+  type BrowserContext,
   dataModules,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_design_positions_unhookModuleInListByBulkActions';
 
@@ -37,7 +36,13 @@ describe('BO - Design - Positions : Unhook module in list by Bulk actions', asyn
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Design > Positions\' page', async function () {
@@ -48,31 +53,31 @@ describe('BO - Design - Positions : Unhook module in list by Bulk actions', asyn
         boDashboardPage.designParentLink,
         boDashboardPage.positionsLink,
       );
-      await positionsPage.closeSfToolBar(page);
+      await boDesignPositionsPage.closeSfToolBar(page);
 
-      const pageTitle = await positionsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(positionsPage.pageTitle);
+      const pageTitle = await boDesignPositionsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDesignPositionsPage.pageTitle);
     });
 
     it('should select a hook and display the selection box', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'selectHookModule', baseContext);
 
-      const isSelectionBoxVisible = await positionsPage.selectHookModule(
+      const isSelectionBoxVisible = await boDesignPositionsPage.selectHookModule(
         page,
         'GraphEngine',
         dataModules.psBanner.tag,
       );
       expect(isSelectionBoxVisible).to.equal(true);
 
-      const numSelectedHook = await positionsPage.getSelectedHookCount(page);
+      const numSelectedHook = await boDesignPositionsPage.getSelectedHookCount(page);
       expect(numSelectedHook).to.be.equal(1);
     });
 
     it('should unhook the selection', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'unhookSelection', baseContext);
 
-      const textResult = await positionsPage.unhookSelection(page);
-      expect(textResult).to.equal(positionsPage.messageModuleRemovedFromHook);
+      const textResult = await boDesignPositionsPage.unhookSelection(page);
+      expect(textResult).to.equal(boDesignPositionsPage.messageModuleRemovedFromHook);
     });
   });
 });

@@ -1,24 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import FO pages
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
+import {expect} from 'chai';
 
 import {
   boCustomerSettingsPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCustomers,
   foClassicHomePage,
   foClassicLoginPage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_customerSettings_customers_redisplayCartAtLogin';
 
@@ -45,7 +40,13 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable re-display c
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop parameters > Customer Settings\' page', async function () {
@@ -118,7 +119,7 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable re-display c
       await testContext.addContextItem(this, 'testIdentifier', `addProductToTheCart_${index}`, baseContext);
 
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foClassicModalBlockCartPage.proceedToCheckout(page);
 
       // Check number of product in cart
       const notificationsNumber = await foClassicHomePage.getCartNotificationsNumber(page);

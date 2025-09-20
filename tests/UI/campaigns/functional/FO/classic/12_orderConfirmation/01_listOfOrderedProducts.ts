@@ -1,15 +1,11 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import FO pages
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataPaymentMethods,
@@ -18,13 +14,12 @@ import {
   foClassicCheckoutPage,
   foClassicCheckoutOrderConfirmationPage,
   foClassicHomePage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 // context
 const baseContext: string = 'functional_FO_classic_orderConfirmation_listOfOrderedProducts';
@@ -77,7 +72,7 @@ describe('FO - Order confirmation : List of ordered products', async () => {
       await foClassicSearchResultsPage.quickViewProduct(page, 1);
 
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.closeBlockCartModal(page);
+      await foClassicModalBlockCartPage.closeBlockCartModal(page);
     });
 
     it(`should add the product ${
@@ -88,7 +83,7 @@ describe('FO - Order confirmation : List of ordered products', async () => {
       await foClassicSearchResultsPage.quickViewProduct(page, 1);
 
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.closeBlockCartModal(page);
+      await foClassicModalBlockCartPage.closeBlockCartModal(page);
     });
 
     it(`should add the product ${dataProducts.demo_12.name} to cart by quick view`, async function () {
@@ -98,7 +93,7 @@ describe('FO - Order confirmation : List of ordered products', async () => {
       await foClassicSearchResultsPage.quickViewProduct(page, 1);
 
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foClassicModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foClassicCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foClassicCartPage.pageTitle);
@@ -173,7 +168,13 @@ describe('FO - Order confirmation : List of ordered products', async () => {
   describe('Get the order reference from the BO', async () => {
     it('should login in BO', async function () {
       page = await utilsPlaywright.newTab(browserContext);
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Orders > Orders\' page', async function () {

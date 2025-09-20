@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import monitoringPage from '@pages/BO/catalog/monitoring';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boMonitoringPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -35,7 +31,13 @@ function bulkDeleteProductsTest(tableID: string, baseContext: string = `commonTe
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Monitoring\' page', async function () {
@@ -47,21 +49,21 @@ function bulkDeleteProductsTest(tableID: string, baseContext: string = `commonTe
         boDashboardPage.monitoringLink,
       );
 
-      const pageTitle = await monitoringPage.getPageTitle(page);
-      expect(pageTitle).to.contains(monitoringPage.pageTitle);
+      const pageTitle = await boMonitoringPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boMonitoringPage.pageTitle);
     });
 
     it('should bulk delete elements on table', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'bulkDeleteElements', baseContext);
 
-      const textResult = await monitoringPage.bulkDeleteElementsInTable(page, tableID);
-      expect(textResult).to.equal(monitoringPage.successfulDeleteMessage);
+      const textResult = await boMonitoringPage.bulkDeleteElementsInTable(page, tableID);
+      expect(textResult).to.equal(boMonitoringPage.successfulDeleteMessage);
     });
 
     it('should check number of elements on table', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'reset', baseContext);
 
-      const numberOfElementsAfterDelete = await monitoringPage.resetAndGetNumberOfLines(page, tableID);
+      const numberOfElementsAfterDelete = await boMonitoringPage.resetAndGetNumberOfLines(page, tableID);
       expect(numberOfElementsAfterDelete).to.be.equal(0);
     });
   });

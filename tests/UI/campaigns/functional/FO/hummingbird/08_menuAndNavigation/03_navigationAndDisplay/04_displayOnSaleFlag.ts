@@ -1,21 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-
-// Import BO pages
-import addProductPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
+  type BrowserContext,
   FakerProduct,
   foHummingbirdProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -62,7 +58,13 @@ describe('FO - Navigation and display : Display \'On sale\' flag', async () => {
   // Pre-condition : Create product with on sale flag
   describe('BO - Create product with enabled flag \'On sale\'', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -85,15 +87,15 @@ describe('FO - Navigation and display : Display \'On sale\' flag', async () => {
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      const createProductMessage = await addProductPage.setProduct(page, onSaleProductData);
-      expect(createProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, onSaleProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -101,7 +103,7 @@ describe('FO - Navigation and display : Display \'On sale\' flag', async () => {
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToShopFO2', baseContext);
 
-      page = await addProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(onSaleProductData.name);

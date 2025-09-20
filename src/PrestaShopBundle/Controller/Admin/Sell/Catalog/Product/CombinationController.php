@@ -116,7 +116,7 @@ class CombinationController extends PrestaShopAdminController
                 ]);
             }
         } catch (Exception $e) {
-            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
+            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
         }
 
         return $this->render('@PrestaShop/Admin/Sell/Catalog/Product/Combination/edit.html.twig', [
@@ -287,7 +287,7 @@ class CombinationController extends PrestaShopAdminController
                     'shop_id' => $this->getShopContext()->getId(),
                 ]);
             } catch (CombinationNotFoundException $e) {
-                $errors[] = $this->getErrorMessageForException($e, $this->getErrorMessages($e));
+                $errors[] = $this->getErrorMessageForException($e, $this->getErrorMessages());
                 continue;
             }
 
@@ -310,7 +310,7 @@ class CombinationController extends PrestaShopAdminController
                     ], Response::HTTP_BAD_REQUEST);
                 }
             } catch (CombinationException $e) {
-                $errors[] = $this->getErrorMessageForException($e, $this->getErrorMessages($e));
+                $errors[] = $this->getErrorMessageForException($e, $this->getErrorMessages());
             }
         }
 
@@ -449,7 +449,7 @@ class CombinationController extends PrestaShopAdminController
             ));
         } catch (Exception $e) {
             return $this->json([
-                'error' => $this->getErrorMessageForException($e, $this->getErrorMessages($e)),
+                'error' => $this->getErrorMessageForException($e, $this->getErrorMessages()),
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -487,7 +487,7 @@ class CombinationController extends PrestaShopAdminController
             }
 
             return $this->json([
-                'error' => $this->getErrorMessageForException($e, $this->getErrorMessages($e)),
+                'error' => $this->getErrorMessageForException($e, $this->getErrorMessages()),
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -509,7 +509,7 @@ class CombinationController extends PrestaShopAdminController
                 'Error for combination %combination_id%: %error_message%',
                 [
                     '%combination_id%' => $productId,
-                    '%error_message%' => $this->getErrorMessageForException($productException, $this->getErrorMessages($productException)),
+                    '%error_message%' => $this->getErrorMessageForException($productException, $this->getErrorMessages()),
                 ],
                 'Admin.Catalog.Notification'
             );
@@ -553,7 +553,7 @@ class CombinationController extends PrestaShopAdminController
             }
         } catch (Exception $e) {
             return $this->json(
-                ['errors' => [$this->getErrorMessageForException($e, $this->getErrorMessages($e))]],
+                ['errors' => [$this->getErrorMessageForException($e, $this->getErrorMessages())]],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
@@ -589,7 +589,7 @@ class CombinationController extends PrestaShopAdminController
         } catch (Exception $e) {
             return $this->json([
                 'error' => [
-                    $this->getErrorMessageForException($e, $this->getErrorMessages($e)),
+                    $this->getErrorMessageForException($e, $this->getErrorMessages()),
                 ],
             ], Response::HTTP_BAD_REQUEST);
         }
@@ -681,11 +681,9 @@ class CombinationController extends PrestaShopAdminController
     /**
      * Gets an error by exception class and its code.
      *
-     * @param Exception $e
-     *
      * @return array
      */
-    private function getErrorMessages(Exception $e): array
+    private function getErrorMessages(): array
     {
         return [
             ProductConstraintException::class => [

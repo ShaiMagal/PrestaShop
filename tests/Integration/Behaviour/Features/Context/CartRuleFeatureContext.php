@@ -239,6 +239,16 @@ class CartRuleFeatureContext extends AbstractPrestaShopFeatureContext
     }
 
     /**
+     * @Then I should get cart rule validation error
+     *
+     * @return void
+     */
+    public function assertGenericCartRuleValidationError(): void
+    {
+        $this->assertLastErrorIs(CartRuleValidityException::class);
+    }
+
+    /**
      * @Given discount code :cartRuleReference is not applied to my cart
      *
      * @param string $code

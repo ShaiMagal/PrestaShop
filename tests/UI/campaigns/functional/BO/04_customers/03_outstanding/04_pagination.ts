@@ -1,27 +1,23 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import {disableB2BTest, enableB2BTest} from '@commonTests/BO/shopParameters/b2b';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
 
-// Import pages
-import outstandingPage from '@pages/BO/customers/outstanding';
-
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  boOutstandingPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
   dataProducts,
   FakerOrder,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_customers_outstanding_pagination';
 
@@ -71,7 +67,13 @@ describe('BO - Customers - Outstanding : Pagination of the outstanding page', as
   });
   describe('PRE-TEST: Create 11 orders on FO and change their status to payment accepted on BO', async () => {
     it('should login to BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     const creationTests: number[] = new Array(numberOfOrdersToCreate).fill(0, 0, numberOfOrdersToCreate);
@@ -123,23 +125,23 @@ describe('BO - Customers - Outstanding : Pagination of the outstanding page', as
         boDashboardPage.outstandingLink,
       );
 
-      const pageTitle = await outstandingPage.getPageTitle(page);
-      expect(pageTitle).to.contains(outstandingPage.pageTitle);
+      const pageTitle = await boOutstandingPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boOutstandingPage.pageTitle);
     });
 
     it('should reset all filters and get the number of outstanding', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFilterAndGetNumberOfOutstanding');
 
-      await outstandingPage.resetFilter(page);
+      await boOutstandingPage.resetFilter(page);
 
-      numberOutstanding = await outstandingPage.getNumberOutstanding(page);
+      numberOutstanding = await boOutstandingPage.getNumberOutstanding(page);
       expect(numberOutstanding).to.be.above(numberOfOrdersToCreate);
     });
 
     it('should change the items number to 10 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo10', baseContext);
 
-      const paginationNumber = await outstandingPage.selectPaginationLimit(page, 10);
+      const paginationNumber = await boOutstandingPage.selectPaginationLimit(page, 10);
       expect(paginationNumber, `Number of pages is not correct (page 1 / ${Math.ceil(numberOutstanding / 10)})`)
         .to.contains(`(page 1 / ${Math.ceil(numberOutstanding / 10)})`);
     });
@@ -147,7 +149,7 @@ describe('BO - Customers - Outstanding : Pagination of the outstanding page', as
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await outstandingPage.paginationNext(page);
+      const paginationNumber = await boOutstandingPage.paginationNext(page);
       expect(paginationNumber, `Number of pages is not (page 2 / ${Math.ceil(numberOutstanding / 10)})`)
         .to.contains(`(page 2 / ${Math.ceil(numberOutstanding / 10)})`);
     });
@@ -155,7 +157,7 @@ describe('BO - Customers - Outstanding : Pagination of the outstanding page', as
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await outstandingPage.paginationPrevious(page);
+      const paginationNumber = await boOutstandingPage.paginationPrevious(page);
       expect(paginationNumber, `Number of pages is not (page 1 / ${Math.ceil(numberOutstanding / 10)})`)
         .to.contains(`(page 1 / ${Math.ceil(numberOutstanding / 10)})`);
     });
@@ -163,7 +165,7 @@ describe('BO - Customers - Outstanding : Pagination of the outstanding page', as
     it('should change the items number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo50', baseContext);
 
-      const paginationNumber = await outstandingPage.selectPaginationLimit(page, 50);
+      const paginationNumber = await boOutstandingPage.selectPaginationLimit(page, 50);
       expect(paginationNumber, 'Number of pages is not correct').to.contains('(page 1 / 1)');
     });
   });

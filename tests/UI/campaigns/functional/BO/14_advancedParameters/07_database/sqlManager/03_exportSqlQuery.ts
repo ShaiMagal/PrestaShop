@@ -1,19 +1,16 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import sqlManagerPage from '@pages/BO/advancedParameters/database/sqlManager';
-import addSqlQueryPage from '@pages/BO/advancedParameters/database/sqlManager/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
+  boSqlManagerPage,
+  boSqlManagerCreatePage,
+  type BrowserContext,
   dataSqlTables,
   FakerSqlQuery,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -44,7 +41,13 @@ describe('BO - Advanced Parameters - Database : Export SQL query', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   // Go to database page
@@ -58,14 +61,14 @@ describe('BO - Advanced Parameters - Database : Export SQL query', async () => {
     );
     await boDashboardPage.closeSfToolBar(page);
 
-    const pageTitle = await sqlManagerPage.getPageTitle(page);
-    expect(pageTitle).to.contains(sqlManagerPage.pageTitle);
+    const pageTitle = await boSqlManagerPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boSqlManagerPage.pageTitle);
   });
 
   it('should reset all filters', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'firstResetFilter', baseContext);
 
-    numberOfSQLQueries = await sqlManagerPage.resetAndGetNumberOfLines(page);
+    numberOfSQLQueries = await boSqlManagerPage.resetAndGetNumberOfLines(page);
     if (numberOfSQLQueries !== 0) {
       expect(numberOfSQLQueries).to.be.above(0);
     }
@@ -75,17 +78,17 @@ describe('BO - Advanced Parameters - Database : Export SQL query', async () => {
     it('should go to \'New SQL query\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToNewSQLQueryPage', baseContext);
 
-      await sqlManagerPage.goToNewSQLQueryPage(page);
+      await boSqlManagerPage.goToNewSQLQueryPage(page);
 
-      const pageTitle = await addSqlQueryPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addSqlQueryPage.pageTitle);
+      const pageTitle = await boSqlManagerCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boSqlManagerCreatePage.pageTitle);
     });
 
     it('should create new SQL query', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createNewSQLQuery', baseContext);
 
-      const textResult = await addSqlQueryPage.createEditSQLQuery(page, sqlQueryData);
-      expect(textResult).to.equal(addSqlQueryPage.successfulCreationMessage);
+      const textResult = await boSqlManagerCreatePage.createEditSQLQuery(page, sqlQueryData);
+      expect(textResult).to.equal(boSqlManagerCreatePage.successfulCreationMessage);
     });
   });
 
@@ -93,7 +96,7 @@ describe('BO - Advanced Parameters - Database : Export SQL query', async () => {
     it('should export sql query to a csv file', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'exportSqlQuery', baseContext);
 
-      filePath = await sqlManagerPage.exportSqlResultDataToCsv(page);
+      filePath = await boSqlManagerPage.exportSqlResultDataToCsv(page);
 
       const doesFileExist = await utilsFile.doesFileExist(filePath, 5000);
       expect(doesFileExist, 'Export of data has failed').to.eq(true);
@@ -102,7 +105,7 @@ describe('BO - Advanced Parameters - Database : Export SQL query', async () => {
     it('should check existence of query result data in csv file', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkSqlQueryInCsvFile', baseContext);
 
-      const numberOfQuery = await sqlManagerPage.getNumberOfElementInGrid(page);
+      const numberOfQuery = await boSqlManagerPage.getNumberOfElementInGrid(page);
 
       for (let row = 1; row <= numberOfQuery; row++) {
         const textExist = await utilsFile.isTextInFile(filePath, fileContent, true, true);
@@ -115,20 +118,20 @@ describe('BO - Advanced Parameters - Database : Export SQL query', async () => {
     it('should filter list by name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterToDeleteSQLQuery', baseContext);
 
-      await sqlManagerPage.resetFilter(page);
-      await sqlManagerPage.filterSQLQuery(page, 'name', sqlQueryData.name);
+      await boSqlManagerPage.resetFilter(page);
+      await boSqlManagerPage.filterSQLQuery(page, 'name', sqlQueryData.name);
 
-      const sqlQueryName = await sqlManagerPage.getTextColumnFromTable(page, 1, 'name');
+      const sqlQueryName = await boSqlManagerPage.getTextColumnFromTable(page, 1, 'name');
       expect(sqlQueryName).to.contains(sqlQueryData.name);
     });
 
     it('should delete SQL query', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteSQLQuery', baseContext);
 
-      const textResult = await sqlManagerPage.deleteSQLQuery(page, 1);
-      expect(textResult).to.equal(sqlManagerPage.successfulDeleteMessage);
+      const textResult = await boSqlManagerPage.deleteSQLQuery(page, 1);
+      expect(textResult).to.equal(boSqlManagerPage.successfulDeleteMessage);
 
-      const numberOfSQLQueriesAfterDelete = await sqlManagerPage.resetAndGetNumberOfLines(page);
+      const numberOfSQLQueriesAfterDelete = await boSqlManagerPage.resetAndGetNumberOfLines(page);
       expect(numberOfSQLQueriesAfterDelete).to.be.equal(numberOfSQLQueries);
     });
   });

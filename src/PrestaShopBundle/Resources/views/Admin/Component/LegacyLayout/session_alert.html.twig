@@ -1,4 +1,4 @@
-{#**
+{# **
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
@@ -21,7 +21,7 @@
  * @author    PrestaShop SA and Contributors <contact@prestashop.com>
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- *#}
+ * #}
 
 {% if this.confirmationMessage is not empty %}
 <div class="bootstrap">
@@ -66,7 +66,7 @@
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <ul id="infos_block" class="list-unstyled">
       {% for info in this.informations %}
-      <li>{{ info }}</li>
+      <li>{{ info|raw }}</li>
       {% endfor %}
     </ul>
   </div>
@@ -87,12 +87,12 @@
 <div class="bootstrap">
   <div class="alert alert-warning">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    {% if this.warnings|length > 1%}
+    {% if this.warnings|length > 1 %}
     <h4>{{ 'There are %d warnings:'|trans({'%d': this.warnings|length}) }}</h4>
     {% endif %}
     <ul class="list-unstyled">
       {% for warning in this.warnings %}
-      <li>{{ warning }}</li>
+      <li>{{ warning|raw }}</li>
       {% endfor %}
     </ul>
   </div>

@@ -1,23 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import common tests
 import importFileTest from '@commonTests/BO/advancedParameters/importFile';
 import bulkDeleteCategoriesTest from '@commonTests/BO/catalog/category';
-import loginCommon from '@commonTests/BO/loginBO';
 
-// Import pages
-import categoriesPage from '@pages/BO/catalog/categories';
-import monitoringPage from '@pages/BO/catalog/monitoring';
-
-// Import data
-import ImportCategories from '@data/import/categories';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  boCategoriesPage,
   boDashboardPage,
+  boLoginPage,
+  boMonitoringPage,
+  type BrowserContext,
   type CategoryFilter,
+  dataImportCategories,
+  type Page,
   utilsCore,
   utilsFile,
   utilsPlaywright,
@@ -46,14 +42,14 @@ describe('BO - Catalog - Monitoring : Sort and pagination list of empty categori
   const categoryData: CategoryFilter = {filterBy: 'name', value: 'category'};
 
   // Pre-condition: Import empty category list
-  importFileTest(fileName, ImportCategories.entity, baseContext);
+  importFileTest(fileName, dataImportCategories.entity, baseContext);
 
   // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
     // Create csv file with all data
-    await utilsFile.createCSVFile('.', fileName, ImportCategories);
+    await utilsFile.createCSVFile('.', fileName, dataImportCategories);
   });
 
   after(async () => {
@@ -65,26 +61,32 @@ describe('BO - Catalog - Monitoring : Sort and pagination list of empty categori
   // 1 - Sort list of empty categories
   describe('Sort list of empty categories', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Monitoring\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToMonitoringPageToSort', baseContext);
 
-      await categoriesPage.goToSubMenu(
+      await boCategoriesPage.goToSubMenu(
         page,
         boDashboardPage.catalogParentLink,
         boDashboardPage.monitoringLink,
       );
 
-      const pageTitle = await monitoringPage.getPageTitle(page);
-      expect(pageTitle).to.contains(monitoringPage.pageTitle);
+      const pageTitle = await boMonitoringPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boMonitoringPage.pageTitle);
     });
 
     it('should check that the number of imported categories is greater than 10', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkNumberOfCategories', baseContext);
 
-      const numberOfEmptyCategories = await monitoringPage.resetAndGetNumberOfLines(page, 'empty_category');
+      const numberOfEmptyCategories = await boMonitoringPage.resetAndGetNumberOfLines(page, 'empty_category');
       expect(numberOfEmptyCategories).to.be.at.least(10);
     });
 
@@ -113,15 +115,15 @@ describe('BO - Catalog - Monitoring : Sort and pagination list of empty categori
         async function () {
           await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-          const nonSortedTable = await monitoringPage.getAllRowsColumnContent(
+          const nonSortedTable = await boMonitoringPage.getAllRowsColumnContent(
             page,
             tableName,
             test.args.sortBy,
           );
 
-          await monitoringPage.sortTable(page, 'empty_category', test.args.sortBy, test.args.sortDirection);
+          await boMonitoringPage.sortTable(page, 'empty_category', test.args.sortBy, test.args.sortDirection);
 
-          const sortedTable = await monitoringPage.getAllRowsColumnContent(
+          const sortedTable = await boMonitoringPage.getAllRowsColumnContent(
             page,
             tableName,
             test.args.sortBy,
@@ -157,28 +159,28 @@ describe('BO - Catalog - Monitoring : Sort and pagination list of empty categori
     it('should change the items number to 10 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo10', baseContext);
 
-      const paginationNumber = await monitoringPage.selectPaginationLimit(page, tableName, 10);
+      const paginationNumber = await boMonitoringPage.selectPaginationLimit(page, tableName, 10);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await monitoringPage.paginationNext(page, tableName);
+      const paginationNumber = await boMonitoringPage.paginationNext(page, tableName);
       expect(paginationNumber).to.contains('(page 2 / 2)');
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await monitoringPage.paginationPrevious(page, tableName);
+      const paginationNumber = await boMonitoringPage.paginationPrevious(page, tableName);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should change the items number to 20 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo20', baseContext);
 
-      const paginationNumber = await monitoringPage.selectPaginationLimit(page, tableName, 20);
+      const paginationNumber = await boMonitoringPage.selectPaginationLimit(page, tableName, 20);
       expect(paginationNumber).to.contains('(page 1 / 1)');
     });
   });

@@ -30,8 +30,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @TODO Move undeclared variables and methods to this (base) class: $errors, $layout, checkLiveEditAccess, etc.
- *
- * @since 1.5.0
  */
 abstract class ControllerCore
 {
@@ -619,8 +617,6 @@ abstract class ControllerCore
     /**
      * Checks if the controller has been called from XmlHttpRequest (AJAX).
      *
-     * @since 1.5
-     *
      * @return bool
      */
     public function isXmlHttpRequest()
@@ -756,6 +752,7 @@ abstract class ControllerCore
 
         Hook::exec('actionAjaxDie' . $controller . $method . 'Before', ['value' => &$value]);
         header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+        header('X-Robots-Tag: noindex, nofollow', true);
 
         echo $value;
     }

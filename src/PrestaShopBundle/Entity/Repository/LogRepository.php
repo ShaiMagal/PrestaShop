@@ -130,11 +130,9 @@ class LogRepository implements RepositoryInterface
             ->setFirstResult($filters['offset'])
             ->setMaxResults($filters['limit']);
 
-        if (!empty($scalarFilters)) {
-            foreach ($scalarFilters as $column => $value) {
-                $qb->andWhere("$column LIKE :$column");
-                $qb->setParameter($column, '%' . $value . '%');
-            }
+        foreach ($scalarFilters as $column => $value) {
+            $qb->andWhere("$column LIKE :$column");
+            $qb->setParameter($column, '%' . $value . '%');
         }
 
         /* Manage Dates interval */

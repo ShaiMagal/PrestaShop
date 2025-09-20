@@ -12,6 +12,8 @@ services:
 
     prestashop.adapter.image.uploader.category_cover_image_uploader:
         class: 'PrestaShop\PrestaShop\Adapter\Image\Uploader\CategoryCoverImageUploader'
+        arguments:
+          - '@PrestaShop\PrestaShop\Core\Image\ImageFormatConfiguration'
 
     prestashop.adapter.shop.url.product_image_folder_provider:
         class: 'Tests\Integration\Adapter\Shop\Url\TestProductImageFolderProvider'
@@ -78,13 +80,25 @@ services:
       decorates: PrestaShop\PrestaShop\Core\Context\EmployeeContext
       arguments: ['@.inner']
 
-    # The builder is made public to dynamically change its settings for test purposes
+    # The builders are made public to dynamically change their settings for test purposes
     test_shop_context_builder:
       alias: PrestaShop\PrestaShop\Core\Context\ShopContextBuilder
+    test_language_context_builder:
+      alias: PrestaShop\PrestaShop\Core\Context\LanguageContextBuilder
+    test_currency_context_builder:
+      alias: PrestaShop\PrestaShop\Core\Context\CurrencyContextBuilder
 
-    # Shop context is not shared, meaning a new instance is created everytime it is accessed
-    # This allow changing it dynamically during the test process
+    # The contexts services are not shared, meaning a new instance is created everytime they are accessed
+    # This allow changing them dynamically during the test process
     PrestaShop\PrestaShop\Core\Context\ShopContext:
       shared: false
       lazy: true
       factory: [ '@PrestaShop\PrestaShop\Core\Context\ShopContextBuilder', 'build' ]
+    PrestaShop\PrestaShop\Core\Context\LanguageContext:
+      shared: false
+      lazy: true
+      factory: [ '@PrestaShop\PrestaShop\Core\Context\LanguageContextBuilder', 'build' ]
+    PrestaShop\PrestaShop\Core\Context\CurrencyContext:
+      shared: false
+      lazy: true
+      factory: [ '@PrestaShop\PrestaShop\Core\Context\CurrencyContextBuilder', 'build' ]

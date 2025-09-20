@@ -27,6 +27,7 @@
 namespace PrestaShopBundle\Controller\Admin\Improve\International;
 
 use Exception;
+use PrestaShop\PrestaShop\Adapter\Form\ChoiceProvider\CountryStateByIdChoiceProvider;
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryConstraintException;
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\State\Command\BulkDeleteStateCommand;
@@ -44,20 +45,21 @@ use PrestaShop\PrestaShop\Core\Domain\Zone\Exception\ZoneException;
 use PrestaShop\PrestaShop\Core\Domain\Zone\Exception\ZoneNotFoundException;
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilderInterface;
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Handler\FormHandlerInterface;
+use PrestaShop\PrestaShop\Core\Grid\GridFactoryInterface;
 use PrestaShop\PrestaShop\Core\Search\Filters\StateFilters;
-use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
 use PrestaShopBundle\Security\Attribute\DemoRestricted;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Throwable;
 
 /**
  * Responsible for handling country states data
  */
-class StateController extends FrameworkBundleAdminController
+class StateController extends PrestaShopAdminController
 {
     /**
      * Provides country states in json response
@@ -66,11 +68,14 @@ class StateController extends FrameworkBundleAdminController
      *
      * @return JsonResponse
      */
-    public function getStatesAction(Request $request)
-    {
+    #[AdminSecurity("is_granted('read', request.get('_legacy_controller')) || is_granted('create', request.get('AdminCustomers')) || is_granted('update', request.get('AdminCustomers')) || is_granted('create', request.get('AdminManufacturers')) || is_granted('update', request.get('AdminManufacturers')) || is_granted('create', request.get('AdminSuppliers')) || is_granted('update', request.get('AdminSuppliers'))")]
+    public function getStatesAction(
+        Request $request,
+        #[Autowire(service: 'prestashop.adapter.form.choice_provider.country_state_by_id')]
+        CountryStateByIdChoiceProvider $statesProvider
+    ): JsonResponse {
         try {
             $countryId = (int) $request->query->get('id_country');
-            $statesProvider = $this->get('prestashop.adapter.form.choice_provider.country_state_by_id');
             $states = $statesProvider->getChoices([
                 'id_country' => $countryId,
             ]);
@@ -88,6 +93,50 @@ class StateController extends FrameworkBundleAdminController
     }
 
     /**
+     * Provides country states select input options for legacy pages
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    #[AdminSecurity("is_granted('read', request.get('_legacy_controller')) || is_granted('create', request.get('AdminTaxRulesGroup')) || is_granted('update', request.get('AdminTaxRulesGroup')) || is_granted('create', request.get('AdminStores')) || is_granted('update', request.get('AdminStores'))")]
+    public function getLegacyStatesOptionsAction(
+        Request $request,
+        #[Autowire(service: 'prestashop.adapter.form.choice_provider.country_state_by_id')]
+        CountryStateByIdChoiceProvider $statesProvider
+    ): Response {
+        try {
+            $countryId = (int) $request->query->get('id_country');
+            $states = $statesProvider->getChoices([
+                'id_country' => $countryId,
+            ]);
+
+            if (!empty($states)) {
+                $htmlResponse = '';
+                if ($request->query->get('no_empty')) {
+                    $emptyValue = $request->get('empty_value') ?: '-';
+                    $htmlResponse = '<option value="0">' . htmlentities($emptyValue, ENT_QUOTES, 'utf-8') . '</option>' . "\n";
+                }
+
+                $queryStateId = (int) $request->query->get('id_state');
+                foreach ($states as $stateName => $stateId) {
+                    $htmlResponse .= '<option value="' . $stateId . '"' . ($queryStateId == $stateId ? ' selected="selected"' : '') . '>' . $stateName . '</option>' . "\n";
+                }
+
+                return new Response($htmlResponse);
+            }
+        } catch (Exception $e) {
+            return $this->json([
+                'message' => $this->getErrorMessageForException($e, []),
+            ],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        return new Response('false');
+    }
+
+    /**
      * Show states listing page
      *
      * @param Request $request
@@ -96,9 +145,13 @@ class StateController extends FrameworkBundleAdminController
      * @return Response
      */
     #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))")]
-    public function indexAction(Request $request, StateFilters $filters): Response
-    {
-        $stateGrid = $this->get('prestashop.core.grid.grid_factory.state')->getGrid($filters);
+    public function indexAction(
+        Request $request,
+        StateFilters $filters,
+        #[Autowire(service: 'prestashop.core.grid.grid_factory.state')]
+        GridFactoryInterface $gridFactory
+    ): Response {
+        $stateGrid = $gridFactory->getGrid($filters);
 
         return $this->render('@PrestaShop/Admin/Improve/International/Locations/State/index.html.twig', [
             'help_link' => $this->generateSidebarLink($request->attributes->get('_legacy_controller')),
@@ -120,10 +173,10 @@ class StateController extends FrameworkBundleAdminController
     public function deleteAction(int $stateId): RedirectResponse
     {
         try {
-            $this->getCommandBus()->handle(new DeleteStateCommand($stateId));
+            $this->dispatchCommand(new DeleteStateCommand($stateId));
             $this->addFlash(
                 'success',
-                $this->trans('Successful deletion', 'Admin.Notifications.Success')
+                $this->trans('Successful deletion', [], 'Admin.Notifications.Success')
             );
         } catch (StateException $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
@@ -141,11 +194,17 @@ class StateController extends FrameworkBundleAdminController
      * @return Response
      */
     #[AdminSecurity("is_granted('update', request.get('_legacy_controller'))", redirectRoute: 'admin_states_index')]
-    public function editAction(int $stateId, Request $request): Response
-    {
+    public function editAction(
+        int $stateId,
+        Request $request,
+        #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.state_form_builder')]
+        FormBuilderInterface $formBuilder,
+        #[Autowire(service: 'prestashop.core.form.identifiable_object.handler.state_form_handler')]
+        FormHandlerInterface $formHandler
+    ): Response {
         try {
             /** @var EditableState $editableState */
-            $editableState = $this->getQueryBus()->handle(new GetStateForEditing((int) $stateId));
+            $editableState = $this->dispatchQuery(new GetStateForEditing((int) $stateId));
         } catch (StateException $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
 
@@ -155,11 +214,11 @@ class StateController extends FrameworkBundleAdminController
         $stateForm = null;
 
         try {
-            $stateForm = $this->getFormBuilder()->getFormFor((int) $stateId);
+            $stateForm = $formBuilder->getFormFor((int) $stateId);
             $stateForm->handleRequest($request);
-            $result = $this->getFormHandler()->handleFor((int) $stateId, $stateForm);
+            $result = $formHandler->handleFor((int) $stateId, $stateForm);
             if ($result->isSubmitted() && $result->isValid()) {
-                $this->addFlash('success', $this->trans('Update successful', 'Admin.Notifications.Success'));
+                $this->addFlash('success', $this->trans('Update successful', [], 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_states_index');
             }
@@ -173,7 +232,7 @@ class StateController extends FrameworkBundleAdminController
 
         return $this->render('@PrestaShop/Admin/Improve/International/Locations/State/edit.html.twig', [
             'enableSidebar' => true,
-            'layoutTitle' => $this->trans('Editing state %value%', 'Admin.Navigation.Menu', ['%value%' => $editableState->getName()]),
+            'layoutTitle' => $this->trans('Editing state %value%', ['%value%' => $editableState->getName()], 'Admin.Navigation.Menu'),
             'stateForm' => $stateForm->createView(),
             'help_link' => $this->generateSidebarLink($request->attributes->get('_legacy_controller')),
         ]);
@@ -187,15 +246,20 @@ class StateController extends FrameworkBundleAdminController
      * @return Response
      */
     #[AdminSecurity("is_granted('create', request.get('_legacy_controller'))", redirectRoute: 'admin_states_index', message: 'You do not have permission to create this.')]
-    public function createAction(Request $request): Response
-    {
-        $stateForm = $this->getFormBuilder()->getForm();
+    public function createAction(
+        Request $request,
+        #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.state_form_builder')]
+        FormBuilderInterface $formBuilder,
+        #[Autowire(service: 'prestashop.core.form.identifiable_object.handler.state_form_handler')]
+        FormHandlerInterface $formHandler
+    ): Response {
+        $stateForm = $formBuilder->getForm();
         $stateForm->handleRequest($request);
 
         try {
-            $handlerResult = $this->getFormHandler()->handle($stateForm);
+            $handlerResult = $formHandler->handle($stateForm);
             if ($handlerResult->isSubmitted() && $handlerResult->isValid()) {
-                $this->addFlash('success', $this->trans('Successful creation', 'Admin.Notifications.Success'));
+                $this->addFlash('success', $this->trans('Successful creation', [], 'Admin.Notifications.Success'));
 
                 return $this->redirectToRoute('admin_states_index');
             }
@@ -209,10 +273,11 @@ class StateController extends FrameworkBundleAdminController
             'help_link' => $this->generateSidebarLink($request->attributes->get('_legacy_controller')),
             'multistoreInfoTip' => $this->trans(
                 'Note that this feature is only available in the "all stores" context. It will be added to all your stores.',
+                [],
                 'Admin.Notifications.Info'
             ),
-            'multistoreIsUsed' => $this->get('prestashop.adapter.multistore_feature')->isUsed(),
-            'layoutTitle' => $this->trans('New state', 'Admin.Navigation.Menu'),
+            'multistoreIsUsed' => $this->getShopContext()->isMultiShopUsed(),
+            'layoutTitle' => $this->trans('New state', [], 'Admin.Navigation.Menu'),
         ]);
     }
 
@@ -228,13 +293,14 @@ class StateController extends FrameworkBundleAdminController
     public function toggleStatusAction(int $stateId): JsonResponse
     {
         try {
-            $this->getCommandBus()->handle(
+            $this->dispatchCommand(
                 new ToggleStateStatusCommand((int) $stateId)
             );
             $response = [
                 'status' => true,
                 'message' => $this->trans(
                     'The status has been successfully updated.',
+                    [],
                     'Admin.Notifications.Success'
                 ),
             ];
@@ -261,13 +327,13 @@ class StateController extends FrameworkBundleAdminController
         $stateIds = $this->getBulkStatesFromRequest($request);
 
         try {
-            $this->getCommandBus()->handle(new BulkDeleteStateCommand($stateIds));
+            $this->dispatchCommand(new BulkDeleteStateCommand($stateIds));
             $this->addFlash(
                 'success',
-                $this->trans('Successful deletion', 'Admin.Notifications.Success')
+                $this->trans('Successful deletion', [], 'Admin.Notifications.Success')
             );
         } catch (StateException $e) {
-            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
+            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
         }
 
         return $this->redirectToRoute('admin_states_index');
@@ -287,14 +353,14 @@ class StateController extends FrameworkBundleAdminController
         $stateIds = $this->getBulkStatesFromRequest($request);
 
         try {
-            $this->getCommandBus()->handle(new BulkToggleStateStatusCommand(true, $stateIds));
+            $this->dispatchCommand(new BulkToggleStateStatusCommand(true, $stateIds));
 
             $this->addFlash(
                 'success',
-                $this->trans('The status has been successfully updated.', 'Admin.Notifications.Success')
+                $this->trans('The status has been successfully updated.', [], 'Admin.Notifications.Success')
             );
         } catch (StateException $e) {
-            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
+            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
         }
 
         return $this->redirectToRoute('admin_states_index');
@@ -314,14 +380,14 @@ class StateController extends FrameworkBundleAdminController
         $stateIds = $this->getBulkStatesFromRequest($request);
 
         try {
-            $this->getCommandBus()->handle(new BulkToggleStateStatusCommand(false, $stateIds));
+            $this->dispatchCommand(new BulkToggleStateStatusCommand(false, $stateIds));
 
             $this->addFlash(
                 'success',
-                $this->trans('The status has been successfully updated.', 'Admin.Notifications.Success')
+                $this->trans('The status has been successfully updated.', [], 'Admin.Notifications.Success')
             );
         } catch (StateException $e) {
-            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
+            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
         }
 
         return $this->redirectToRoute('admin_states_index');
@@ -336,7 +402,7 @@ class StateController extends FrameworkBundleAdminController
 
         $toolbarButtons['add'] = [
             'href' => $this->generateUrl('admin_states_create'),
-            'desc' => $this->trans('Add new state', 'Admin.International.Feature'),
+            'desc' => $this->trans('Add new state', [], 'Admin.International.Feature'),
             'icon' => 'add_circle_outline',
         ];
 
@@ -360,69 +426,60 @@ class StateController extends FrameworkBundleAdminController
     }
 
     /**
-     * @param Throwable|null $e
-     *
      * @return array
      */
-    private function getErrorMessages(?Throwable $e = null): array
+    private function getErrorMessages(): array
     {
         return [
             StateException::class => $this->trans(
                 'An unexpected error occurred.',
+                [],
                 'Admin.Notifications.Error'
             ),
             StateNotFoundException::class => $this->trans(
                 'The object cannot be loaded (or found).',
+                [],
                 'Admin.Notifications.Error'
             ),
             StateConstraintException::class => [
                 StateConstraintException::INVALID_ID => $this->trans(
                     'The object cannot be loaded (the identifier is missing or invalid)',
+                    [],
                     'Admin.Notifications.Error'
                 ),
             ],
             CannotUpdateStateException::class => $this->trans(
                 'An error occurred while attempting to save.',
+                [],
                 'Admin.Notifications.Error'
             ),
             CannotAddStateException::class => $this->trans(
                 'An error occurred while attempting to save.',
+                [],
                 'Admin.Notifications.Error'
             ),
             ZoneNotFoundException::class => $this->trans(
                 'The object cannot be loaded (or found).',
+                [],
                 'Admin.Notifications.Error'
             ),
             CountryNotFoundException::class => $this->trans(
                 'The object cannot be loaded (or found).',
+                [],
                 'Admin.Notifications.Error'
             ),
             ZoneException::class => $this->trans(
                 'The object cannot be loaded (the identifier is missing or invalid)',
+                [],
                 'Admin.Notifications.Error'
             ),
             CountryConstraintException::class => [
                 CountryConstraintException::INVALID_ID => $this->trans(
                     'The object cannot be loaded (the identifier is missing or invalid)',
+                    [],
                     'Admin.Notifications.Error'
                 ),
             ],
         ];
-    }
-
-    /**
-     * @return FormHandlerInterface
-     */
-    private function getFormHandler(): FormHandlerInterface
-    {
-        return $this->get('prestashop.core.form.identifiable_object.handler.state_form_handler');
-    }
-
-    /**
-     * @return FormBuilderInterface
-     */
-    private function getFormBuilder(): FormBuilderInterface
-    {
-        return $this->get('prestashop.core.form.identifiable_object.builder.state_form_builder');
     }
 }

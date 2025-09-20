@@ -1,6 +1,4 @@
 // Import utils
-import loginCommon from '@commonTests/BO/loginBO';
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
 
 // Import test context
@@ -8,7 +6,10 @@ import testContext from '@utils/testContext';
 
 import {
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   foClassicHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -29,7 +30,10 @@ describe('BO - Header : View My Shop', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
 
     const numPages = utilsPlaywright.getNumberTabs(browserContext);
     expect(numPages).to.be.eq(1);

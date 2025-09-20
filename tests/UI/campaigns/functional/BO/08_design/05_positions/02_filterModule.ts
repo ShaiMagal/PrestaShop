@@ -1,16 +1,13 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import positionsPage from '@pages/BO/design/positions';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boDesignPositionsPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -32,7 +29,13 @@ describe('BO - Design - Positions : Filter module', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Design > Positions\' page', async function () {
@@ -43,18 +46,18 @@ describe('BO - Design - Positions : Filter module', async () => {
       boDashboardPage.designParentLink,
       boDashboardPage.positionsLink,
     );
-    await positionsPage.closeSfToolBar(page);
+    await boDesignPositionsPage.closeSfToolBar(page);
 
-    const pageTitle = await positionsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(positionsPage.pageTitle);
+    const pageTitle = await boDesignPositionsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDesignPositionsPage.pageTitle);
   });
 
   it(`should filter by module '${moduleName}' and check the result`, async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'filterModule', baseContext);
 
-    await positionsPage.filterModule(page, moduleName);
+    await boDesignPositionsPage.filterModule(page, moduleName);
 
-    const numberOfHooks = await positionsPage.getNumberOfHooks(page);
+    const numberOfHooks = await boDesignPositionsPage.getNumberOfHooks(page);
     expect(numberOfHooks).to.eq(5);
   });
 
@@ -69,10 +72,10 @@ describe('BO - Design - Positions : Filter module', async () => {
     it(`should check the hook '${hook}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `checkHooks${hook}`, baseContext);
 
-      const isVisible = await positionsPage.isHookVisible(page, hook);
+      const isVisible = await boDesignPositionsPage.isHookVisible(page, hook);
       expect(isVisible).to.eq(true);
 
-      const firstModuleName = await positionsPage.getModulesInHook(page, hook);
+      const firstModuleName = await boDesignPositionsPage.getModulesInHook(page, hook);
       expect(firstModuleName).to.contain(moduleName);
     });
   });
@@ -80,9 +83,9 @@ describe('BO - Design - Positions : Filter module', async () => {
   it('should filter by \'All modules\' and check the result', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'filterAllModules', baseContext);
 
-    await positionsPage.filterModule(page, 'All modules');
+    await boDesignPositionsPage.filterModule(page, 'All modules');
 
-    const numberOfHooks = await positionsPage.getNumberOfHooks(page);
+    const numberOfHooks = await boDesignPositionsPage.getNumberOfHooks(page);
     expect(numberOfHooks).to.above(5);
   });
 });

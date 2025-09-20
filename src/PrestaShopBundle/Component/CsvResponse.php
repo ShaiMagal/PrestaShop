@@ -227,11 +227,11 @@ class CsvResponse extends StreamedResponse
         $handle = tmpfile();
 
         if ($this->includeHeaderRow) {
-            fputcsv($handle, $this->headersData, ';');
+            fputcsv($handle, $this->headersData, ';', '"', '');
         }
 
         foreach ($this->data as $line) {
-            fputcsv($handle, $line, ';');
+            fputcsv($handle, $line, ';', '"', '');
         }
 
         $this->dumpFile($handle);
@@ -245,7 +245,7 @@ class CsvResponse extends StreamedResponse
         $handle = tmpfile();
 
         if ($this->includeHeaderRow) {
-            fputcsv($handle, $this->headersData, ';');
+            fputcsv($handle, $this->headersData, ';', '"', '');
         }
 
         do {
@@ -265,7 +265,7 @@ class CsvResponse extends StreamedResponse
                     }
                 }
 
-                fputcsv($handle, $lineData, ';');
+                fputcsv($handle, $lineData, ';', '"', '');
             }
 
             $this->incrementData();

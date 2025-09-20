@@ -1,24 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import catalogPriceRulesPage from '@pages/BO/catalog/discounts/catalogPriceRules';
-import addCatalogPriceRulePage from '@pages/BO/catalog/discounts/catalogPriceRules/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boCartRulesPage,
+  boCatalogPriceRulesPage,
+  boCatalogPriceRulesCreatePage,
   boDashboardPage,
+  boLoginPage,
   boProductSettingsPage,
+  type BrowserContext,
   dataProducts,
   FakerCatalogPriceRule,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -53,7 +48,13 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable display disco
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Discounts\' page', async function () {
@@ -65,38 +66,38 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable display disco
       boDashboardPage.discountsLink,
     );
 
-    const pageTitle = await cartRulesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+    const pageTitle = await boCartRulesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
   });
 
   it('should go to \'Catalog Price Rules\' tab', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToCatalogPriceRulesTab', baseContext);
 
-    await cartRulesPage.goToCatalogPriceRulesTab(page);
+    await boCartRulesPage.goToCatalogPriceRulesTab(page);
 
-    const pageTitle = await catalogPriceRulesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(catalogPriceRulesPage.pageTitle);
+    const pageTitle = await boCatalogPriceRulesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCatalogPriceRulesPage.pageTitle);
   });
 
   it('should create new catalog price rule', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'createCatalogPriceRule', baseContext);
 
-    await catalogPriceRulesPage.goToAddNewCatalogPriceRulePage(page);
+    await boCatalogPriceRulesPage.goToAddNewCatalogPriceRulePage(page);
 
-    const pageTitle = await addCatalogPriceRulePage.getPageTitle(page);
-    expect(pageTitle).to.contains(addCatalogPriceRulePage.pageTitle);
+    const pageTitle = await boCatalogPriceRulesCreatePage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCatalogPriceRulesCreatePage.pageTitle);
 
-    const validationMessage = await addCatalogPriceRulePage.setCatalogPriceRule(page, priceRuleData);
-    expect(validationMessage).to.contains(catalogPriceRulesPage.successfulCreationMessage);
+    const validationMessage = await boCatalogPriceRulesCreatePage.setCatalogPriceRule(page, priceRuleData);
+    expect(validationMessage).to.contains(boCatalogPriceRulesPage.successfulCreationMessage);
   });
 
   it('should go to \'Shop parameters > Product Settings\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToProductSettingsPage', baseContext);
 
-    await addCatalogPriceRulePage.goToSubMenu(
+    await boCatalogPriceRulesCreatePage.goToSubMenu(
       page,
-      addCatalogPriceRulePage.shopParametersParentLink,
-      addCatalogPriceRulePage.productSettingsLink,
+      boCatalogPriceRulesCreatePage.shopParametersParentLink,
+      boCatalogPriceRulesCreatePage.productSettingsLink,
     );
     await boProductSettingsPage.closeSfToolBar(page);
 
@@ -181,23 +182,23 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable display disco
       boProductSettingsPage.discountsLink,
     );
 
-    const pageTitle = await cartRulesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+    const pageTitle = await boCartRulesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
   });
 
   it('should go to \'Catalog Price Rules\' tab', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToCatalogPriceRuleTabToDeletePriceRule', baseContext);
 
-    await cartRulesPage.goToCatalogPriceRulesTab(page);
+    await boCartRulesPage.goToCatalogPriceRulesTab(page);
 
-    const pageTitle = await catalogPriceRulesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(catalogPriceRulesPage.pageTitle);
+    const pageTitle = await boCatalogPriceRulesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCatalogPriceRulesPage.pageTitle);
   });
 
   it('should delete catalog price rule', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'deleteCatalogPriceRule', baseContext);
 
-    const deleteTextResult = await catalogPriceRulesPage.deleteCatalogPriceRule(page, priceRuleData.name);
-    expect(deleteTextResult).to.contains(catalogPriceRulesPage.successfulDeleteMessage);
+    const deleteTextResult = await boCatalogPriceRulesPage.deleteCatalogPriceRule(page, priceRuleData.name);
+    expect(deleteTextResult).to.contains(boCatalogPriceRulesPage.successfulDeleteMessage);
   });
 });

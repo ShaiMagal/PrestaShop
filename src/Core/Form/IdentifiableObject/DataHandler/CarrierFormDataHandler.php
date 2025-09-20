@@ -30,6 +30,7 @@ use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\AddCarrierCommand;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\EditCarrierCommand;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\SetCarrierRangesCommand;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\Command\SetCarrierTaxRuleGroupCommand;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\CarrierId;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -75,11 +76,19 @@ class CarrierFormDataHandler implements FormDataHandlerInterface
         // Then, we need to add ranges for this carrier
         $carrierId = $this->setCarrierRange($carrierId, $data);
 
+        // Finally we save the tax rules group
+        $carrierId = $this->setCarrierTaxRuleGroup($carrierId, $data);
+
         return $carrierId->getValue();
     }
 
     public function update($id, array $data)
     {
+        // If the courier has no costs, 'has_additional_handling_fee' must be false.
+        if ((bool) $data['shipping_settings']['is_free'] === true) {
+            $data['shipping_settings']['has_additional_handling_fee'] = false;
+        }
+
         // First, we need to update the general settings of the carrier
         $command = new EditCarrierCommand($id);
         $command
@@ -113,11 +122,14 @@ class CarrierFormDataHandler implements FormDataHandlerInterface
             $carrierId = $this->setCarrierRange($carrierId, $data);
         }
 
+        // Finally we save the tax rules group
+        $carrierId = $this->setCarrierTaxRuleGroup($carrierId, $data);
+
         return $carrierId->getValue();
     }
 
     /**
-     * Function aim to format ranges data from the form, to be used in the command of Seting carrier ranges.
+     * Function aim to format ranges data from the form, to be used in the command of Setting carrier ranges.
      */
     private function formatFormRangesData(array $data): array
     {
@@ -153,6 +165,20 @@ class CarrierFormDataHandler implements FormDataHandlerInterface
         // Then, we handle the command to save the ranges.
         /** @var CarrierId $newCarrierId */
         $newCarrierId = $this->commandBus->handle($rangesCommand);
+
+        return $newCarrierId;
+    }
+
+    private function setCarrierTaxRuleGroup(CarrierId $carrierId, array $data): CarrierId
+    {
+        $taxRuleCommand = new SetCarrierTaxRuleGroupCommand(
+            $carrierId->getValue(),
+            $data['shipping_settings']['id_tax_rule_group'],
+            ShopConstraint::allShops()
+        );
+
+        /** @var CarrierId $newCarrierId */
+        $newCarrierId = $this->commandBus->handle($taxRuleCommand);
 
         return $newCarrierId;
     }

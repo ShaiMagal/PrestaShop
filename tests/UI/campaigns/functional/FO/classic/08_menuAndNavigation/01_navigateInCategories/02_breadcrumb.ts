@@ -2,11 +2,12 @@
 import testContext from '@utils/testContext';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataCategories,
   foClassicCategoryPage,
   foClassicHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -86,7 +87,7 @@ describe('FO - Menu and Navigation : Breadcrumb', async () => {
   it('should click on Home link from the breadcrumb', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'clickOnHomeLink', baseContext);
 
-    await foClassicCategoryPage.clickOnBreadCrumbLink(page, 'en');
+    await foClassicCategoryPage.clickOnBreadCrumbLink(page, '/');
 
     const isHomePage = await foClassicHomePage.isHomePage(page);
     expect(isHomePage).to.eq(true);
@@ -127,7 +128,7 @@ describe('FO - Menu and Navigation : Breadcrumb', async () => {
   it('should click on Home link from the breadcrumb', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'clickOnHomeLink2', baseContext);
 
-    await foClassicCategoryPage.clickOnBreadCrumbLink(page, 'en');
+    await foClassicCategoryPage.clickOnBreadCrumbLink(page, '/');
 
     const isHomePage = await foClassicHomePage.isHomePage(page);
     expect(isHomePage).to.eq(true);

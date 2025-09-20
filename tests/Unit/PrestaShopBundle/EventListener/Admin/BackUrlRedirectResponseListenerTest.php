@@ -47,7 +47,7 @@ class BackUrlRedirectResponseListenerTest extends TestCase
     protected function getLegacyContextMock($isConnected = true)
     {
         $legacyContextMock = $this->getMockBuilder(LegacyContext::class)
-            ->setMethods([
+            ->onlyMethods([
                 'getContext',
             ])
             ->getMock();

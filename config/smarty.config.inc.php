@@ -42,6 +42,17 @@ $smarty->force_compile = Configuration::get('PS_SMARTY_FORCE_COMPILE') == _PS_SM
 $smarty->compile_check = (Configuration::get('PS_SMARTY_FORCE_COMPILE') >= _PS_SMARTY_CHECK_COMPILE_) ? Smarty::COMPILECHECK_ON : Smarty::COMPILECHECK_OFF;
 $smarty->debug_tpl = _PS_ALL_THEMES_DIR_ . 'debug.tpl';
 
+// Register core classes used in smarty templates or else we cannot use the constant classes
+$smarty->registerClass('Configuration', '\Configuration');
+$smarty->registerClass('Context', '\Context');
+$smarty->registerClass('ImageManager', '\ImageManager');
+$smarty->registerClass('Module', '\Module');
+$smarty->registerClass('Product', '\Product');
+$smarty->registerClass('Profile', '\Profile');
+$smarty->registerClass('Shop', '\Shop');
+$smarty->registerClass('Tab', '\Tab');
+$smarty->registerClass('Tools', '\Tools');
+
 /* Use this constant if you want to load smarty without all PrestaShop functions */
 if (defined('_PS_SMARTY_FAST_LOAD_') && _PS_SMARTY_FAST_LOAD_) {
     return;
@@ -85,6 +96,7 @@ smartyRegisterFunction($smarty, 'modifier', 'boolval', array('Tools', 'boolval')
 smartyRegisterFunction($smarty, 'modifier', 'classname', 'smartyClassname');
 smartyRegisterFunction($smarty, 'modifier', 'classnames', 'smartyClassnames');
 smartyRegisterFunction($smarty, 'modifier', 'cleanHtml', 'smartyCleanHtml');
+smartyRegisterFunction($smarty, 'modifier', 'dump', 'dump');
 smartyRegisterFunction($smarty, 'modifier', 'end', 'smarty_endWithoutReference');
 smartyRegisterFunction($smarty, 'modifier', 'escape', 'smartyEscape');
 smartyRegisterFunction($smarty, 'modifier', 'truncate', 'smarty_modifier_truncate');
@@ -92,6 +104,7 @@ smartyRegisterFunction($smarty, 'modifier', 'truncate', 'smarty_modifier_truncat
 // Native PHP functions
 smartyRegisterFunction($smarty, 'modifier', 'addcslashes', 'addcslashes');
 smartyRegisterFunction($smarty, 'modifier', 'addslashes', 'addslashes');
+smartyRegisterFunction($smarty, 'modifier', 'array_key_first', 'array_key_first');
 smartyRegisterFunction($smarty, 'modifier', 'array_merge', 'array_merge');
 smartyRegisterFunction($smarty, 'modifier', 'array_slice', 'array_slice');
 smartyRegisterFunction($smarty, 'modifier', 'date', 'date');
@@ -111,16 +124,21 @@ smartyRegisterFunction($smarty, 'modifier', 'nl2br', 'nl2br');
 smartyRegisterFunction($smarty, 'modifier', 'print_r', 'print_r');
 smartyRegisterFunction($smarty, 'modifier', 'rand', 'rand');
 smartyRegisterFunction($smarty, 'modifier', 'sizeof', 'sizeof');
+smartyRegisterFunction($smarty, 'modifier', 'sprintf', 'sprintf');
 smartyRegisterFunction($smarty, 'modifier', 'str_replace', 'str_replace');
 smartyRegisterFunction($smarty, 'modifier', 'stripslashes', 'stripslashes');
 smartyRegisterFunction($smarty, 'modifier', 'strstr', 'strstr');
 smartyRegisterFunction($smarty, 'modifier', 'strtolower', 'strtolower');
 smartyRegisterFunction($smarty, 'modifier', 'strval', 'strval');
 smartyRegisterFunction($smarty, 'modifier', 'substr', 'substr');
+smartyRegisterFunction($smarty, 'modifier', 'strpos', 'strpos');
 smartyRegisterFunction($smarty, 'modifier', 'trim', 'trim');
 smartyRegisterFunction($smarty, 'modifier', 'ucfirst', 'ucfirst');
 smartyRegisterFunction($smarty, 'modifier', 'urlencode', 'urlencode');
 smartyRegisterFunction($smarty, 'modifier', 'var_dump', 'var_dump');
+smartyRegisterFunction($smarty, 'modifier', 'version_compare', 'version_compare');
+smartyRegisterFunction($smarty, 'modifier', 'file_exists', 'file_exists');
+smartyRegisterFunction($smarty, 'modifier', 'strpos', 'strpos');
 
 function smarty_modifier_htmlentitiesUTF8($string)
 {

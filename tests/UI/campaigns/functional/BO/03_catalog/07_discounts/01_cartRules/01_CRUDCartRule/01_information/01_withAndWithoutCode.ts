@@ -1,23 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import addCartRulePage from '@pages/BO/catalog/discounts/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boCartRulesPage,
+  boCartRulesCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataProducts,
   FakerCartRule,
   foClassicCartPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsDate,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -61,7 +56,13 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Discounts\' page', async function () {
@@ -73,8 +74,8 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
       boDashboardPage.discountsLink,
     );
 
-    const pageTitle = await cartRulesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+    const pageTitle = await boCartRulesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
   });
 
   describe('case 1 : Create cart rule without code then check it on FO', async () => {
@@ -82,17 +83,17 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
       it('should go to new cart rule page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage', baseContext);
 
-        await cartRulesPage.goToAddNewCartRulesPage(page);
+        await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-        const pageTitle = await addCartRulePage.getPageTitle(page);
-        expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+        const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
       });
 
       it('should create cart rule', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'createCartRule', baseContext);
 
-        const validationMessage = await addCartRulePage.createEditCartRules(page, cartRuleWithoutCode);
-        expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+        const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, cartRuleWithoutCode);
+        expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
       });
     });
 
@@ -101,7 +102,7 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         await testContext.addContextItem(this, 'testIdentifier', 'viewMyShop1', baseContext);
 
         // View my shop and init pages
-        page = await addCartRulePage.viewMyShop(page);
+        page = await boCartRulesCreatePage.viewMyShop(page);
         await foClassicHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foClassicHomePage.isHomePage(page);
@@ -129,7 +130,7 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
       it('should verify the total after discount', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'verifyTotalAfterDiscount1', baseContext);
 
-        const discountPercent = cartRuleWithoutCode.discountPercent!;
+        const discountPercent = cartRuleWithoutCode.getDiscountPercent();
         const totalAfterDiscount = dataProducts.demo_1.finalPrice
           - ((dataProducts.demo_1.finalPrice * discountPercent) / 100);
 
@@ -139,8 +140,10 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         const cartRuleName = await foClassicCartPage.getCartRuleName(page);
         expect(cartRuleName).to.equal(cartRuleWithoutCode.name);
 
-        const discountValue = await foClassicCartPage.getDiscountValue(page);
-        expect(discountValue).to.equal(parseFloat(totalAfterDiscount.toFixed(2)) - dataProducts.demo_1.finalPrice);
+        const discountValue = await foClassicCartPage.getCartRuleValue(page);
+        expect(discountValue).to.equal(
+          `-€${Math.abs(parseFloat(totalAfterDiscount.toFixed(2)) - dataProducts.demo_1.finalPrice)}`,
+        );
       });
 
       it('should remove product from shopping cart', async function () {
@@ -162,24 +165,24 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         // Close tab and init other page objects with new current tab
         page = await foClassicHomePage.closePage(browserContext, page, 0);
 
-        const pageTitle = await cartRulesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+        const pageTitle = await boCartRulesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
       });
 
       it('should go to edit cart rule page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToEditCartRulePage', baseContext);
 
-        await cartRulesPage.goToEditCartRulePage(page, 1);
+        await boCartRulesPage.goToEditCartRulePage(page, 1);
 
-        const pageTitle = await addCartRulePage.getPageTitle(page);
-        expect(pageTitle).to.contains(addCartRulePage.editPageTitle);
+        const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesCreatePage.editPageTitle);
       });
 
       it('should update cart rule', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'updateCartRule', baseContext);
 
-        const validationMessage = await addCartRulePage.createEditCartRules(page, cartRuleWithCode);
-        expect(validationMessage).to.contains(addCartRulePage.successfulUpdateMessage);
+        const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, cartRuleWithCode);
+        expect(validationMessage).to.contains(boCartRulesCreatePage.successfulUpdateMessage);
       });
     });
 
@@ -188,7 +191,7 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         await testContext.addContextItem(this, 'testIdentifier', 'viewMyShop2', baseContext);
 
         // View my shop and init pages
-        page = await addCartRulePage.viewMyShop(page);
+        page = await boCartRulesCreatePage.viewMyShop(page);
         await foClassicHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foClassicHomePage.isHomePage(page);
@@ -232,15 +235,17 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
       it('should verify the total after the discount', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount2', baseContext);
 
-        const discountPercent = cartRuleWithoutCode.discountPercent!;
+        const discountPercent = cartRuleWithoutCode.getDiscountPercent();
         const totalAfterPromoCode = dataProducts.demo_1.finalPrice
           - ((dataProducts.demo_1.finalPrice * discountPercent) / 100);
 
         const priceATI = await foClassicCartPage.getATIPrice(page);
         expect(priceATI).to.equal(parseFloat(totalAfterPromoCode.toFixed(2)));
 
-        const discountValue = await foClassicCartPage.getDiscountValue(page, 1);
-        expect(discountValue).to.equal(parseFloat((totalAfterPromoCode - dataProducts.demo_1.finalPrice).toFixed(2)));
+        const discountValue = await foClassicCartPage.getCartRuleValue(page, 1);
+        expect(discountValue).to.equal(
+          `-€${Math.abs(parseFloat((totalAfterPromoCode - dataProducts.demo_1.finalPrice).toFixed(2)))}`,
+        );
       });
 
       it('should remove voucher and product from shopping cart', async function () {
@@ -263,24 +268,24 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         // Close tab and init other page objects with new current tab
         page = await foClassicHomePage.closePage(browserContext, page, 0);
 
-        const pageTitle = await cartRulesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+        const pageTitle = await boCartRulesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
       });
 
       it('should go to edit cart rule page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToEditCartRulePage2', baseContext);
 
-        await cartRulesPage.goToEditCartRulePage(page, 1);
+        await boCartRulesPage.goToEditCartRulePage(page, 1);
 
-        const pageTitle = await addCartRulePage.getPageTitle(page);
-        expect(pageTitle).to.contains(addCartRulePage.editPageTitle);
+        const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesCreatePage.editPageTitle);
       });
 
       it('should update cart rule', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'updateCartRule2', baseContext);
 
-        const validationMessage = await addCartRulePage.createEditCartRules(page, secondCartRuleWithCode);
-        expect(validationMessage).to.contains(addCartRulePage.successfulUpdateMessage);
+        const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, secondCartRuleWithCode);
+        expect(validationMessage).to.contains(boCartRulesCreatePage.successfulUpdateMessage);
       });
     });
 
@@ -289,7 +294,7 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         await testContext.addContextItem(this, 'testIdentifier', 'viewMyShop3', baseContext);
 
         // View my shop and init pages
-        page = await addCartRulePage.viewMyShop(page);
+        page = await boCartRulesCreatePage.viewMyShop(page);
         await foClassicHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foClassicHomePage.isHomePage(page);
@@ -341,13 +346,15 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
         await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount3', baseContext);
 
         const totalAfterPromoCode = dataProducts.demo_1.finalPrice
-          - ((dataProducts.demo_1.finalPrice * (cartRuleWithCode.discountPercent!)) / 100);
+          - ((dataProducts.demo_1.finalPrice * cartRuleWithCode.getDiscountPercent()) / 100);
 
         const priceATI = await foClassicCartPage.getATIPrice(page);
         expect(priceATI).to.equal(parseFloat(totalAfterPromoCode.toFixed(2)));
 
-        const discountValue = await foClassicCartPage.getDiscountValue(page, 1);
-        expect(discountValue).to.equal(parseFloat((totalAfterPromoCode - dataProducts.demo_1.finalPrice).toFixed(2)));
+        const discountValue = await foClassicCartPage.getCartRuleValue(page, 1);
+        expect(discountValue).to.equal(
+          `-€${Math.abs(parseFloat((totalAfterPromoCode - dataProducts.demo_1.finalPrice).toFixed(2)))}`,
+        );
       });
 
       it('should remove voucher and product from shopping cart', async function () {
@@ -369,15 +376,15 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with/without code', async (
       // Close tab and init other page objects with new current tab
       page = await foClassicHomePage.closePage(browserContext, page, 0);
 
-      const pageTitle = await cartRulesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+      const pageTitle = await boCartRulesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
     });
 
     it('should delete cart rule', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteCartRule', baseContext);
 
-      const validationMessage = await cartRulesPage.deleteCartRule(page);
-      expect(validationMessage).to.contains(cartRulesPage.successfulDeleteMessage);
+      const validationMessage = await boCartRulesPage.deleteCartRule(page);
+      expect(validationMessage).to.contains(boCartRulesPage.successfulDeleteMessage);
     });
   });
 });

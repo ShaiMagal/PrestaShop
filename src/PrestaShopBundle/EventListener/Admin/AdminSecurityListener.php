@@ -77,10 +77,8 @@ class AdminSecurityListener
         $methodAttributes = $reflectionMethod->getAttributes(AdminSecurityAttribute::class);
         $attributes = array_merge($classAttributes, $methodAttributes);
 
-        if (!empty($attributes)) {
-            foreach ($attributes as $attribute) {
-                $this->isGranted($attribute->newInstance(), $event->getRequest());
-            }
+        foreach ($attributes as $attribute) {
+            $this->isGranted($attribute->newInstance(), $event->getRequest());
         }
 
         // annotation management

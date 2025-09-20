@@ -1,15 +1,11 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import emailPage from '@pages/BO/advancedParameters/email';
-
 import {
   boDashboardPage,
+  boEmailPage,
+  boLoginPage,
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   foClassicCartPage,
@@ -18,12 +14,12 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicProductPage,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_advancedParameters_email_sortAndPagination';
 
@@ -48,7 +44,13 @@ describe('BO - Advanced Parameters - E-mail : Sort and pagination emails', async
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   //  Erase list of mails
@@ -63,17 +65,17 @@ describe('BO - Advanced Parameters - E-mail : Sort and pagination emails', async
       );
       await boDashboardPage.closeSfToolBar(page);
 
-      const pageTitle = await emailPage.getPageTitle(page);
-      expect(pageTitle).to.contains(emailPage.pageTitle);
+      const pageTitle = await boEmailPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmailPage.pageTitle);
     });
 
     it('should erase all emails', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'eraseEmails', baseContext);
 
-      const textResult = await emailPage.eraseAllEmails(page);
-      expect(textResult).to.equal(emailPage.successfulDeleteMessage);
+      const textResult = await boEmailPage.eraseAllEmails(page);
+      expect(textResult).to.equal(boEmailPage.successfulDeleteMessage);
 
-      const numberOfLines = await emailPage.getNumberOfElementInGrid(page);
+      const numberOfLines = await boEmailPage.getNumberOfElementInGrid(page);
       expect(numberOfLines).to.be.equal(0);
     });
   });
@@ -160,8 +162,8 @@ describe('BO - Advanced Parameters - E-mail : Sort and pagination emails', async
       // Go Back to BO
       page = await foClassicCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await emailPage.getPageTitle(page);
-      expect(pageTitle).to.contains(emailPage.pageTitle);
+      const pageTitle = await boEmailPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmailPage.pageTitle);
     });
   });
 
@@ -170,37 +172,37 @@ describe('BO - Advanced Parameters - E-mail : Sort and pagination emails', async
     it('should go to \'Advanced parameters > E-mail\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToEmailPage', baseContext);
 
-      await emailPage.reloadPage(page);
+      await boEmailPage.reloadPage(page);
 
-      const pageTitle = await emailPage.getPageTitle(page);
-      expect(pageTitle).to.contains(emailPage.pageTitle);
+      const pageTitle = await boEmailPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmailPage.pageTitle);
     });
 
     it('should change the items number to 10 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo10', baseContext);
 
-      const paginationNumber = await emailPage.selectPaginationLimit(page, 10);
+      const paginationNumber = await boEmailPage.selectPaginationLimit(page, 10);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await emailPage.paginationNext(page);
+      const paginationNumber = await boEmailPage.paginationNext(page);
       expect(paginationNumber).to.contains('(page 2 / 2)');
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await emailPage.paginationPrevious(page);
+      const paginationNumber = await boEmailPage.paginationPrevious(page);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should change the items number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemNumberTo20', baseContext);
 
-      const paginationNumber = await emailPage.selectPaginationLimit(page, 20);
+      const paginationNumber = await boEmailPage.selectPaginationLimit(page, 20);
       expect(paginationNumber).to.contains('(page 1 / 1)');
     });
   });
@@ -286,10 +288,10 @@ describe('BO - Advanced Parameters - E-mail : Sort and pagination emails', async
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await emailPage.getAllRowsColumnContent(page, test.args.sortBy);
-        await emailPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        const nonSortedTable = await boEmailPage.getAllRowsColumnContent(page, test.args.sortBy);
+        await boEmailPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await emailPage.getAllRowsColumnContent(page, test.args.sortBy);
+        const sortedTable = await boEmailPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));
@@ -328,8 +330,8 @@ describe('BO - Advanced Parameters - E-mail : Sort and pagination emails', async
     it('should delete all emails', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'BulkDelete', baseContext);
 
-      const deleteTextResult = await emailPage.deleteEmailLogsBulkActions(page);
-      expect(deleteTextResult).to.be.equal(emailPage.successfulMultiDeleteMessage);
+      const deleteTextResult = await boEmailPage.deleteEmailLogsBulkActions(page);
+      expect(deleteTextResult).to.be.equal(boEmailPage.successfulMultiDeleteMessage);
     });
   });
 });

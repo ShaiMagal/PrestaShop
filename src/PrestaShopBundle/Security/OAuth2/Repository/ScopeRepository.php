@@ -39,10 +39,10 @@ use PrestaShopBundle\Security\OAuth2\Entity\ScopeEntity;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
- * Repository class responsible for managing PrestaShop's Authorization Server scopes
- * Empty implementation for now because scopes are not used yet
- *
- * @experimental
+ * Repository class responsible for managing PrestaShop's Authorization Server scopes,
+ * based on our scopes extractor that extract scopes from the ApiPlatform resources in
+ * which scopes are defined. The ApiPlatform resources can come from modules so the list
+ * is dynamic based on which modules are installed.
  */
 class ScopeRepository implements ScopeRepositoryInterface
 {
@@ -67,12 +67,16 @@ class ScopeRepository implements ScopeRepositoryInterface
         return null;
     }
 
+    /**
+     * @return ScopeEntityInterface[]
+     */
     public function finalizeScopes(
         array $scopes,
         $grantType,
         ClientEntityInterface $clientEntity,
-        $userIdentifier = null
-    ): array {
+        $userIdentifier = null,
+        $authCodeId = null
+    ) {
         $finalizedScopes = [
             new ScopeEntity('is_authenticated'),
         ];

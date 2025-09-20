@@ -1,24 +1,21 @@
 import testContext from '@utils/testContext';
-
-// Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import createProductPage from '@pages/BO/catalog/products/add';
-import optionsTab from '@pages/BO/catalog/products/add/optionsTab';
-
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabDescriptionPage,
+  boProductsCreateTabOptionsPage,
+  type BrowserContext,
   FakerProduct,
   foClassicHomePage,
   foClassicCategoryPage,
   foClassicModalQuickViewPage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -61,7 +58,13 @@ describe('BO - Catalog - Products : Options tab', async () => {
   // 1 - Create product
   describe('Create product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -91,15 +94,15 @@ describe('BO - Catalog - Products : Options tab', async () => {
       await boProductsPage.selectProductType(page, newProductData.type);
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      await expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      await expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      const createProductMessage = await createProductPage.setProduct(page, newProductData);
-      await expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      await expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -108,37 +111,37 @@ describe('BO - Catalog - Products : Options tab', async () => {
     it('should add category', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addCategory', baseContext);
 
-      await createProductPage.goToTab(page, 'description');
+      await boProductsCreatePage.goToTab(page, 'description');
       await boProductsCreateTabDescriptionPage.addNewCategory(page, ['Clothes']);
 
-      const createProductMessage = await createProductPage.saveProduct(page);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should choose \'Clothes\' as default category', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseDefaultCategory', baseContext);
 
-      await boProductsCreateTabDescriptionPage.chooseDefaultCategory(page, 2);
+      await boProductsCreateTabDescriptionPage.chooseDefaultCategory(page, 'Clothes');
 
-      const createProductMessage = await createProductPage.saveProduct(page);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check the visibility to catalog only in options tab', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkCategoryOnly', baseContext);
 
-      await createProductPage.goToTab(page, 'options');
-      await optionsTab.setVisibility(page, 'catalog_only');
+      await boProductsCreatePage.goToTab(page, 'options');
+      await boProductsCreateTabOptionsPage.setVisibility(page, 'catalog_only');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle = await foClassicProductPage.getPageTitle(page);
@@ -172,24 +175,24 @@ describe('BO - Catalog - Products : Options tab', async () => {
 
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should check the visibility to search only in options tab', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkSearchOnly', baseContext);
 
-      await optionsTab.setVisibility(page, 'search_only');
+      await boProductsCreateTabOptionsPage.setVisibility(page, 'search_only');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct2', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle = await foClassicProductPage.getPageTitle(page);
@@ -227,24 +230,24 @@ describe('BO - Catalog - Products : Options tab', async () => {
 
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should check the visibility to nowhere in options tab', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkNowhere', baseContext);
 
-      await optionsTab.setVisibility(page, 'nowhere');
+      await boProductsCreateTabOptionsPage.setVisibility(page, 'nowhere');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct3', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle = await foClassicProductPage.getPageTitle(page);
@@ -284,25 +287,25 @@ describe('BO - Catalog - Products : Options tab', async () => {
 
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should check the visibility to everywhere in options tab and disable Available for order', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkEverywhere', baseContext);
 
-      await optionsTab.setVisibility(page, 'everywhere');
-      await optionsTab.setAvailableForOrder(page, false);
+      await boProductsCreateTabOptionsPage.setVisibility(page, 'everywhere');
+      await boProductsCreateTabOptionsPage.setAvailableForOrder(page, false);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct4', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle = await foClassicProductPage.getPageTitle(page);
@@ -321,24 +324,24 @@ describe('BO - Catalog - Products : Options tab', async () => {
 
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should disable the option show price', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'disableShowPrice', baseContext);
 
-      await optionsTab.setShowPrice(page, false);
+      await boProductsCreateTabOptionsPage.setShowPrice(page, false);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct5', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle = await foClassicProductPage.getPageTitle(page);
@@ -357,25 +360,25 @@ describe('BO - Catalog - Products : Options tab', async () => {
 
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should enable the option show price and the option web only', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'enableShowPrice', baseContext);
 
-      await optionsTab.setShowPrice(page, true);
-      await optionsTab.setWebOnly(page, true);
+      await boProductsCreateTabOptionsPage.setShowPrice(page, true);
+      await boProductsCreateTabOptionsPage.setWebOnly(page, true);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct6', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle = await foClassicProductPage.getPageTitle(page);
@@ -394,26 +397,26 @@ describe('BO - Catalog - Products : Options tab', async () => {
 
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should choose the supplier associated with the product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseSupplierAssociated', baseContext);
 
-      await optionsTab.chooseSupplier(page, 1);
+      await boProductsCreateTabOptionsPage.chooseSupplier(page, 1);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check the 2 blocks \'Default supplier\' & \'Supplier references\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkNewBlocks', baseContext);
 
-      let isVisible = await optionsTab.isDefaultSupplierSectionVisible(page);
+      let isVisible = await boProductsCreateTabOptionsPage.isDefaultSupplierSectionVisible(page);
       expect(isVisible, 'Default supplier block is not visible!').to.eq(true);
 
-      isVisible = await optionsTab.isSupplierReferencesSectionVisible(page);
+      isVisible = await boProductsCreateTabOptionsPage.isSupplierReferencesSectionVisible(page);
       expect(isVisible, 'Supplier references block is not visible!').to.eq(true);
     });
   });
@@ -423,7 +426,7 @@ describe('BO - Catalog - Products : Options tab', async () => {
     it('should delete product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteProduct', baseContext);
 
-      const deleteProductMessage = await createProductPage.deleteProduct(page);
+      const deleteProductMessage = await boProductsCreatePage.deleteProduct(page);
       expect(deleteProductMessage).to.equal(boProductsPage.successfulDeleteMessage);
     });
   });

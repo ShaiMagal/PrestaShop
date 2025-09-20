@@ -1,23 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import createProductsPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabDescriptionPage,
+  type BrowserContext,
   FakerProduct,
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -68,7 +64,13 @@ describe('FO - Product page - Quick view : Change image', async () => {
 
   describe(`PRE-TEST: Create new product '${newProductData.name}' with 4 images`, async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -93,20 +95,20 @@ describe('FO - Product page - Quick view : Change image', async () => {
 
       await boProductsPage.selectProductType(page, newProductData.type);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should go to new product page and set product name and status', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
       await boProductsPage.clickOnAddNewProduct(page);
-      await createProductsPage.setProductName(page, newProductData.name);
+      await boProductsCreatePage.setProductName(page, newProductData.name);
 
-      await createProductsPage.setProductStatus(page, newProductData.status);
+      await boProductsCreatePage.setProductStatus(page, newProductData.status);
 
-      const createProductMessage = await createProductsPage.saveProduct(page);
-      expect(createProductMessage).to.equal(createProductsPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should add 4 images', async function () {

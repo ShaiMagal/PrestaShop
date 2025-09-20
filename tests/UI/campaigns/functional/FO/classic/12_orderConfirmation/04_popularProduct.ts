@@ -1,10 +1,8 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import FO pages
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
+import {expect} from 'chai';
 
 import {
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataPaymentMethods,
@@ -14,13 +12,12 @@ import {
   foClassicCheckoutPage,
   foClassicCheckoutOrderConfirmationPage,
   foClassicHomePage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 // context
 const baseContext: string = 'functional_FO_classic_orderConfirmation_popularProduct';
@@ -65,7 +62,7 @@ describe('FO - Order confirmation : Popular product', async () => {
     await foClassicSearchResultsPage.quickViewProduct(page, 1);
 
     await foClassicModalQuickViewPage.addToCartByQuickView(page);
-    await blockCartModal.proceedToCheckout(page);
+    await foClassicModalBlockCartPage.proceedToCheckout(page);
 
     const pageTitle = await foClassicCartPage.getPageTitle(page);
     expect(pageTitle).to.equal(foClassicCartPage.pageTitle);
@@ -145,7 +142,7 @@ describe('FO - Order confirmation : Popular product', async () => {
     await testContext.addContextItem(this, 'testIdentifier', 'addProductToCart', baseContext);
 
     await foClassicModalQuickViewPage.addToCartByQuickView(page);
-    await blockCartModal.proceedToCheckout(page);
+    await foClassicModalBlockCartPage.proceedToCheckout(page);
 
     const pageTitle = await foClassicCartPage.getPageTitle(page);
     expect(pageTitle).to.eq(foClassicCartPage.pageTitle);

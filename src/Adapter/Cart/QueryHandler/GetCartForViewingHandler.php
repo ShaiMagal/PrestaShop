@@ -125,6 +125,7 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
         $products = $sorter->natural($products, Sorter::ORDER_DESC, 'reference', 'supplier_reference');
 
         foreach ($products as &$product) {
+            // Add proper prices depending on customer group price display style
             if ($tax_calculation_method == PS_TAX_EXC) {
                 $product['product_price'] = $product['price'];
                 $product['product_total'] = $product['total'];
@@ -133,12 +134,14 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
                 $product['product_total'] = $product['total_wt'];
             }
 
+            // Add CURRENT quantity in stock
             $product['qty_in_stock'] = StockAvailable::getQuantityAvailableByProduct(
                 $product['id_product'],
                 isset($product['id_product_attribute']) ? $product['id_product_attribute'] : null,
                 (int) $id_shop
             );
 
+            // Add customizations for the product
             $customized_datas = Product::getAllCustomizedDatas(
                 $context->cart->id,
                 null,
@@ -147,12 +150,6 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
                 (int) $product['id_customization']
             );
             $context->cart->setProductCustomizedDatas($product, $customized_datas);
-
-            $product['id_address_delivery'] = (int) $cart->id_address_delivery;
-
-            if ($customized_datas) {
-                Product::addProductCustomizationPrice($product, $customized_datas);
-            }
         }
         unset($product);
 

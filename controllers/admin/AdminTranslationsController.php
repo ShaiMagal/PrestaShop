@@ -780,7 +780,7 @@ class AdminTranslationsControllerCore extends AdminController
      *
      * @throws PrestaShopException
      */
-    protected function findAndWriteTranslationsIntoFile(string $file_name, array $files, string $theme_name, string $module_name, string|bool $dir = false)
+    protected function findAndWriteTranslationsIntoFile(string $file_name, array $files, ?string $theme_name, string $module_name, string|bool $dir = false)
     {
         // These static vars allow to use file to write just one time.
         static $cache_file = [];
@@ -892,7 +892,7 @@ class AdminTranslationsControllerCore extends AdminController
      * @param string $module_name
      * @param string|bool $dir
      */
-    protected function findAndFillTranslations(array $files, string $theme_name, string $module_name, string|bool $dir = false)
+    protected function findAndFillTranslations(array $files, ?string $theme_name, string $module_name, string|bool $dir = false)
     {
         $name_var = (empty($this->translations_informations[$this->type_selected]['var']) ? false : $this->translations_informations[$this->type_selected]['var']);
 
@@ -1742,7 +1742,7 @@ class AdminTranslationsControllerCore extends AdminController
                         $stringToTranslate = $matches[2][$key];
                         $prefix_key = $matches[$domainKey][$key];
 
-                        if ($prefix_key && $stringToTranslate) {
+                        if ($prefix_key) {
                             if (isset($GLOBALS[$name_var][$prefix_key . md5($stringToTranslate)])) {
                                 $tabs_array[$prefix_key][$stringToTranslate]['trad'] = stripslashes(html_entity_decode($GLOBALS[$name_var][$prefix_key . md5($stringToTranslate)], ENT_COMPAT, 'UTF-8'));
                             } else {
@@ -1783,7 +1783,7 @@ class AdminTranslationsControllerCore extends AdminController
                     $stringToTranslate = $matches[2][$key];
                     $prefix_key = $matches[$domainKey][$key];
 
-                    if ($prefix_key && $stringToTranslate) {
+                    if ($prefix_key) {
                         if (isset($GLOBALS[$name_var][$prefix_key . md5($stringToTranslate)])) {
                             $tabs_array[$prefix_key][$stringToTranslate]['trad'] = stripslashes(html_entity_decode($GLOBALS[$name_var][$prefix_key . md5($stringToTranslate)], ENT_COMPAT, 'UTF-8'));
                         } else {
@@ -2108,8 +2108,6 @@ class AdminTranslationsControllerCore extends AdminController
     /**
      * Get each informations for each mails found in the folder $dir.
      *
-     * @since 1.4.0.14
-     *
      * @param string $dir
      * @param string $group_name
      *
@@ -2177,8 +2175,6 @@ class AdminTranslationsControllerCore extends AdminController
     /**
      * Get content of the mail file.
      *
-     * @since 1.4.0.14
-     *
      * @param string $dir
      * @param string $file
      *
@@ -2198,8 +2194,6 @@ class AdminTranslationsControllerCore extends AdminController
     /**
      * Display mails in html format.
      * This was create for factorize the html displaying.
-     *
-     * @since 1.4.0.14
      *
      * @param array $mails
      * @param array $all_subject_mail
@@ -2324,8 +2318,6 @@ class AdminTranslationsControllerCore extends AdminController
     /**
      * Just build the html structure for display txt mails.
      *
-     * @since 1.4.0.14
-     *
      * @param array $content With english and language needed contents
      * @param string $lang ISO code of the needed language
      * @param string $mail_name Name of the file to translate (same for txt and html files)
@@ -2356,8 +2348,6 @@ class AdminTranslationsControllerCore extends AdminController
 
     /**
      * Just build the html structure for display html mails.
-     *
-     * @since 1.4.0.14
      *
      * @param array $content With english and language needed contents
      * @param string $lang ISO code of the needed language
@@ -2875,8 +2865,6 @@ class AdminTranslationsControllerCore extends AdminController
     /**
      * Parse PDF class.
      *
-     * @since 1.4.5.0
-     *
      * @param string $file_path File to parse
      * @param string $file_type Type of file
      * @param array $lang_array Contains expression in the chosen language
@@ -3055,7 +3043,7 @@ class AdminTranslationsControllerCore extends AdminController
             $email_file = _PS_ROOT_DIR_ . $email;
         }
 
-        if (strpos(realpath($email_file), _PS_ROOT_DIR_) === 0 && file_exists($email_file)) {
+        if (strpos(realpath($email_file), _PS_MAIL_DIR_) === 0 && file_exists($email_file)) {
             $email_html = file_get_contents($email_file);
         } else {
             $email_html = '';

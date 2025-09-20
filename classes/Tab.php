@@ -234,7 +234,7 @@ class TabCore extends ObjectModel
     {
         $cacheId = 'getCurrentParentId_' . Tools::strtolower(Tools::getValue('controller'));
         if (!Cache::isStored($cacheId)) {
-            $value = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('
+            $value = (int) Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('
 			SELECT `id_parent`
 			FROM `' . _DB_PREFIX_ . 'tab`
 			WHERE LOWER(class_name) = \'' . pSQL(Tools::strtolower(Tools::getValue('controller'))) . '\'');
@@ -344,7 +344,7 @@ class TabCore extends ObjectModel
      *
      * @param string $className
      *
-     * @return int Tab ID
+     * @return int|false Tab ID
      */
     public static function getIdFromClassName($className)
     {
@@ -635,37 +635,6 @@ class TabCore extends ObjectModel
         return parent::update($nullValues);
     }
 
-    /**
-     * Get Tab by Profile ID.
-     *
-     * @param int $idParent
-     * @param int $idProfile
-     *
-     * @return array|false|mysqli_result|PDOStatement|resource|null
-     */
-    public static function getTabByIdProfile($idParent, $idProfile)
-    {
-        return Db::getInstance()->executeS('
-			SELECT t.`id_tab`, t.`id_parent`, tl.`name`, a.`id_profile`
-			FROM `' . _DB_PREFIX_ . 'tab` t
-			LEFT JOIN `' . _DB_PREFIX_ . 'access` a
-				ON (a.`id_tab` = t.`id_tab`)
-			LEFT JOIN `' . _DB_PREFIX_ . 'tab_lang` tl
-				ON (t.`id_tab` = tl.`id_tab` AND tl.`id_lang` = ' . (int) Context::getContext()->language->id . ')
-			WHERE a.`id_profile` = ' . (int) $idProfile . '
-			AND t.`id_parent` = ' . (int) $idParent . '
-			AND a.`view` = 1
-			AND a.`edit` = 1
-			AND a.`delete` = 1
-			AND a.`add` = 1
-			AND t.`id_parent` != 0 AND t.`id_parent` != -1
-			ORDER BY t.`id_parent` ASC
-		');
-    }
-
-    /**
-     * @since 1.5.0
-     */
     public static function getClassNameById($idTab)
     {
         return Db::getInstance()->getValue('SELECT class_name FROM ' . _DB_PREFIX_ . 'tab WHERE id_tab = ' . (int) $idTab);

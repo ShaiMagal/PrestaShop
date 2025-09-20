@@ -1,29 +1,25 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import {deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 
-// Import BO pages
-import loginCommon from '@commonTests/BO/loginBO';
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import addCartRulePage from '@pages/BO/catalog/discounts/add';
-
-// Import FO pages
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  boCartRulesPage,
+  boCartRulesCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataProducts,
   FakerCartRule,
   foClassicCartPage,
   foClassicHomePage,
   foClassicLoginPage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
+  type Page,
   utilsCore,
   utilsPlaywright,
+  dataCurrencies,
 } from '@prestashop-core/ui-testing';
 
 const baseContext: string = 'functional_BO_catalog_discounts_cartRules_CRUDCartRule_conditions_minimumAmount';
@@ -48,7 +44,7 @@ describe('BO - Catalog - Cart rules : Minimum amount', async () => {
     code: 'test',
     minimumAmount: {
       value: 50,
-      currency: 'EUR',
+      currency: dataCurrencies.euro,
       tax: 'Tax included',
       shipping: 'Shipping excluded',
     },
@@ -68,7 +64,13 @@ describe('BO - Catalog - Cart rules : Minimum amount', async () => {
 
   describe('BO : Create new cart rule', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Discounts\' page', async function () {
@@ -80,24 +82,24 @@ describe('BO - Catalog - Cart rules : Minimum amount', async () => {
         boDashboardPage.discountsLink,
       );
 
-      const pageTitle = await cartRulesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+      const pageTitle = await boCartRulesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
     });
 
     it('should go to new cart rule page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage', baseContext);
 
-      await cartRulesPage.goToAddNewCartRulesPage(page);
+      await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-      const pageTitle = await addCartRulePage.getPageTitle(page);
-      expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+      const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
     });
 
     it('should create new cart rule', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createCartRule', baseContext);
 
-      const validationMessage = await addCartRulePage.createEditCartRules(page, newCartRuleData);
-      expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+      const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, newCartRuleData);
+      expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
     });
   });
 
@@ -125,7 +127,7 @@ describe('BO - Catalog - Cart rules : Minimum amount', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'addProductToCart', baseContext);
 
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foClassicModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foClassicCartPage.getPageTitle(page);
       expect(pageTitle).to.eq(foClassicCartPage.pageTitle);
@@ -155,9 +157,9 @@ describe('BO - Catalog - Cart rules : Minimum amount', async () => {
 
       await foClassicCartPage.addPromoCode(page, newCartRuleData.code);
 
-      const discount = await utilsCore.percentage(
+      const discount = utilsCore.percentage(
         dataProducts.demo_6.combinations[0].price * 2,
-        newCartRuleData.discountPercent!,
+        newCartRuleData.getDiscountPercent(),
       );
 
       const totalAfterDiscount = await foClassicCartPage.getATIPrice(page);

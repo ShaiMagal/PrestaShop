@@ -2,19 +2,20 @@
 import testContext from '@utils/testContext';
 
 // Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 import createShoppingCart from '@commonTests/FO/classic/shoppingCart';
 import {createCustomerTest, deleteCustomerTest} from '@commonTests/BO/customers/customer';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boShoppingCartsPage,
+  type BrowserContext,
   dataProducts,
   dataShoppingCarts,
   FakerCustomer,
   FakerOrder,
+  type Page,
   utilsCore,
   utilsDate,
   utilsPlaywright,
@@ -27,7 +28,7 @@ Delete the non ordered shopping carts
 Filter shopping carts By :
 Id, order id, customer, carrier, date and online
 */
-describe('BO - Orders - Shopping carts: Filter & sort table', async () => {
+describe('BO - Orders - Shopping carts: Filter shopping cart table', async () => {
   let browserContext: BrowserContext;
   let page: Page;
   let numberOfShoppingCarts: number;
@@ -64,7 +65,13 @@ describe('BO - Orders - Shopping carts: Filter & sort table', async () => {
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Orders > Shopping carts\' page', async function () {
@@ -147,7 +154,7 @@ describe('BO - Orders - Shopping carts: Filter & sort table', async () => {
         testIdentifier: 'filterCustomerLastName',
         filterType: 'input',
         filterBy: 'customer_name',
-        filterValue: dataShoppingCarts[3].customer.lastName.substring(0, 2),
+        filterValue: dataShoppingCarts[3].customer.lastName.substring(0, 3),
       },
       {
         testIdentifier: 'filterCarrier',

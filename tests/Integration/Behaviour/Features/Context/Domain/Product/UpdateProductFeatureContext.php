@@ -36,6 +36,7 @@ use PrestaShop\PrestaShop\Core\Domain\Manufacturer\Exception\ManufacturerExcepti
 use PrestaShop\PrestaShop\Core\Domain\Product\Command\UpdateProductCommand;
 use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductException;
 use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\DeliveryTimeNoteType;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopCollection;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use RuntimeException;
 use Tests\Integration\Behaviour\Features\Context\Domain\TaxRulesGroupFeatureContext;
@@ -78,6 +79,17 @@ class UpdateProductFeatureContext extends AbstractProductFeatureContext
         $shopId = $this->getSharedStorage()->get(trim($shopReference));
         $shopConstraint = ShopConstraint::shop($shopId);
         $this->updateProduct($productReference, $table, $shopConstraint);
+    }
+
+    /**
+     * @When I update product ":productReference" for shops :shopReferences with following values:
+     *
+     * @param string $productReference
+     * @param TableNode $table
+     */
+    public function updateProductForShopCollection(string $productReference, string $shopReferences, TableNode $table): void
+    {
+        $this->updateProduct($productReference, $table, ShopCollection::shops($this->referencesToIds($shopReferences)));
     }
 
     /**
@@ -263,9 +275,6 @@ class UpdateProductFeatureContext extends AbstractProductFeatureContext
         }
         if (isset($data['reference'])) {
             $command->setReference($data['reference']);
-        }
-        if (isset($data['mpn'])) {
-            $command->setMpn($data['mpn']);
         }
     }
 

@@ -1,19 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import common tests
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataProducts,
   foHummingbirdCartPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -89,7 +86,7 @@ describe('FO - Product page : Change quantity', async () => {
 
       await foHummingbirdProductPage.clickOnAddToCartButton(page);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
 
@@ -99,7 +96,7 @@ describe('FO - Product page : Change quantity', async () => {
       await foHummingbirdProductPage.setQuantity(page, 0);
       await foHummingbirdProductPage.clickOnAddToCartButton(page);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
 
@@ -116,14 +113,14 @@ describe('FO - Product page : Change quantity', async () => {
       await foHummingbirdProductPage.setQuantity(page, 12);
       await foHummingbirdProductPage.clickOnAddToCartButton(page);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foHummingbirdModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.equal(true);
     });
 
     it('should click on continue shopping', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping2', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
 
@@ -147,7 +144,7 @@ describe('FO - Product page : Change quantity', async () => {
     it('should click on continue shopping', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping3', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
 
@@ -164,7 +161,7 @@ describe('FO - Product page : Change quantity', async () => {
     it('should proceed to checkout', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'proceedToCheckout', baseContext);
 
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);

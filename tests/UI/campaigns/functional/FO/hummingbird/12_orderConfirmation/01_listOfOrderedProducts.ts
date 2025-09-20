@@ -1,16 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
 
 import {
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataPaymentMethods,
@@ -19,15 +16,13 @@ import {
   foHummingbirdCheckoutPage,
   foHummingbirdCheckoutOrderConfirmationPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   foHummingbirdSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_hummingbird_orderConfirmation_listOfOrderedProducts';
 
 /*
@@ -85,7 +80,7 @@ describe('FO - Order confirmation : List of ordered products', async () => {
       await foHummingbirdSearchResultsPage.quickViewProduct(page, 1);
 
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.closeBlockCartModal(page);
+      await foHummingbirdModalBlockCartPage.closeBlockCartModal(page);
     });
 
     it(`should add the product ${dataProducts.demo_5.name} to cart by quick view`, async function () {
@@ -95,7 +90,7 @@ describe('FO - Order confirmation : List of ordered products', async () => {
       await foHummingbirdSearchResultsPage.quickViewProduct(page, 1);
 
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.closeBlockCartModal(page);
+      await foHummingbirdModalBlockCartPage.closeBlockCartModal(page);
     });
 
     it(`should add the product ${dataProducts.demo_12.name} to cart by quick view`, async function () {
@@ -105,7 +100,7 @@ describe('FO - Order confirmation : List of ordered products', async () => {
       await foHummingbirdSearchResultsPage.quickViewProduct(page, 1);
 
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);
@@ -180,7 +175,13 @@ describe('FO - Order confirmation : List of ordered products', async () => {
   describe('Get the order reference from the BO', async () => {
     it('should login in BO', async function () {
       page = await utilsPlaywright.newTab(browserContext);
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Orders > Orders\' page', async function () {

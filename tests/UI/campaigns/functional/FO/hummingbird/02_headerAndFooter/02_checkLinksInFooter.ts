@@ -1,45 +1,39 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import deleteCacheTest from '@commonTests/BO/advancedParameters/cache';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import pages
-// Import BO pages
-// Import FO pages
-import bestSalesPage from '@pages/FO/hummingbird/bestSales';
-import contactUsPage from '@pages/FO/hummingbird/contactUs';
-import deliveryPage from '@pages/FO/hummingbird/delivery';
-import legalNoticePage from '@pages/FO/hummingbird/legalNotice';
-import createAccountPage from '@pages/FO/hummingbird/myAccount/add';
-import addAddressPage from '@pages/FO/hummingbird/myAccount/addAddress';
-import addressesPage from '@pages/FO/hummingbird/myAccount/addresses';
-import creditSlipsPage from '@pages/FO/hummingbird/myAccount/creditSlips';
-import personalInfoPage from '@pages/FO/hummingbird/myAccount/identity';
-import ordersPage from '@pages/FO/hummingbird/myAccount/orderHistory';
-import guestOrderTrackingPage from '@pages/FO/hummingbird/orderTracking/guestOrderTracking';
-import newProductsPage from '@pages/FO/hummingbird/newProducts';
-import pricesDropPage from '@pages/FO/hummingbird/pricesDrop';
-import securePaymentPage from '@pages/FO/hummingbird/securePayment';
-import siteMapPage from '@pages/FO/hummingbird/siteMap';
-import storesPage from '@pages/FO/hummingbird/stores';
-import termsAndConditionsOfUsePage from '@pages/FO/hummingbird/termsAndConditionsOfUse';
-
 import {
+  type BrowserContext,
   dataCustomers,
   FakerCustomer,
   foHummingbirdAboutUsPage,
+  foHummingbirdBestSalesPage,
+  foHummingbirdContactUsPage,
+  foHummingbirdCreateAccountPage,
+  foHummingbirdDeliveryPage,
+  foHummingbirdGuestOrderTrackingPage,
   foHummingbirdHomePage,
+  foHummingbirdLegalNoticePage,
   foHummingbirdLoginPage,
+  foHummingbirdMyAddressesPage,
+  foHummingbirdMyAddressesCreatePage,
+  foHummingbirdMyCreditSlipsPage,
+  foHummingbirdMyInformationsPage,
+  foHummingbirdMyOrderHistoryPage,
   foHummingbirdMyWishlistsPage,
+  foHummingbirdNewProductsPage,
+  foHummingbirdPricesDropPage,
+  foHummingbirdSecurePaymentPage,
+  foHummingbirdSitemapPage,
+  foHummingbirdStoresPage,
+  foHummingbirdTermsAndConditionsOfUsePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_hummingbird_headerAndFooter_checkLinksInFooter';
 
@@ -97,9 +91,9 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
 
   describe('Check \'Products\' footer links', async () => {
     [
-      {linkSelector: 'Prices drop', pageTitle: pricesDropPage.pageTitle},
-      {linkSelector: 'New products', pageTitle: newProductsPage.pageTitle},
-      {linkSelector: 'Best sellers', pageTitle: bestSalesPage.pageTitle},
+      {linkSelector: 'Prices drop', pageTitle: foHummingbirdPricesDropPage.pageTitle},
+      {linkSelector: 'New products', pageTitle: foHummingbirdNewProductsPage.pageTitle},
+      {linkSelector: 'Best sellers', pageTitle: foHummingbirdBestSalesPage.pageTitle},
     ].forEach((args, index: number) => {
       it(`should check '${args.linkSelector}' footer links`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `checkProductsFooterLinks${index}`, baseContext);
@@ -115,14 +109,14 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
 
   describe('Check \'Our Company\' footer links', async () => {
     [
-      {linkSelector: 'Delivery', pageTitle: deliveryPage.pageTitle},
-      {linkSelector: 'Legal Notice', pageTitle: legalNoticePage.pageTitle},
-      {linkSelector: 'Terms and conditions of use', pageTitle: termsAndConditionsOfUsePage.pageTitle},
+      {linkSelector: 'Delivery', pageTitle: foHummingbirdDeliveryPage.pageTitle},
+      {linkSelector: 'Legal Notice', pageTitle: foHummingbirdLegalNoticePage.pageTitle},
+      {linkSelector: 'Terms and conditions of use', pageTitle: foHummingbirdTermsAndConditionsOfUsePage.pageTitle},
       {linkSelector: 'About us', pageTitle: foHummingbirdAboutUsPage.pageTitle},
-      {linkSelector: 'Secure payment', pageTitle: securePaymentPage.pageTitle},
-      {linkSelector: 'Contact us', pageTitle: contactUsPage.pageTitle},
-      {linkSelector: 'Sitemap', pageTitle: siteMapPage.pageTitle},
-      {linkSelector: 'Stores', pageTitle: storesPage.pageTitle},
+      {linkSelector: 'Secure payment', pageTitle: foHummingbirdSecurePaymentPage.pageTitle},
+      {linkSelector: 'Contact us', pageTitle: foHummingbirdContactUsPage.pageTitle},
+      {linkSelector: 'Sitemap', pageTitle: foHummingbirdSitemapPage.pageTitle},
+      {linkSelector: 'Stores', pageTitle: foHummingbirdStoresPage.pageTitle},
     ].forEach((args, index: number) => {
       it(`should check '${args.linkSelector}' footer links`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `checkOurCompanyFooterLinks${index}`, baseContext);
@@ -138,9 +132,9 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
 
   describe('Check \'Your Account\' footer links before login', async () => {
     [
-      {linkSelector: 'Order tracking', pageTitle: guestOrderTrackingPage.pageTitle},
+      {linkSelector: 'Order tracking', pageTitle: foHummingbirdGuestOrderTrackingPage.pageTitle},
       {linkSelector: 'Sign in', pageTitle: foHummingbirdLoginPage.pageTitle},
-      {linkSelector: 'Create account', pageTitle: createAccountPage.formTitle},
+      {linkSelector: 'Create account', pageTitle: foHummingbirdCreateAccountPage.formTitle},
     ].forEach((args, index: number) => {
       it(`should check '${args.linkSelector}' footer links`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `checkYourAccountFooterLinks1${index}`, baseContext);
@@ -149,7 +143,7 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
         await foHummingbirdHomePage.goToFooterLink(page, args.linkSelector);
 
         if (args.linkSelector === 'Create account') {
-          pageTitle = await createAccountPage.getHeaderTitle(page);
+          pageTitle = await foHummingbirdCreateAccountPage.getHeaderTitle(page);
         } else {
           pageTitle = await foHummingbirdHomePage.getPageTitle(page);
         }
@@ -170,10 +164,10 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
     });
 
     [
-      {linkSelector: 'Information', pageTitle: personalInfoPage.pageTitle},
-      {linkSelector: 'Addresses', pageTitle: addressesPage.pageTitle},
-      {linkSelector: 'Orders', pageTitle: ordersPage.pageTitle},
-      {linkSelector: 'Credit slips', pageTitle: creditSlipsPage.pageTitle},
+      {linkSelector: 'Information', pageTitle: foHummingbirdMyInformationsPage.pageTitle},
+      {linkSelector: 'Addresses', pageTitle: foHummingbirdMyAddressesPage.pageTitle},
+      {linkSelector: 'Orders', pageTitle: foHummingbirdMyOrderHistoryPage.pageTitle},
+      {linkSelector: 'Credit slips', pageTitle: foHummingbirdMyCreditSlipsPage.pageTitle},
       {linkSelector: 'Wishlist', pageTitle: foHummingbirdMyWishlistsPage.pageTitle},
       {linkSelector: 'Sign out', pageTitle: foHummingbirdLoginPage.pageTitle},
     ].forEach((args, index: number) => {
@@ -208,10 +202,10 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
     });
 
     [
-      {linkSelector: 'Information', pageTitle: personalInfoPage.pageTitle},
-      {linkSelector: 'Add first address', pageTitle: addAddressPage.pageTitle},
-      {linkSelector: 'Orders', pageTitle: ordersPage.pageTitle},
-      {linkSelector: 'Credit slips', pageTitle: creditSlipsPage.pageTitle},
+      {linkSelector: 'Information', pageTitle: foHummingbirdMyInformationsPage.pageTitle},
+      {linkSelector: 'Add first address', pageTitle: foHummingbirdMyAddressesCreatePage.pageTitle},
+      {linkSelector: 'Orders', pageTitle: foHummingbirdMyOrderHistoryPage.pageTitle},
+      {linkSelector: 'Credit slips', pageTitle: foHummingbirdMyCreditSlipsPage.pageTitle},
       {linkSelector: 'Wishlist', pageTitle: foHummingbirdMyWishlistsPage.pageTitle},
       {linkSelector: 'Sign out', pageTitle: foHummingbirdLoginPage.pageTitle},
     ].forEach((args, index: number) => {

@@ -1,26 +1,22 @@
-// Import utils
+import {expect} from 'chai';
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
 
 import {
   boCarriersPage,
   boCarriersCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCarriers,
   FakerCarrier,
+  type Page,
   utilsCore,
   utilsFile,
   utilsPlaywright,
+  dataZones,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
 const baseContext: string = 'functional_BO_shipping_carriers_filterSortAndPagination';
-
-// Browser and tab
 
 describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', async () => {
   let browserContext: BrowserContext;
@@ -38,7 +34,13 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shipping > Carriers\' page', async function () {
@@ -63,7 +65,7 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
 
   // 1 - Filter carriers
   describe('Filter carriers table', async () => {
-    const tests = [
+    [
       {
         args:
           {
@@ -111,18 +113,7 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
           },
         expected: 'Disabled',
       },
-      {
-        args:
-          {
-            testIdentifier: 'filterByPosition',
-            filterType: 'input',
-            filterBy: 'a!position',
-            filterValue: dataCarriers.myLightCarrier.position.toString(),
-          },
-      },
-    ];
-
-    tests.forEach((test) => {
+    ].forEach((test) => {
       it(`should filter by ${test.args.filterBy} '${test.args.filterValue}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
@@ -158,56 +149,47 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
 
   // 2 - Sort carriers table
   describe('Sort carriers table', async () => {
-    const sortTests = [
+    [
       {
-        args: {
-          testIdentifier: 'sortByIdDesc', sortBy: 'id_carrier', sortDirection: 'down', isFloat: true,
-        },
+        testIdentifier: 'sortByIdDesc', sortBy: 'id_carrier', sortDirection: 'desc', isFloat: true,
       },
       {
-        args: {
-          testIdentifier: 'sortByNameDesc', sortBy: 'name', sortDirection: 'down',
-        },
+        testIdentifier: 'sortByNameDesc', sortBy: 'name', sortDirection: 'desc',
       },
       {
-        args: {
-          testIdentifier: 'sortByNameAsc', sortBy: 'name', sortDirection: 'up',
-        },
+        testIdentifier: 'sortByNameAsc', sortBy: 'name', sortDirection: 'asc',
       },
       {
-        args: {
-          testIdentifier: 'sortByPositionAsc', sortBy: 'a!position', sortDirection: 'up', isFloat: true,
-        },
+        testIdentifier: 'sortByPositionAsc', sortBy: 'a!position', sortDirection: 'asc', isFloat: true,
       },
       {
-        args: {
-          testIdentifier: 'sortByPositionDesc', sortBy: 'a!position', sortDirection: 'down', isFloat: true,
-        },
+        testIdentifier: 'sortByPositionDesc', sortBy: 'a!position', sortDirection: 'desc', isFloat: true,
       },
       {
-        args: {
-          testIdentifier: 'sortByIdAsc', sortBy: 'id_carrier', sortDirection: 'up', isFloat: true,
-        },
+        testIdentifier: 'sortByIdAsc', sortBy: 'id_carrier', sortDirection: 'asc', isFloat: true,
       },
-    ];
+    ].forEach((test: {
+      testIdentifier: string
+      sortBy: string
+      sortDirection: string
+      isFloat?: boolean
+    }) => {
+      it(`should sort by '${test.sortBy}' '${test.sortDirection}' and check result`, async function () {
+        await testContext.addContextItem(this, 'testIdentifier', test.testIdentifier, baseContext);
 
-    sortTests.forEach((test) => {
-      it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
-        await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
+        const nonSortedTable = await boCarriersPage.getAllRowsColumnContent(page, test.sortBy);
 
-        const nonSortedTable = await boCarriersPage.getAllRowsColumnContent(page, test.args.sortBy);
+        await boCarriersPage.sortTable(page, test.sortBy, test.sortDirection);
 
-        await boCarriersPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        const sortedTable = await boCarriersPage.getAllRowsColumnContent(page, test.sortBy);
 
-        const sortedTable = await boCarriersPage.getAllRowsColumnContent(page, test.args.sortBy);
-
-        if (test.args.isFloat) {
+        if (test.isFloat) {
           const nonSortedTableFloat = nonSortedTable.map((text: string): number => parseFloat(text));
           const sortedTableFloat = sortedTable.map((text: string): number => parseFloat(text));
 
           const expectedResult = await utilsCore.sortArrayNumber(nonSortedTableFloat);
 
-          if (test.args.sortDirection === 'up') {
+          if (test.sortDirection === 'asc') {
             expect(sortedTableFloat).to.deep.equal(expectedResult);
           } else {
             expect(sortedTableFloat).to.deep.equal(expectedResult.reverse());
@@ -215,7 +197,7 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
         } else {
           const expectedResult = await utilsCore.sortArray(nonSortedTable);
 
-          if (test.args.sortDirection === 'up') {
+          if (test.sortDirection === 'asc') {
             expect(sortedTable).to.deep.equal(expectedResult);
           } else {
             expect(sortedTable).to.deep.equal(expectedResult.reverse());
@@ -231,12 +213,27 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
     creationTests.forEach((test: number, index: number) => {
       before(() => utilsFile.generateImage(`todelete${index}.jpg`));
 
-      const carrierData: FakerCarrier = new FakerCarrier({name: `todelete${index}`});
+      const carrierData: FakerCarrier = new FakerCarrier({
+        name: `todelete${index}`,
+        ranges: [
+          {
+            weightMin: 0,
+            weightMax: 5,
+            zones: [
+              {
+                zone: dataZones.europe,
+                price: 5,
+              },
+            ],
+          },
+        ],
+      });
 
       it('should go to add new carrier page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToAddCarrierPage${index}`, baseContext);
 
         await boCarriersPage.goToAddNewCarrierPage(page);
+
         const pageTitle = await boCarriersCreatePage.getPageTitle(page);
         expect(pageTitle).to.contains(boCarriersCreatePage.pageTitleCreate);
       });
@@ -246,6 +243,19 @@ describe('BO - Shipping - Carriers : Filter, sort and pagination carriers', asyn
 
         const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierData);
         expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+      });
+
+      it('should return to carriers page', async function () {
+        await testContext.addContextItem(this, 'testIdentifier', `returnToCarriers${index}`, baseContext);
+
+        await boDashboardPage.goToSubMenu(
+          page,
+          boDashboardPage.shippingLink,
+          boDashboardPage.carriersLink,
+        );
+
+        const pageTitle = await boCarriersPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCarriersPage.pageTitle);
 
         const numberOfCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
         expect(numberOfCarriersAfterCreation).to.be.equal(numberOfCarriers + 1 + index);

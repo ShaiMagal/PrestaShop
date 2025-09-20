@@ -1,22 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import addressesPage from '@pages/BO/customers/addresses';
-import addAddressPage from '@pages/BO/customers/addresses/add';
+import {expect} from 'chai';
 
 import {
+  boAddressesPage,
+  boAddressesCreatePage,
   boDashboardPage,
   boLocalizationPage,
+  boLoginPage,
+  type BrowserContext,
   dataCountries,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_international_localization_localization_defaultCountry';
 
@@ -47,7 +42,13 @@ describe('BO - International - Localization : Update default country', async () 
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   countriesToTest.forEach((country: string, index: number) => {
@@ -81,23 +82,23 @@ describe('BO - International - Localization : Update default country', async () 
           boLocalizationPage.addressesLink,
         );
 
-        const pageTitle = await addressesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addressesPage.pageTitle);
+        const pageTitle = await boAddressesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boAddressesPage.pageTitle);
       });
 
       it('should go to add new address page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goToAddNewAddressPage${index}`, baseContext);
 
-        await addressesPage.goToAddNewAddressPage(page);
+        await boAddressesPage.goToAddNewAddressPage(page);
 
-        const pageTitle = await addAddressPage.getPageTitle(page);
-        expect(pageTitle).to.contains(addAddressPage.pageTitleCreate);
+        const pageTitle = await boAddressesCreatePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boAddressesCreatePage.pageTitleCreate);
       });
 
       it('should check default country', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `checkSelectedCountry${index}`, baseContext);
 
-        const selectedCountry = await addAddressPage.getSelectedCountry(page);
+        const selectedCountry = await boAddressesCreatePage.getSelectedCountry(page);
         expect(selectedCountry).to.equal(country);
       });
     });

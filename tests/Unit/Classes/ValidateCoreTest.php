@@ -315,7 +315,7 @@ class ValidateCoreTest extends TestCase
             [false, date('Y-m-d', strtotime('+1 year +1 month'))],
             [false, date('Y-m-d', strtotime('+1 year +1 month -1 day'))],
             [false, date('Y-m-d', strtotime('+1 year +1 month +1 day'))],
-            [false, date('Y-m-d', strtotime('-201 year'))],
+            [false, date('Y-m-d', strtotime('-121 year'))],
         ];
     }
 

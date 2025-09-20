@@ -1,17 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import errorPage from '@pages/BO/error';
-import moduleCatalogPage from '@pages/BO/modules/moduleCatalog';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boErrorPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -35,7 +30,13 @@ describe('Regression : Access to Module catalog is denied with neither left menu
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go check that `Module Catalog` on left menu is not visible', async function () {
@@ -54,8 +55,8 @@ describe('Regression : Access to Module catalog is denied with neither left menu
 
     await boDashboardPage.navigateToPageWithInvalidToken(page, pageLegacyUrl);
 
-    const alertText = await moduleCatalogPage.getAlertDangerBlockParagraphContent(page);
-    expect(alertText).to.contain(moduleCatalogPage.pageNotFoundMessage);
+    const alertText = await boErrorPage.getAlertDangerBlockParagraphContent(page);
+    expect(alertText).to.contain(boErrorPage.pageNotFoundMessage);
   });
 
   it('should redirect to dashboard when accessing by symfony url', async function () {
@@ -63,7 +64,7 @@ describe('Regression : Access to Module catalog is denied with neither left menu
 
     await boDashboardPage.navigateToPageWithInvalidToken(page, pageSymfonyUrl);
 
-    const pageTitle = await errorPage.getPageTitle(page);
-    expect(pageTitle).to.contains(errorPage.notFoundTitle);
+    const pageTitle = await boErrorPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boErrorPage.notFoundTitle);
   });
 });

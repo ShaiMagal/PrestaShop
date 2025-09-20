@@ -1,21 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import {createProductTest, deleteProductTest} from '@commonTests/BO/catalog/product';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataProducts,
   FakerProduct,
   foHummingbirdCategoryPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
+  type Page,
   type ProductAttribute,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -23,17 +20,17 @@ import {
 const baseContext: string = 'functional_FO_hummingbird_homePage_productQuickView';
 
 /*
-Pre-condition:
-- Create product out of stock not allowed
-- Install hummingbird theme
-Scenario:
-- Quick view product with combinations
-- Quick view simple product
-- Quick view customized product
-- Quick view product out of stock not allowed
-Post-condition:
-- Delete created product
-- Uninstall hummingbird theme
+ * Pre-condition:
+ * - Create product out of stock not allowed
+ * - Install hummingbird theme
+ * Scenario:
+ * - Quick view product with combinations
+ * - Quick view simple product
+ * - Quick view customized product
+ * - Quick view product out of stock not allowed
+ * Post-condition:
+ * - Delete created product
+ * - Uninstall hummingbird theme
  */
 describe('FO - Home Page : Product quick view', async () => {
   let browserContext: BrowserContext;
@@ -146,14 +143,14 @@ describe('FO - Home Page : Product quick view', async () => {
       await foHummingbirdModalQuickViewPage.setQuantity(page, attributesQty);
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foHummingbirdModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.equal(true);
     });
 
     it('should click on continue shopping and check that the modal is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
   });
@@ -188,14 +185,14 @@ describe('FO - Home Page : Product quick view', async () => {
       await foHummingbirdModalQuickViewPage.setQuantity(page, attributesQty);
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foHummingbirdModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.equal(true);
     });
 
     it('should click on continue shopping and check that the modal is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping2', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foHummingbirdModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
   });

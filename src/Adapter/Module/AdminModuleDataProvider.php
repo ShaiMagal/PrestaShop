@@ -62,9 +62,9 @@ class AdminModuleDataProvider implements ModuleInterface
      * @var array<string> of defined and callable module actions
      */
     protected $moduleActions = [
+        Module::ACTION_ENABLE,
         Module::ACTION_INSTALL,
         Module::ACTION_CONFIGURE,
-        Module::ACTION_ENABLE,
         Module::ACTION_DISABLE,
         Module::ACTION_RESET,
         Module::ACTION_UPGRADE,
@@ -169,7 +169,7 @@ class AdminModuleDataProvider implements ModuleInterface
             return false;
         }
 
-        if (in_array($action, ['install', 'upgrade'])) {
+        if (in_array($action, ['install', 'upgrade', 'upload'])) {
             return $this->employee->can('add', 'AdminModulessf');
         }
 

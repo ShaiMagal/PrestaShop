@@ -72,12 +72,12 @@ class LayoutExtension extends AbstractExtension implements GlobalsInterface
 
         try {
             $defaultCurrency = $this->context->getEmployeeCurrency() ?: $this->currencyDataProvider->getDefaultCurrency();
-        } catch (Exception $e) {
+        } catch (Exception) {
             $defaultCurrency = null;
         }
         try {
             $rootUrl = $this->context->getRootUrl();
-        } catch (Exception $e) {
+        } catch (Exception) {
             $rootUrl = null;
         }
 

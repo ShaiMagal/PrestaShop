@@ -1,22 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import common tests
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataProducts,
   foHummingbirdCartPage,
   foHummingbirdCheckoutPage,
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   foHummingbirdProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -68,9 +65,10 @@ describe('FO - Checkout : Show details', async () => {
 
       await foHummingbirdHomePage.quickViewProduct(page, 1);
       await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
+      await foHummingbirdModalBlockCartPage.closeBlockCartModal(page);
 
-      const isModalClosed = await blockCartModal.closeBlockCartModal(page);
-      expect(isModalClosed).to.eq(true);
+      const isModalVisible = await foHummingbirdModalBlockCartPage.isBlockCartModalVisible(page);
+      expect(isModalVisible).to.eq(false);
     });
 
     it('should add the third product to cart', async function () {
@@ -79,7 +77,7 @@ describe('FO - Checkout : Show details', async () => {
       await foHummingbirdLoginPage.goToHomePage(page);
       await foHummingbirdHomePage.quickViewProduct(page, 3);
       await foHummingbirdModalQuickViewPage.setQuantityAndAddToCart(page, 2);
-      await blockCartModal.proceedToCheckout(page);
+      await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
       expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);

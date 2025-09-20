@@ -68,10 +68,8 @@ class BulkDeleteCurrenciesException extends CurrencyException
     public function getCurrenciesNames(): array
     {
         $names = [];
-        if (!empty($this->getCurrenciesIds())) {
-            foreach ($this->getCurrenciesIds() as $id) {
-                $names[] = (new Currency((int) $id))->getName();
-            }
+        foreach ($this->getCurrenciesIds() as $id) {
+            $names[] = (new Currency((int) $id))->getName();
         }
 
         return $names;

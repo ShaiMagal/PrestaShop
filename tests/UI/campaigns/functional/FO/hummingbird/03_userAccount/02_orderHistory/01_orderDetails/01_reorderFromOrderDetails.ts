@@ -1,15 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import common tests
 import {createOrderByCustomerTest} from '@commonTests/FO/hummingbird/order';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import FO pages
-import orderDetailsPage from '@pages/FO/hummingbird/myAccount/orderDetails';
-import orderHistoryPage from '@pages/FO/hummingbird/myAccount/orderHistory';
-
 import {
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   dataProducts,
@@ -19,13 +16,12 @@ import {
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
   foHummingbirdMyAccountPage,
+  foHummingbirdMyOrderDetailsPage,
+  foHummingbirdMyOrderHistoryPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_hummingbird_userAccount_orderHistory_orderDetails_reorderFromOrderDetails';
 
 /*
@@ -116,23 +112,23 @@ describe('FO - Account - Order details : Reorder from order detail', async () =>
 
       await foHummingbirdMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foHummingbirdMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foHummingbirdMyOrderHistoryPage.pageTitle);
     });
 
     it('should go to order details page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFoToOrderDetails', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foHummingbirdMyOrderHistoryPage.goToDetailsPage(page);
 
-      const pageTitle = await orderDetailsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(orderDetailsPage.pageTitle);
+      const pageTitle = await foHummingbirdMyOrderDetailsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foHummingbirdMyOrderDetailsPage.pageTitle);
     });
 
     it('should click on reorder link', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnReorderLink', baseContext);
 
-      await orderDetailsPage.clickOnReorderLink(page);
+      await foHummingbirdMyOrderDetailsPage.clickOnReorderLink(page);
 
       const isCheckoutPage = await foHummingbirdCheckoutPage.isCheckoutPage(page);
       expect(isCheckoutPage, 'Browser is not in checkout Page').to.eq(true);
@@ -180,23 +176,23 @@ describe('FO - Account - Order details : Reorder from order detail', async () =>
 
       await foHummingbirdMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foHummingbirdMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foHummingbirdMyOrderHistoryPage.pageTitle);
     });
 
     it('should go to order details page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToFoToOrderDetails', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foHummingbirdMyOrderHistoryPage.goToDetailsPage(page);
 
-      const pageTitle = await orderDetailsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(orderDetailsPage.pageTitle);
+      const pageTitle = await foHummingbirdMyOrderDetailsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foHummingbirdMyOrderDetailsPage.pageTitle);
     });
 
     it('should check the ordered product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTheOrderedProduct', baseContext);
 
-      const orderedProduct = await orderDetailsPage.getProductName(page, 1, 2);
+      const orderedProduct = await foHummingbirdMyOrderDetailsPage.getProductName(page, 1, 2);
       expect(orderedProduct).to.contain(dataProducts.demo_1.name);
     });
 

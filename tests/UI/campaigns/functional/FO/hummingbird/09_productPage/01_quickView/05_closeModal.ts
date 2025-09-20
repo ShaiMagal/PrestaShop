@@ -5,11 +5,12 @@ import testContext from '@utils/testContext';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
+  type BrowserContext,
   dataProducts,
   foHummingbirdHomePage,
   foHummingbirdModalQuickViewPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -32,7 +33,6 @@ describe('FO - Product page - Quick view : Close quick view modal', async () => 
   // Pre-condition : Install Hummingbird
   enableHummingbird(`${baseContext}_preTest`);
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

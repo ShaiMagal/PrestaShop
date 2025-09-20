@@ -1,4 +1,4 @@
-{#**
+{# **
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
@@ -21,7 +21,7 @@
  * @author    PrestaShop SA and Contributors <contact@prestashop.com>
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- *#}
+ * #}
 <!DOCTYPE html>
 <!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7 lt-ie6"> <![endif]-->
 <!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8 ie7"> <![endif]-->
@@ -30,7 +30,7 @@
 <html lang="{{ ps.isoUser }}">
 <head>
   {% block header %}
-    {{ component('LegacyHeadTag') }}
+    {{ component('LegacyHeadTag', {metaTitle: metaTitle|default}) }}
   {% endblock %}
 </head>
 
@@ -106,7 +106,7 @@
       {{ component('LegacyNotificationsCenter') }}
       {{ component('LegacyEmployeeDropdown') }}
 
-      {# Ajax running *#}
+      {# Ajax running * #}
       <span id="ajax_running" class="hidden-xs">
         <i class="icon-refresh icon-spin icon-fw"></i>
       </span>
@@ -122,7 +122,14 @@
     <div id="content" class="bootstrap{% if ps.displayedWithTabs %} with-tabs{% endif %}">
       {# Page header toolbar #}
       {% if showContentHeader %}
-        {{ component('LegacyToolbar') }}
+        {{ component('LegacyToolbar', {
+          layoutTitle: layoutTitle|default,
+          layoutSubTitle: layoutSubTitle|default,
+          helpLink: help_link|default,
+          enableSidebar: enableSidebar|default(false),
+          layoutHeaderToolbarBtn: layoutHeaderToolbarBtn|default([]),
+          breadcrumbLinks: breadcrumbLinks|default([]),
+        }) }}
       {% endif %}
 
       {% block content_header %}
@@ -143,7 +150,7 @@
     </div>
   </div>
 
-  {% if modals is not empty %}
+  {% if modals is defined and modals is not empty %}
     <div class="bootstrap">
       {{ modals|raw }}
     </div>

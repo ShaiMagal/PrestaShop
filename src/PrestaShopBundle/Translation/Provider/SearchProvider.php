@@ -89,7 +89,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
     {
         try {
             $defaultCatalogue = parent::getDefaultCatalogue($empty);
-        } catch (TranslationFilesNotFoundException $e) {
+        } catch (TranslationFilesNotFoundException) {
             $defaultCatalogue = $this->externalModuleLegacySystemProvider->getDefaultCatalogue($empty);
             $defaultCatalogue = $this->filterCatalogue($defaultCatalogue);
         }
@@ -106,7 +106,7 @@ class SearchProvider extends AbstractProvider implements UseDefaultCatalogueInte
     {
         try {
             $xliffCatalogue = parent::getXliffCatalogue();
-        } catch (Exception $e) {
+        } catch (Exception) {
             $xliffCatalogue = $this->externalModuleLegacySystemProvider->getXliffCatalogue();
             $xliffCatalogue = $this->filterCatalogue($xliffCatalogue);
         }

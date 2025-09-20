@@ -1,18 +1,14 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import employeesPage from '@pages/BO/advancedParameters/team';
-import permissionsPage from '@pages/BO/advancedParameters/team/permissions';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boEmployeesPage,
+  boLoginPage,
+  boPermissionsPage,
+  type BrowserContext,
   type EmployeePermission,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -42,7 +38,13 @@ function setPermissions(
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > Team\' page', async function () {
@@ -54,21 +56,21 @@ function setPermissions(
         boDashboardPage.teamLink,
       );
 
-      const pageTitle = await employeesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(employeesPage.pageTitle);
+      const pageTitle = await boEmployeesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boEmployeesPage.pageTitle);
     });
 
     it('should go to \'Permissions\' tab', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToPermissionsTab', baseContext);
 
-      const isTabOpened = await employeesPage.goToPermissionsTab(page);
+      const isTabOpened = await boEmployeesPage.goToPermissionsTab(page);
       expect(isTabOpened, 'Permissions tab is not opened!').to.eq(true);
     });
 
     it('should click on the defined profile', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToProfileSubTab', baseContext);
 
-      const isSubTabOpened = await permissionsPage.goToProfileSubTab(page, profileName);
+      const isSubTabOpened = await boPermissionsPage.goToProfileSubTab(page, profileName);
       expect(isSubTabOpened, 'Profile sub-tab is not opened!').to.eq(true);
     });
 
@@ -82,7 +84,7 @@ function setPermissions(
             baseContext,
           );
 
-          const isPermissionDefined = await permissionsPage.setPermission(page, permission.className, access);
+          const isPermissionDefined = await boPermissionsPage.setPermission(page, permission.className, access);
           expect(isPermissionDefined, 'Permission is not updated').to.eq(true);
         });
       });

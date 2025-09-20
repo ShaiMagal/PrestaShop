@@ -1,26 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import orderSettingsPage from '@pages/BO/shopParameters/orderSettings';
-// Import FO pages
-import {orderHistoryPage} from '@pages/FO/classic/myAccount/orderHistory';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boLoginPage,
+  boOrderSettingsPage,
+  type BrowserContext,
   dataCustomers,
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
+  foClassicMyOrderHistoryPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shopParameters_orderSettings_orderSettings_general_disableReorderingOption';
 
@@ -43,7 +36,13 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable reordering opti
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shop Parameters > Order Settings\' page', async function () {
@@ -54,10 +53,10 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable reordering opti
       boDashboardPage.shopParametersParentLink,
       boDashboardPage.orderSettingsLink,
     );
-    await orderSettingsPage.closeSfToolBar(page);
+    await boOrderSettingsPage.closeSfToolBar(page);
 
-    const pageTitle = await orderSettingsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(orderSettingsPage.pageTitle);
+    const pageTitle = await boOrderSettingsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boOrderSettingsPage.pageTitle);
   });
 
   const tests = [
@@ -69,15 +68,15 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable reordering opti
     it(`should ${test.args.action} reordering option`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `setReorderingOption${index}`, baseContext);
 
-      const result = await orderSettingsPage.setReorderOptionStatus(page, test.args.status);
-      expect(result).to.contains(orderSettingsPage.successfulUpdateMessage);
+      const result = await boOrderSettingsPage.setReorderOptionStatus(page, test.args.status);
+      expect(result).to.contains(boOrderSettingsPage.successfulUpdateMessage);
     });
 
     it('should view my shop', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${index}`, baseContext);
 
       // Click on view my shop
-      page = await orderSettingsPage.viewMyShop(page);
+      page = await boOrderSettingsPage.viewMyShop(page);
       // Change language
       await foClassicHomePage.changeLanguage(page, 'en');
 
@@ -100,7 +99,7 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable reordering opti
       await foClassicMyAccountPage.goToHistoryAndDetailsPage(page);
 
       // Check reorder link
-      const isReorderLinkVisible = await orderHistoryPage.isReorderLinkVisible(page);
+      const isReorderLinkVisible = await foClassicMyOrderHistoryPage.isReorderLinkVisible(page);
       expect(isReorderLinkVisible).to.be.equal(test.args.reorderOption);
     });
 
@@ -108,11 +107,11 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable reordering opti
       await testContext.addContextItem(this, 'testIdentifier', `goBackToBO${index}`, baseContext);
 
       // Logout FO
-      await orderHistoryPage.logout(page);
-      page = await orderHistoryPage.closePage(browserContext, page, 0);
+      await foClassicMyOrderHistoryPage.logout(page);
+      page = await foClassicMyOrderHistoryPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await orderSettingsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(orderSettingsPage.pageTitle);
+      const pageTitle = await boOrderSettingsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boOrderSettingsPage.pageTitle);
     });
   });
 });

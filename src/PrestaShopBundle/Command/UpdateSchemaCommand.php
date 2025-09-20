@@ -75,7 +75,7 @@ class UpdateSchemaCommand extends Command
      * @param InputInterface $input
      * @param OutputInterface $output
      */
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->dumpSql = $input->getOption('dump-sql') === true;
         $this->forceSql = $input->getOption('force') === true;

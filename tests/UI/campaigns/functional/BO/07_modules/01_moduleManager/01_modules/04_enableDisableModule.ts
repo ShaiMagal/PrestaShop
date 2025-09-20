@@ -1,15 +1,14 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boModuleManagerPage,
+  type BrowserContext,
   dataModules,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -30,7 +29,13 @@ describe('BO - Modules - Module Manager : Enable/Disable module', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Modules > Module Manager\' page', async function () {
@@ -52,30 +57,30 @@ describe('BO - Modules - Module Manager : Enable/Disable module', async () => {
       args: {
         title: 'disable the module',
         action: 'disable',
-        message: boModuleManagerPage.disableModuleSuccessMessage(dataModules.availableQuantities.tag),
+        message: boModuleManagerPage.disableModuleSuccessMessage(dataModules.statsstock.tag),
       },
     },
   ].forEach((test) => {
     it(`should ${test.args.title}`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', test.args.action, baseContext);
 
-      const successMessage = await boModuleManagerPage.setActionInModule(page, dataModules.availableQuantities, test.args.action);
+      const successMessage = await boModuleManagerPage.setActionInModule(page, dataModules.statsstock, test.args.action);
       expect(successMessage).to.eq(test.args.message);
     });
   });
 
-  it(`should search the module ${dataModules.availableQuantities.name}`, async function () {
+  it(`should search the module ${dataModules.statsstock.name}`, async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'searchModule', baseContext);
 
-    const isModuleVisible = await boModuleManagerPage.searchModule(page, dataModules.availableQuantities);
+    const isModuleVisible = await boModuleManagerPage.searchModule(page, dataModules.statsstock);
     expect(isModuleVisible).to.eq(true);
   });
 
   it('should enable the module', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'enableModule', baseContext);
 
-    const successMessage = await boModuleManagerPage.setActionInModule(page, dataModules.availableQuantities, 'enable');
-    expect(successMessage).to.eq(boModuleManagerPage.enableModuleSuccessMessage(dataModules.availableQuantities.tag));
+    const successMessage = await boModuleManagerPage.setActionInModule(page, dataModules.statsstock, 'enable');
+    expect(successMessage).to.eq(boModuleManagerPage.enableModuleSuccessMessage(dataModules.statsstock.tag));
   });
 
   it('should show all modules', async function () {

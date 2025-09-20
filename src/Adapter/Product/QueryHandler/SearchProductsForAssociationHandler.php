@@ -101,7 +101,8 @@ class SearchProductsForAssociationHandler implements SearchProductsForAssociatio
             (int) $foundProduct['id_product'],
             $foundProduct['name'],
             $foundProduct['reference'] ?? '',
-            $imagePath
+            $imagePath,
+            $foundProduct['product_type'],
         );
     }
 }

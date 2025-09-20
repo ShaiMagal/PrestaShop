@@ -23,6 +23,7 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+
 use PrestaShop\PrestaShop\Adapter\EntityTranslation\DataLangFactory;
 use PrestaShop\PrestaShop\Adapter\EntityTranslation\EntityTranslatorFactory;
 use PrestaShop\PrestaShop\Adapter\EntityTranslation\Exception\DataLangClassNameNotFoundException;
@@ -1317,6 +1318,13 @@ class LanguageCore extends ObjectModel implements LanguageInterface
         $zipArchive->extractTo(self::SF_TRANSLATIONS_DIR);
         $zipArchive->close();
 
+        // As soon as new XLF catalogue is installed the translator catalogues are not up to date
+        // anymore, so we force them to reload
+        self::loadAdminTranslatorLocale($locale, true);
+
+        // Symfony cache must be cleared after new language is installed
+        Tools::clearSf2Cache();
+
         return true;
     }
 
@@ -1493,8 +1501,6 @@ class LanguageCore extends ObjectModel implements LanguageInterface
     /**
      * Check if more on than one language is activated.
      *
-     * @since 1.5.0
-     *
      * @return bool
      */
     public static function isMultiLanguageActivated($id_shop = null)
@@ -1647,19 +1653,35 @@ class LanguageCore extends ObjectModel implements LanguageInterface
     private static function updateMultilangFromClassForShop(DataLangCore $classObject, self $lang, Shop $shop)
     {
         $shopDefaultLangId = (int) Configuration::get('PS_LANG_DEFAULT', null, $shop->id_shop_group, $shop->id);
-        $shopDefaultLanguage = new Language($shopDefaultLangId);
-
-        $sfContainer = SymfonyContainer::getInstance();
-        $translator = $sfContainer->get(TranslatorInterface::class);
-        if (!$translator->isLanguageLoaded($shopDefaultLanguage->locale)) {
-            $sfContainer->get('prestashop.translation.translator_language_loader')
-                ->setIsAdminContext(true)
-                ->loadLanguage($translator, $shopDefaultLanguage->locale);
+        // During install process the default language may not be available yet
+        if (!empty($shopDefaultLangId)) {
+            $shopDefaultLanguage = new Language($shopDefaultLangId);
+            self::loadAdminTranslatorLocale($shopDefaultLanguage->locale, false);
         }
 
+        // The provided locale should always be loaded though
+        self::loadAdminTranslatorLocale($lang->locale, false);
+
+        $sfContainer = SymfonyContainer::getInstance();
+        /** @var TranslatorInterface $translator */
+        $translator = $sfContainer->get(TranslatorInterface::class);
         (new EntityTranslatorFactory($translator))
             ->build($classObject)
             ->translate($lang->id, $shop->id);
+    }
+
+    private static function loadAdminTranslatorLocale(string $locale, bool $clearCatalogue): void
+    {
+        $sfContainer = SymfonyContainer::getInstance();
+        if ($sfContainer === null) {
+            return;
+        }
+        $translator = $sfContainer->get(TranslatorInterface::class);
+        if (!$translator->isLanguageLoaded($locale) || $clearCatalogue) {
+            $languageLoader = $sfContainer->get('prestashop.translation.translator_language_loader');
+            $languageLoader->setIsAdminContext(true);
+            $languageLoader->loadLanguage($translator, $locale, true, null, $clearCatalogue);
+        }
     }
 
     /**

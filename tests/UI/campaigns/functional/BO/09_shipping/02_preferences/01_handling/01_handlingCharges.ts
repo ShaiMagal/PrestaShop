@@ -1,12 +1,5 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import preferencesPage from '@pages/BO/shipping/preferences';
+import {expect} from 'chai';
 
 import {
   boCarriersPage,
@@ -15,6 +8,9 @@ import {
   boCustomerGroupsCreatePage,
   boCustomerSettingsPage,
   boDashboardPage,
+  boLoginPage,
+  boShippingPreferencesPage,
+  type BrowserContext,
   dataCustomers,
   dataGroups,
   FakerCarrier,
@@ -23,12 +19,10 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_shipping_preferences_handling_handlingCharges';
 
@@ -90,7 +84,13 @@ describe('BO - Shipping - Preferences : Test handling charges for carriers in FO
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   // 1 - Choose display tax excluded in FO
@@ -173,6 +173,19 @@ describe('BO - Shipping - Preferences : Test handling charges for carriers in FO
 
       const textResult = await boCarriersCreatePage.createEditCarrier(page, createCarrierData);
       expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+    });
+
+    it('should return to carriers page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriers', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.shippingLink,
+        boDashboardPage.carriersLink,
+      );
+
+      const pageTitle = await boCarriersPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCarriersPage.pageTitle);
     });
 
     it('should filter list by name and get the new carrier ID', async function () {
@@ -274,15 +287,15 @@ describe('BO - Shipping - Preferences : Test handling charges for carriers in FO
 
       await boDashboardPage.goToSubMenu(page, boDashboardPage.shippingLink, boDashboardPage.shippingPreferencesLink);
 
-      const pageTitle = await preferencesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(preferencesPage.pageTitle);
+      const pageTitle = await boShippingPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boShippingPreferencesPage.pageTitle);
     });
 
     it('should update \'Handling charges\' value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateHandlingCharges1', baseContext);
 
-      const textResult = await preferencesPage.setHandlingCharges(page, updateHandlingChargesValue.toString());
-      expect(textResult).to.contain(preferencesPage.successfulUpdateMessage);
+      const textResult = await boShippingPreferencesPage.setHandlingCharges(page, updateHandlingChargesValue.toString());
+      expect(textResult).to.contain(boShippingPreferencesPage.successfulUpdateMessage);
     });
   });
 
@@ -362,15 +375,15 @@ describe('BO - Shipping - Preferences : Test handling charges for carriers in FO
 
       page = await foClassicCheckoutPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await preferencesPage.getPageTitle(page);
-      expect(pageTitle).to.contains(preferencesPage.pageTitle);
+      const pageTitle = await boShippingPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boShippingPreferencesPage.pageTitle);
     });
 
     it('should update \'Handling charges\' value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateHandlingCharges2', baseContext);
 
-      const textResult = await preferencesPage.setHandlingCharges(page, defaultHandlingChargesValue.toString());
-      expect(textResult).to.contain(preferencesPage.successfulUpdateMessage);
+      const textResult = await boShippingPreferencesPage.setHandlingCharges(page, defaultHandlingChargesValue.toString());
+      expect(textResult).to.contain(boShippingPreferencesPage.successfulUpdateMessage);
     });
   });
 

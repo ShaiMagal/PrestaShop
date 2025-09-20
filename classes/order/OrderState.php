@@ -136,6 +136,7 @@ class OrderStateCore extends ObjectModel
     public const FLAG_DELIVERY = 4;  /* 00100 */
     public const FLAG_SHIPPED = 8;  /* 01000 */
     public const FLAG_PAID = 16; /* 10000 */
+    public const FLAG_EMAIL = 32; /* 100000 */
 
     /**
      * Get all available order statuses.

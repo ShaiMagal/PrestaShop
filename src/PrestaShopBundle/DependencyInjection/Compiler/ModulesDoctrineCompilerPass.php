@@ -81,7 +81,7 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
                 }
                 $modulePrefix = 'Module' . Inflector::getInflector()->camelize($moduleFolder->getFilename());
                 $moduleEntityDirectory = realpath($moduleFolder . '/src/Entity');
-                $mappingPass = $this->createAnnotationMappingDriver($moduleNamespace, $moduleEntityDirectory, $modulePrefix);
+                $mappingPass = $this->createAnnotationMappingDriver($moduleNamespace, $moduleEntityDirectory);
                 $mappingsPassList[$moduleEntityDirectory] = $mappingPass;
             }
         }
@@ -97,11 +97,10 @@ class ModulesDoctrineCompilerPass implements CompilerPassInterface
      *
      * @param string $moduleNamespace
      * @param string $moduleEntityDirectory
-     * @param string $modulePrefix
      *
      * @return DoctrineOrmMappingsPass
      */
-    private function createAnnotationMappingDriver($moduleNamespace, $moduleEntityDirectory, $modulePrefix)
+    private function createAnnotationMappingDriver($moduleNamespace, $moduleEntityDirectory)
     {
         $reader = new Reference('annotation_reader');
         $driverDefinition = new Definition('Doctrine\ORM\Mapping\Driver\AnnotationDriver', [$reader, [$moduleEntityDirectory]]);

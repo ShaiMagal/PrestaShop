@@ -29,6 +29,7 @@ namespace PrestaShopBundle\EventListener\Admin;
 use PrestaShop\PrestaShop\Core\Exception\CoreException;
 use PrestaShopBundle\Routing\Converter\LegacyUrlConverter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 
 /**
@@ -60,10 +61,10 @@ class LegacyUrlListener
 
         try {
             $convertedUrl = $this->converter->convertByRequest($event->getRequest());
-        } catch (CoreException $e) {
+        } catch (CoreException) {
             return;
         }
 
-        $event->setResponse(new RedirectResponse($convertedUrl));
+        $event->setResponse(new RedirectResponse($convertedUrl, Response::HTTP_PERMANENTLY_REDIRECT));
     }
 }

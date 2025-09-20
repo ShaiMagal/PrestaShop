@@ -1,16 +1,15 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import login steps
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boThemeAndLogoPage,
   boThemePagesConfigurationPage,
+  type BrowserContext,
   dataModules,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -31,7 +30,13 @@ describe('BO - Design - Theme & Logo : Enable/disable module', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Design > Theme & Logo\' page', async function () {
@@ -74,7 +79,11 @@ describe('BO - Design - Theme & Logo : Enable/disable module', async () => {
     it(`should ${test.args.title}`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', test.args.action, baseContext);
 
-      const successMessage = await boThemePagesConfigurationPage.setActionInModule(page, dataModules.mainMenu, test.args.action);
+      const successMessage = await boThemePagesConfigurationPage.setActionInModule(
+        page,
+        dataModules.psMainMenu,
+        test.args.action,
+      );
       expect(successMessage).to.eq(boThemePagesConfigurationPage.successMessage);
     });
   });

@@ -30,6 +30,8 @@ use Employee;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Adapter\Module\AdminModuleDataProvider;
 use PrestaShop\PrestaShop\Adapter\Module\Configuration\ModuleSelfConfigurator;
+use PrestaShop\PrestaShop\Core\ConfigurationInterface;
+use PrestaShop\PrestaShop\Core\Context\ContextBuilderPreparer;
 use PrestaShop\PrestaShop\Core\Module\ModuleManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\FormatterHelper;
@@ -52,11 +54,6 @@ class ModuleCommand extends Command
     ];
 
     /**
-     * @var TranslatorInterface
-     */
-    protected $translator;
-
-    /**
      * @var InputInterface
      */
     protected $input;
@@ -66,32 +63,15 @@ class ModuleCommand extends Command
      */
     protected $output;
 
-    /**
-     * @var LegacyContext
-     */
-    private $context;
-
-    /**
-     * @var ModuleSelfConfigurator
-     */
-    private $moduleSelfConfigurator;
-
-    /**
-     * @var ModuleManager
-     */
-    private $moduleManager;
-
     public function __construct(
-        TranslatorInterface $translator,
-        LegacyContext $context,
-        ModuleSelfConfigurator $moduleSelfConfigurator,
-        ModuleManager $moduleManager
+        protected readonly TranslatorInterface $translator,
+        protected readonly LegacyContext $context,
+        protected readonly ModuleSelfConfigurator $moduleSelfConfigurator,
+        protected readonly ModuleManager $moduleManager,
+        protected readonly ContextBuilderPreparer $contextBuilderPreparer,
+        protected readonly ConfigurationInterface $configuration,
     ) {
         parent::__construct();
-        $this->translator = $translator;
-        $this->context = $context;
-        $this->moduleSelfConfigurator = $moduleSelfConfigurator;
-        $this->moduleManager = $moduleManager;
     }
 
     protected function configure()
@@ -114,9 +94,12 @@ class ModuleCommand extends Command
             // Even a non existing employee is fine
             $this->context->getContext()->employee = new Employee(42);
         }
+
+        // We must initialize the language context because ModuleRepository depends on it for its cache key
+        $this->contextBuilderPreparer->prepareLanguageId($this->configuration->get('PS_LANG_DEFAULT'));
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->init($input, $output);
 

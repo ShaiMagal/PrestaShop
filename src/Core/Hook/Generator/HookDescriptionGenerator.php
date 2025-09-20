@@ -70,7 +70,7 @@ final class HookDescriptionGenerator implements HookDescriptionGeneratorInterfac
      */
     public function generate($hookName)
     {
-        foreach ($this->hookDescriptions as $hookPlaceholder => $hookDescription) {
+        foreach ($this->hookDescriptions as $hookDescription) {
             $prefix = isset($hookDescription['prefix']) ? $hookDescription['prefix'] : '';
             $suffix = isset($hookDescription['suffix']) ? $hookDescription['suffix'] : '';
 

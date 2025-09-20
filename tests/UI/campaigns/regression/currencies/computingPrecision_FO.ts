@@ -1,23 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Common tests login BO
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import sqlManagerPage from '@pages/BO/advancedParameters/database/sqlManager';
-import addSqlQueryPage from '@pages/BO/advancedParameters/database/sqlManager/add';
-import viewSqlQueryPage from '@pages/BO/advancedParameters/database/sqlManager/view';
-import cartRulesPage from '@pages/BO/catalog/discounts';
-import addCartRulePage from '@pages/BO/catalog/discounts/add';
+import {expect} from 'chai';
 
 import {
-  boDashboardPage,
-  boLocalizationPage,
+  boCartRulesPage,
+  boCartRulesCreatePage,
   boCurrenciesPage,
   boCurrenciesCreatePage,
+  boDashboardPage,
+  boLocalizationPage,
+  boLoginPage,
   boOrdersPage,
+  boSqlManagerPage,
+  boSqlManagerCreatePage,
+  boSqlManagerViewPage,
+  type BrowserContext,
   dataCurrencies,
   dataCustomers,
   dataPaymentMethods,
@@ -32,11 +28,9 @@ import {
   foClassicLoginPage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'regression_currencies_computingPrecision_FO';
 
@@ -90,7 +84,7 @@ describe(
         },
       ],
       discountPercentValue: 20.678,
-      discountGiftValue: giftCartRule.freeGiftProduct?.price,
+      discountGiftValue: giftCartRule.freeGiftProduct?.finalPrice,
       totalPrice: 117.178,
     });
 
@@ -105,7 +99,13 @@ describe(
     });
 
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     describe('Create cart rules', async () => {
@@ -118,25 +118,25 @@ describe(
           boCurrenciesCreatePage.discountsLink,
         );
 
-        const pageTitle = await cartRulesPage.getPageTitle(page);
-        expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+        const pageTitle = await boCartRulesPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
       });
 
       describe('Create a percentage cart rule', async () => {
         it('should go to new cart rule page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage1', baseContext);
 
-          await cartRulesPage.goToAddNewCartRulesPage(page);
+          await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-          const pageTitle = await addCartRulePage.getPageTitle(page);
-          expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+          const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
         });
 
         it('should create new cart rule', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'createPercentCartRule', baseContext);
 
-          const validationMessage = await addCartRulePage.createEditCartRules(page, percentCartRule);
-          expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+          const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, percentCartRule);
+          expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
         });
       });
 
@@ -144,17 +144,17 @@ describe(
         it('should go to new cart rule page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'goToNewCartRulePage2', baseContext);
 
-          await cartRulesPage.goToAddNewCartRulesPage(page);
+          await boCartRulesPage.goToAddNewCartRulesPage(page);
 
-          const pageTitle = await addCartRulePage.getPageTitle(page);
-          expect(pageTitle).to.contains(addCartRulePage.pageTitle);
+          const pageTitle = await boCartRulesCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boCartRulesCreatePage.pageTitle);
         });
 
         it('should create new cart rule', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'createGiftCartRule', baseContext);
 
-          const validationMessage = await addCartRulePage.createEditCartRules(page, giftCartRule);
-          expect(validationMessage).to.contains(addCartRulePage.successfulCreationMessage);
+          const validationMessage = await boCartRulesCreatePage.createEditCartRules(page, giftCartRule);
+          expect(validationMessage).to.contains(boCartRulesCreatePage.successfulCreationMessage);
         });
       });
     });
@@ -216,7 +216,7 @@ describe(
       it('should go to FO page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'viewMyShop', baseContext);
 
-        page = await cartRulesPage.viewMyShop(page);
+        page = await boCartRulesPage.viewMyShop(page);
         await foClassicHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foClassicHomePage.isHomePage(page);
@@ -322,10 +322,10 @@ describe(
       it('should go to orders page', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToOrdersPage', baseContext);
 
-        await cartRulesPage.goToSubMenu(
+        await boCartRulesPage.goToSubMenu(
           page,
-          cartRulesPage.ordersParentLink,
-          cartRulesPage.ordersLink,
+          boCartRulesPage.ordersParentLink,
+          boCartRulesPage.ordersLink,
         );
 
         const pageTitle = await boOrdersPage.getPageTitle(page);
@@ -354,27 +354,27 @@ describe(
           boOrdersPage.databaseLink,
         );
 
-        const pageTitle = await sqlManagerPage.getPageTitle(page);
-        expect(pageTitle).to.contains(sqlManagerPage.pageTitle);
+        const pageTitle = await boSqlManagerPage.getPageTitle(page);
+        expect(pageTitle).to.contains(boSqlManagerPage.pageTitle);
       });
 
       describe('Create new SQL query to get last order total price', async () => {
         it('should go to \'New SQL query\' page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'goToCreateSqlQueryPage', baseContext);
 
-          await sqlManagerPage.goToNewSQLQueryPage(page);
+          await boSqlManagerPage.goToNewSQLQueryPage(page);
           // Adding order reference to sql query
           sqlQueryData.sqlQuery = sqlQueryTemplate(orderToMake.reference);
 
-          const pageTitle = await addSqlQueryPage.getPageTitle(page);
-          expect(pageTitle).to.contains(addSqlQueryPage.pageTitle);
+          const pageTitle = await boSqlManagerCreatePage.getPageTitle(page);
+          expect(pageTitle).to.contains(boSqlManagerCreatePage.pageTitle);
         });
 
         it('should create new SQL query', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'createSqlQuery', baseContext);
 
-          const textResult = await addSqlQueryPage.createEditSQLQuery(page, sqlQueryData);
-          expect(textResult).to.equal(addSqlQueryPage.successfulCreationMessage);
+          const textResult = await boSqlManagerCreatePage.createEditSQLQuery(page, sqlQueryData);
+          expect(textResult).to.equal(boSqlManagerCreatePage.successfulCreationMessage);
         });
       });
 
@@ -382,27 +382,27 @@ describe(
         it('should filter list by name', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'filterSqlQueriesToView', baseContext);
 
-          await sqlManagerPage.resetFilter(page);
-          await sqlManagerPage.filterSQLQuery(page, 'name', sqlQueryData.name);
+          await boSqlManagerPage.resetFilter(page);
+          await boSqlManagerPage.filterSQLQuery(page, 'name', sqlQueryData.name);
 
-          const sqlQueryName = await sqlManagerPage.getTextColumnFromTable(page, 1, 'name');
+          const sqlQueryName = await boSqlManagerPage.getTextColumnFromTable(page, 1, 'name');
           expect(sqlQueryName).to.contains(sqlQueryData.name);
         });
 
         it('should click on view button', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'viewSqlQuery', baseContext);
 
-          await sqlManagerPage.goToViewSQLQueryPage(page, 1);
+          await boSqlManagerPage.goToViewSQLQueryPage(page, 1);
 
-          const pageTitle = await viewSqlQueryPage.getPageTitle(page);
-          expect(pageTitle).to.contains(viewSqlQueryPage.pageTitle);
+          const pageTitle = await boSqlManagerViewPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boSqlManagerViewPage.pageTitle);
         });
 
         it('should check order discount in database', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'checkLastOrderDiscountInDatabase', baseContext);
 
           // Get total discount from first column of the first row
-          const discountInDatabase = await viewSqlQueryPage.getTextColumn(page, 1, 'total_discounts');
+          const discountInDatabase = await boSqlManagerViewPage.getTextColumn(page, 1, 'total_discounts');
           expect(parseFloat(discountInDatabase), 'Discount price is incorrect in database')
             .to.equal(orderToMake.discountPercentValue + orderToMake.discountGiftValue);
         });
@@ -410,7 +410,7 @@ describe(
           await testContext.addContextItem(this, 'testIdentifier', 'checkToTalPriceInDatabase', baseContext);
 
           // Get total discount from second column of the first row
-          const totalPriceInDatabase = await viewSqlQueryPage.getTextColumn(page, 1, 'total_paid_tax_incl');
+          const totalPriceInDatabase = await boSqlManagerViewPage.getTextColumn(page, 1, 'total_paid_tax_incl');
           expect(parseFloat(totalPriceInDatabase), 'Total price is incorrect in database')
             .to.equal(orderToMake.totalPrice);
         });
@@ -427,10 +427,10 @@ describe(
         it('should go to localization page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'goToLocalizationPageToReset', baseContext);
 
-          await sqlManagerPage.goToSubMenu(
+          await boSqlManagerPage.goToSubMenu(
             page,
-            sqlManagerPage.internationalParentLink,
-            sqlManagerPage.localizationLink,
+            boSqlManagerPage.internationalParentLink,
+            boSqlManagerPage.localizationLink,
           );
 
           const pageTitle = await boLocalizationPage.getPageTitle(page);
@@ -485,15 +485,15 @@ describe(
             boCurrenciesPage.discountsLink,
           );
 
-          const pageTitle = await cartRulesPage.getPageTitle(page);
-          expect(pageTitle).to.contains(cartRulesPage.pageTitle);
+          const pageTitle = await boCartRulesPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boCartRulesPage.pageTitle);
         });
 
         it('should bulk delete cart rules', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'deleteCartRules', baseContext);
 
-          const deleteTextResult = await cartRulesPage.bulkDeleteCartRules(page);
-          expect(deleteTextResult).to.be.contains(cartRulesPage.successfulMultiDeleteMessage);
+          const deleteTextResult = await boCartRulesPage.bulkDeleteCartRules(page);
+          expect(deleteTextResult).to.be.contains(boCartRulesPage.successfulMultiDeleteMessage);
         });
       });
 
@@ -501,31 +501,31 @@ describe(
         it('should go to \'SQL Manager\' page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'goToSqlManagerPageToDelete', baseContext);
 
-          await cartRulesPage.goToSubMenu(
+          await boCartRulesPage.goToSubMenu(
             page,
-            cartRulesPage.advancedParametersLink,
-            cartRulesPage.databaseLink,
+            boCartRulesPage.advancedParametersLink,
+            boCartRulesPage.databaseLink,
           );
 
-          const pageTitle = await sqlManagerPage.getPageTitle(page);
-          expect(pageTitle).to.contains(sqlManagerPage.pageTitle);
+          const pageTitle = await boSqlManagerPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boSqlManagerPage.pageTitle);
         });
 
         it('should filter list by name', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'filterSQLQueriesToDelete', baseContext);
 
-          await sqlManagerPage.resetFilter(page);
-          await sqlManagerPage.filterSQLQuery(page, 'name', sqlQueryData.name);
+          await boSqlManagerPage.resetFilter(page);
+          await boSqlManagerPage.filterSQLQuery(page, 'name', sqlQueryData.name);
 
-          const sqlQueryName = await sqlManagerPage.getTextColumnFromTable(page, 1, 'name');
+          const sqlQueryName = await boSqlManagerPage.getTextColumnFromTable(page, 1, 'name');
           expect(sqlQueryName).to.contains(sqlQueryData.name);
         });
 
         it('should delete SQL query', async function () {
           await testContext.addContextItem(this, 'testIdentifier', 'deleteSQLQuery', baseContext);
 
-          const textResult = await sqlManagerPage.deleteSQLQuery(page, 1);
-          expect(textResult).to.equal(sqlManagerPage.successfulDeleteMessage);
+          const textResult = await boSqlManagerPage.deleteSQLQuery(page, 1);
+          expect(textResult).to.equal(boSqlManagerPage.successfulDeleteMessage);
         });
       });
     });

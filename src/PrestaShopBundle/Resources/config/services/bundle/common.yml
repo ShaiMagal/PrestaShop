@@ -9,6 +9,12 @@ services:
       - PrestaShopBundle\Entity\FeatureFlag
     lazy: true
 
+  PrestaShopBundle\Entity\Repository\ShipmentRepository:
+    factory: [ '@doctrine.orm.default_entity_manager', getRepository ]
+    arguments:
+      - PrestaShopBundle\Entity\Shipment
+    lazy: true
+
   PrestaShopBundle\Entity\Repository\TabRepository:
     factory: [ '@doctrine.orm.default_entity_manager', getRepository ]
     arguments:

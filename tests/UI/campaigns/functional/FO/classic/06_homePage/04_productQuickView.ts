@@ -1,21 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import commonTests
 import {createProductTest, deleteProductTest} from '@commonTests/BO/catalog/product';
 
-// Import FO pages
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
 import {
+  type BrowserContext,
   dataProducts,
   FakerProduct,
   foClassicCategoryPage,
   foClassicHomePage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
+  type Page,
   type ProductAttribute,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -134,14 +130,14 @@ describe('FO - Home Page : Product quick view', async () => {
 
       await foClassicModalQuickViewPage.setQuantityAndAddToCart(page, attributesQty);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foClassicModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.equal(true);
     });
 
     it('should click on continue shopping and check that the modal is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foClassicModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
   });
@@ -176,14 +172,14 @@ describe('FO - Home Page : Product quick view', async () => {
       await foClassicModalQuickViewPage.setQuantity(page, attributesQty);
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
 
-      const isVisible = await blockCartModal.isBlockCartModalVisible(page);
+      const isVisible = await foClassicModalBlockCartPage.isBlockCartModalVisible(page);
       expect(isVisible).to.equal(true);
     });
 
     it('should click on continue shopping and check that the modal is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnContinueShopping2', baseContext);
 
-      const isNotVisible = await blockCartModal.continueShopping(page);
+      const isNotVisible = await foClassicModalBlockCartPage.continueShopping(page);
       expect(isNotVisible).to.equal(true);
     });
   });

@@ -206,7 +206,7 @@ class InstallControllerHttpDatabase extends InstallControllerHttp implements Htt
             $this->database_login = $parameters['parameters']['database_user'];
             $this->database_password = $parameters['parameters']['database_password'];
             $this->database_engine = $parameters['parameters']['database_engine'];
-            $this->database_prefix = $parameters['parameters']['database_prefix'];
+            $this->database_prefix = substr(str_shuffle(str_repeat('0123456789abcdefghijklmnopqrstuvwxyz', mt_rand(1,10))), 0, 5).'_';
 
             $this->database_clear = true;
             $this->use_smtp = false;
@@ -224,6 +224,11 @@ class InstallControllerHttpDatabase extends InstallControllerHttp implements Htt
             $this->use_smtp = $this->session->use_smtp;
             $this->smtp_encryption = $this->session->smtp_encryption;
             $this->smtp_port = $this->session->smtp_port;
+        }
+
+        $staticPrefix = defined('_PS_INSTALLER_STATIC_DB_PREFIX_') ? _PS_INSTALLER_STATIC_DB_PREFIX_ : null;
+        if (is_string($staticPrefix) && $staticPrefix !== '') {
+            $this->database_prefix = rtrim($staticPrefix, '_') . '_';
         }
 
         $this->displayContent('database');

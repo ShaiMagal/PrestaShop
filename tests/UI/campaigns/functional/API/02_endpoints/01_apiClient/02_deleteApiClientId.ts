@@ -1,16 +1,16 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import type {APIRequestContext, BrowserContext, Page} from 'playwright';
 import {
+  type APIRequestContext,
   boApiClientsPage,
   boApiClientsCreatePage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   FakerAPIClient,
+  type Page,
   utilsAPI,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -24,6 +24,7 @@ describe('API : DELETE /api-client/{apiClientId}', async () => {
   let accessToken: string;
   let clientSecret: string;
   let idApiClient: number;
+  let initialNumberOfApiClients: number;
 
   const clientScope: string = 'api_client_write';
   const clientData: FakerAPIClient = new FakerAPIClient({
@@ -46,7 +47,13 @@ describe('API : DELETE /api-client/{apiClientId}', async () => {
 
   describe('BackOffice : Fetch the access token', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > API Client\' page', async function () {
@@ -62,11 +69,11 @@ describe('API : DELETE /api-client/{apiClientId}', async () => {
       expect(pageTitle).to.eq(boApiClientsPage.pageTitle);
     });
 
-    it('should check that no records found', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkThatNoRecordFound', baseContext);
+    it('should check that at least one API client is present', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkThatOneAPIClientExists', baseContext);
 
-      const noRecordsFoundText = await boApiClientsPage.getTextForEmptyTable(page);
-      expect(noRecordsFoundText).to.contains('warning No records found');
+      initialNumberOfApiClients = await boApiClientsPage.getNumberOfElementInGrid(page);
+      expect(initialNumberOfApiClients).to.be.greaterThanOrEqual(1);
     });
 
     it('should go to add New API Client page', async function () {
@@ -137,7 +144,11 @@ describe('API : DELETE /api-client/{apiClientId}', async () => {
     it('should get informations', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'getInformations', baseContext);
 
-      idApiClient = parseInt(await boApiClientsPage.getTextColumn(page, 'id_api_client', 1), 10);
+      const apiClientsNumber = await boApiClientsPage.getNumberOfElementInGrid(page);
+      expect(apiClientsNumber).to.be.equal(initialNumberOfApiClients + 1);
+
+      // Get ID from last created API Client
+      idApiClient = parseInt(await boApiClientsPage.getTextColumn(page, 'id_api_client', apiClientsNumber), 10);
       expect(idApiClient).to.be.gt(0);
     });
   });
@@ -161,8 +172,8 @@ describe('API : DELETE /api-client/{apiClientId}', async () => {
 
       await boApiClientsPage.reloadPage(page);
 
-      const numberOfGroupsAfterCreation = await boApiClientsPage.getNumberOfElementInGrid(page);
-      expect(numberOfGroupsAfterCreation).to.be.equal(0);
+      const numberOfGroupsAfterDeletion = await boApiClientsPage.getNumberOfElementInGrid(page);
+      expect(numberOfGroupsAfterDeletion).to.be.equal(initialNumberOfApiClients);
     });
   });
 });

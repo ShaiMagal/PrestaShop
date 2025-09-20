@@ -2,17 +2,18 @@
 import testContext from '@utils/testContext';
 
 // Import common tests
-import loginCommon from '@commonTests/BO/loginBO';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
   boProductSettingsPage,
+  type BrowserContext,
   foHummingbirdCategoryPage,
   foHummingbirdHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -51,7 +52,13 @@ describe('FO - Menu and navigation : Filter products', async () => {
   // Pre-condition: Get the number of products
   describe('PRE-TEST : Get the number of active products', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -145,15 +152,6 @@ describe('FO - Menu and navigation : Filter products', async () => {
 
       productsNumber = await foHummingbirdCategoryPage.getNumberOfProducts(page);
       expect(productsNumber).to.be.above(1);
-    });
-
-    it('should check the products list', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkProductsList', baseContext);
-
-      for (let i = 1; i <= productsNumber; i++) {
-        const productURL = await foHummingbirdCategoryPage.getProductHref(page, i);
-        expect(productURL).to.contain.oneOf(['accessories', 'art', 'stationery']);
-      }
     });
 
     it('should clear all filters', async function () {

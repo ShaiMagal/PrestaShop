@@ -1,21 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import viewCustomerPage from '@pages/BO/customers/view';
+import {expect} from 'chai';
 
 import {
+  boCustomersViewPage,
   boDashboardPage,
+  boLoginPage,
   boOrdersPage,
+  type BrowserContext,
   dataCustomers,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_orders_viewCustomer';
 
@@ -39,7 +34,13 @@ describe('BO - Orders : View customer from orders page', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Orders > Orders\' page', async function () {
@@ -83,9 +84,9 @@ describe('BO - Orders : View customer from orders page', async () => {
     // Click on customer link first row
     page = await boOrdersPage.viewCustomer(page, 1);
 
-    const pageTitle = await viewCustomerPage.getPageTitle(page);
+    const pageTitle = await boCustomersViewPage.getPageTitle(page);
     expect(pageTitle).to
-      .eq(viewCustomerPage.pageTitle(`${dataCustomers.johnDoe.firstName[0]}. ${dataCustomers.johnDoe.lastName}`));
+      .eq(boCustomersViewPage.pageTitle(`${dataCustomers.johnDoe.firstName[0]}. ${dataCustomers.johnDoe.lastName}`));
   });
 
   it('should go back to \'Orders > Orders\' page', async function () {

@@ -6,7 +6,7 @@ About PrestaShop
 [![UI tests](https://github.com/PrestaShop/PrestaShop/actions/workflows/sanity.yml/badge.svg)](https://github.com/PrestaShop/PrestaShop/actions/workflows/sanity.yml)
 [![Nightly Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi-nightly.prestashop-project.org%2Fdata%2Fbadge&label=Nightly%20Status&cacheSeconds=3600)](https://nightly.prestashop-project.org/)
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.1-8892BF.svg?style=flat-square)](https://php.net/)
-[![GitHub release](https://img.shields.io/github/v/release/prestashop/prestashop)](https://github.com/PrestaShop/PrestaShop)
+[![GitHub release](https://img.shields.io/github/v/release/prestashop/prestashop?sort=semver)](https://github.com/PrestaShop/PrestaShop)
 [![Slack chat](https://img.shields.io/badge/Chat-on%20Slack-red)](https://www.prestashop-project.org/slack/)
 [![GitHub forks](https://img.shields.io/github/forks/PrestaShop/PrestaShop)](https://github.com/PrestaShop/PrestaShop/network)
 [![GitHub stars](https://img.shields.io/github/stars/PrestaShop/PrestaShop)](https://github.com/PrestaShop/PrestaShop/stargazers)
@@ -14,18 +14,17 @@ About PrestaShop
 PrestaShop is an Open Source e-commerce web application, committed to providing the best shopping cart experience for both merchants and customers. It is written in PHP, is highly customizable, supports all the major payment services, is translated in many languages and localized for many countries, has a fully responsive design (both front and back office), etc. [See all the available features][available-features].
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/2137763/201319765-9157f702-4970-4258-8390-1187de2ad587.png" alt="PrestaShop 8.0 back office"/>
+  <img src="https://github.com/user-attachments/assets/e6342778-e528-4ae7-acf2-f0d097a1e932" alt="PrestaShop 9.0 back office"/>
 </p>
 
-This repository contains the source code of PrestaShop, which is intended for development and preview only. To download the latest stable public version of PrestaShop (currently, version 8.1), please go to [the releases page][download].
+This repository contains the source code of PrestaShop, which is intended for development and preview only. To download the latest stable public version of PrestaShop (currently, version 9.0), please go to [the releases page][download].
 
-The first stable version of PrestaShop 8.0 was released on October 26th, 2022.  
-The first stable version of PrestaShop 8.1 was released on June 26th, 2023. Further updates have been released since then. Learn more about it on [the Build devblog](https://build.prestashop-project.org/tag/8.1/).
+The first stable version of PrestaShop 9.0 was released on June 10th, 2025. Learn more about it on [the Build devblog](https://build.prestashop-project.org/tag/9.0/).
 
 About the `develop` branch
 --------
 
-The `develop` branch of this repository contains the work in progress source code for the next version of PrestaShop. Currently, the next version will be PrestaShop 9.0.
+The `develop` branch of this repository contains the work in progress source code for the next version of PrestaShop. Currently, it is exclusively for version 9.1.
 
 For more information on our branch system, read our guide on [installing PrestaShop for development][install-guide-dev].
 
@@ -57,10 +56,19 @@ docker compose up
 
 Then reach your shop on this URL: http://localhost:8001
 
-Docker will bind your port 8001 to the web server. If you want to use other port, open and modify the file `docker-compose.yml`.
+Or the backoffice on this URL: http://localhost:8001/admin-dev (default access credentials: demo@prestashop.com / Correct Horse Battery Staple)
+
+You can customize the admin credentials by setting the following environment variables before running docker compose:
+```
+export ADMIN_MAIL=your-email@example.com
+export ADMIN_PASSWD=Your-Secure-Password
+docker compose up
+```
+
+Docker will bind your port **8001** to the web server. If you want to use other port, open and modify the file `docker-compose.yml`.
 MySQL credentials can also be found and modified in this file if needed.
 
-**Note:**  Before auto-installing PrestaShop, this container checks the file *config/settings.inc.php* does not exist on startup.
+**Note:**  Before auto-installing PrestaShop, this container checks the file *app/config/parameters.php* does not exist on startup.
 If you expect the container to (re)install your shop, remove this file if it exists. And make sure the container user `www-data`
 has write access to the whole workspace.
 
@@ -73,7 +81,7 @@ git reset --hard origin/develop
 git clean -dfx
 
 # inform build scripts to reinstall shop
-rm config/settings.inc.php
+rm app/config/parameters.php
 
 # clear all docker caches and rebuild everything
 docker compose down -v
@@ -109,7 +117,7 @@ Documentation
 
 For technical information (core, module and theme development, performance...), head on to [PrestaShop DevDocs][devdocs]
 
-If you want to learn how to use PrestaShop 8, read our [User documentation][user-doc].
+If you want to learn how to use PrestaShop 9, read our [User documentation][user-doc].
 
 First-time users will be particularly interested in the following guides:
 
@@ -166,7 +174,7 @@ You can discuss about e-commerce, help other merchants and get help, and contrib
 Thank you for downloading and using the PrestaShop Open Source e-commerce solution!
 
 [available-features]: https://prestashop.com/create-online-store/
-[download]: https://github.com/PrestaShop/PrestaShop/releases
+[download]: https://www.prestashop-project.org/releases/prestashop90/
 [forums]: https://www.prestashop.com/forums/
 [ghdiscussions]: https://github.com/PrestaShop/PrestaShop/discussions
 [support]: https://www.prestashop-project.org/support/

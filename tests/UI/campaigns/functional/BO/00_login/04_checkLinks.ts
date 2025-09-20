@@ -2,10 +2,11 @@
 import testContext from '@utils/testContext';
 
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 import {
   boLoginPage,
+  type BrowserContext,
   foClassicHomePage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -76,7 +77,7 @@ describe('BO - Login : Check links', async () => {
     page = await boLoginPage.clickOnTwitterLink(page);
 
     const url = await boLoginPage.getCurrentURL(page);
-    expect(url).to.equal('https://x.com/i/flow/login?redirect_after_login=/PrestaShop');
+    expect(url).to.contains('https://x.com').and.to.contains('PrestaShop');
   });
 
   it('should close the twitter page', async function () {

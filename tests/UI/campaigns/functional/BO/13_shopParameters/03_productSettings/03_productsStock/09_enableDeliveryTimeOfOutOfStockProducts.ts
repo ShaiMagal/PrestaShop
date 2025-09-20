@@ -1,23 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import addProductPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductSettingsPage,
+  type BrowserContext,
   FakerProduct,
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -40,7 +35,13 @@ describe('BO - Shop Parameters - Product Settings : Enable delivery time out-of-
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   describe('Create a product', async () => {
@@ -69,15 +70,15 @@ describe('BO - Shop Parameters - Product Settings : Enable delivery time out-of-
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await addProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(addProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      const createProductMessage = await addProductPage.setProduct(page, productData);
-      expect(createProductMessage).to.equal(addProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, productData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -85,10 +86,10 @@ describe('BO - Shop Parameters - Product Settings : Enable delivery time out-of-
     it('should go to \'Shop parameters > Product Settings\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToProductSettingsPage', baseContext);
 
-      await addProductPage.goToSubMenu(
+      await boProductsCreatePage.goToSubMenu(
         page,
-        addProductPage.shopParametersParentLink,
-        addProductPage.productSettingsLink,
+        boProductsCreatePage.shopParametersParentLink,
+        boProductsCreatePage.productSettingsLink,
       );
 
       const pageTitle = await boProductSettingsPage.getPageTitle(page);

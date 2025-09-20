@@ -223,7 +223,8 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
             $this->getAttachments($query->getProductId()),
             $this->getProductStockInformation($product),
             $this->getVirtualProductFile($product),
-            $this->getCover($query->getProductId(), $product->getShopId())
+            $this->getCover($query->getProductId(), $product->getShopId()),
+            array_map(fn (ShopId $shopId) => $shopId->getValue(), $this->productRepository->getAssociatedShopIds($query->getProductId()))
         );
     }
 
@@ -505,7 +506,7 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
     {
         try {
             $stockAvailable = $this->stockAvailableRepository->getForProduct(new ProductId($product->id), new ShopId($product->getShopId()));
-        } catch (StockAvailableNotFoundException $e) {
+        } catch (StockAvailableNotFoundException) {
             $stockAvailable = $this->stockAvailableRepository->createStockAvailable(new ProductId($product->id), new ShopId($product->getShopId()));
         }
 
@@ -535,7 +536,7 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
     {
         try {
             $virtualProductFile = $this->virtualProductFileRepository->findByProductId(new ProductId($product->id));
-        } catch (VirtualProductFileNotFoundException $e) {
+        } catch (VirtualProductFileNotFoundException) {
             return null;
         }
 

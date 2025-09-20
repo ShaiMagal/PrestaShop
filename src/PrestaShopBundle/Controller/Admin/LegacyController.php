@@ -95,6 +95,12 @@ class LegacyController extends PrestaShopAdminController
         ];
 
         $adminController = $this->initController($request, $dispatcherHookParameters);
+
+        // Some process methods echo their output directly, so we get them back and include them in the future response
+        ob_start();
+        $adminController->postProcess();
+        $postProcessResult = ob_get_clean();
+
         // Redirect if necessary after post process
         if (!empty($adminController->getRedirectAfter())) {
             // After each request the cookie must be written to save its modified state during AdminController workflow
@@ -116,7 +122,10 @@ class LegacyController extends PrestaShopAdminController
         header('Cache-Control: no-store, no-cache');
 
         $smarty = $this->legacyContext->getSmarty();
-        $smarty->setTemplateDir(_PS_BO_ALL_THEMES_DIR_ . 'default/template/');
+        $smarty->setTemplateDir([
+            _PS_BO_ALL_THEMES_DIR_ . 'default/template/',
+            _PS_OVERRIDE_DIR_ . 'controllers' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'templates',
+        ]);
 
         $isAjaxRequest = (bool) $request->get('ajax');
         if ($isAjaxRequest) {
@@ -127,6 +136,10 @@ class LegacyController extends PrestaShopAdminController
 
         // Execute hook dispatcher after
         $this->dispatchHookWithParameters('actionDispatcherAfter', $dispatcherHookParameters);
+
+        if (!empty($postProcessResult)) {
+            $response->setContent($postProcessResult . $response->getContent());
+        }
 
         return $response;
     }
@@ -233,7 +246,6 @@ class LegacyController extends PrestaShopAdminController
         // This part comes from AdminController::run method, it has been stripped from permission checks since the permission is already
         // handled by this Symfony controller
         $adminController->setMedia(false);
-        $adminController->postProcess();
 
         return $adminController;
     }
@@ -250,11 +262,11 @@ class LegacyController extends PrestaShopAdminController
         $tabId = !empty($adminController->id) && $adminController->id > 0 ? $adminController->id : null;
 
         // When the action is read/view and the controller has overridden the viewAccess method we should rely on the custom implementation
-        if ($action === Permission::READ && $this->isMethodOverridden($adminController, 'viewAccess')) {
+        if ($action === Permission::READ && $this->isMethodOverridden($adminController)) {
             $isAllowed = $adminController->viewAccess();
         } elseif (!empty($tabId) && !empty($controllerName) && !empty($action)) { // Permission can only be checked when the controller is associated to a tab (therefore a permission)
             // Some legacy controller override the getTabSlug method thus the subject does not follow the usual convention based on class name
-            if ($this->isMethodOverridden($adminController, 'getTabSlug')) {
+            if ($this->isMethodOverridden($adminController)) {
                 $tabSlug = $adminController->getTabSlug();
                 // Remove the prefix tab to be compliant with isGranted expected subject format
                 $grantSubject = str_replace(Permission::PREFIX_TAB, '', $tabSlug);
@@ -277,7 +289,7 @@ class LegacyController extends PrestaShopAdminController
         }
     }
 
-    private function isMethodOverridden(AdminController $adminController, string $methodName): bool
+    private function isMethodOverridden(AdminController $adminController): bool
     {
         try {
             $reflector = new ReflectionMethod($adminController, 'getTabSlug');

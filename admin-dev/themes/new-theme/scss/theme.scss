@@ -37,6 +37,7 @@
 @import "components/delta_quantity";
 @import "components/disabling_switch";
 @import "components/dropzone";
+@import "components/enriched_choice";
 @import "components/entity_search";
 @import "components/font";
 @import "components/form";
@@ -73,6 +74,7 @@
 @import "components/translatable_input";
 @import "components/unavailable-feature";
 @import "components/typeahead_product_collection_type";
+@import "components/skeleton";
 
 // Pages specifics SCSS files
 @import "pages/invoices";
@@ -80,6 +82,7 @@
 @import "pages/import_data";
 @import "pages/currency";
 @import "pages/themes_logo";
+@import "pages/themes_import";
 @import "pages/employee";
 @import "pages/error";
 @import "pages/order_states";
@@ -92,6 +95,8 @@
 @import "pages/translation_page";
 @import "pages/product_preferences";
 @import "pages/admin_api";
+@import "pages/discount";
+@import "pages/carrier";
 
 // Main Layout
 @import "pages/modules";

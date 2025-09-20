@@ -31,6 +31,17 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Tests\Resources\DatabaseDump;
 use Tests\Resources\ResourceResetter;
 
+function checkInstallationErrors(Install $install, SymfonyConsoleLogger $logger)
+{
+    if (!empty($install->getErrors())) {
+        $logger->logError('Some errors were found during install:');
+        foreach ($install->getErrors() as $error) {
+            $logger->logError($error);
+        }
+        exit(1);
+    }
+}
+
 define('_PS_ROOT_DIR_', dirname(__DIR__, 2));
 const _PS_IN_TEST_ = true;
 const __PS_BASE_URI__ = '/';
@@ -39,7 +50,7 @@ const _PS_ALL_THEMES_DIR_ = _PS_ROOT_DIR_ . '/tests/Resources/themes/';
 require_once _PS_ROOT_DIR_ . '/install-dev/init.php';
 
 $output = new ConsoleOutput();
-$logger = new SymfonyConsoleLogger($output, PrestaShopLoggerInterface::DEBUG);
+$logger = new SymfonyConsoleLogger($output, SymfonyConsoleLogger::INFO);
 
 $translator = Context::getContext()->getTranslatorFromLocale('en');
 $install = new Install(null, null, $logger);
@@ -51,6 +62,12 @@ $modelDatabase->testDatabaseSettings(_DB_SERVER_, _DB_NAME_, _DB_USER_, _DB_PASS
 $modelDatabase->createDatabase(_DB_SERVER_, _DB_NAME_, _DB_USER_, _DB_PASSWD_);
 
 $install->clearDatabase(false);
+checkInstallationErrors($install, $logger);
+
+// Clear configuration in case DB was installed when this script is launched or else it keeps cached data that prevents
+// updating the database
+Configuration::resetStaticCache();
+
 if (!$install->installDatabase(true)) {
     exit(1);
 }
@@ -65,6 +82,7 @@ $install->configureShop([
     'admin_email' => 'test@prestashop.com',
     'configuration_agrement' => true,
 ]);
+checkInstallationErrors($install, $logger);
 
 $logger->log('Installing language');
 // Default language is forced as en, we need french translation package as well, we only need the catalog to
@@ -73,14 +91,21 @@ if (!Language::translationPackIsInCache('fr-FR')) {
     Language::downloadXLFLanguagePack('fr-FR');
 }
 Language::installSfLanguagePack('fr-FR');
+checkInstallationErrors($install, $logger);
 
 $install->installFixtures();
-
 Category::regenerateEntireNtree();
 Tab::resetStaticCache();
+checkInstallationErrors($install, $logger);
 
 $install->installTheme();
+checkInstallationErrors($install, $logger);
 $install->installModules(array_keys($install->getModulesOnDisk()));
+if (isset($install->getErrors()['ganalytics']) && $install->getErrors()['ganalytics'][0] === 'Cannot install module "ganalytics"') {
+    $logger->log('One expected error from test module not installable');
+    $install->resetErrors();
+}
+checkInstallationErrors($install, $logger);
 
 $logger->log('Configure SMTP server for maildev');
 Configuration::updateGlobalValue('PS_MAIL_METHOD', Mail::METHOD_SMTP);

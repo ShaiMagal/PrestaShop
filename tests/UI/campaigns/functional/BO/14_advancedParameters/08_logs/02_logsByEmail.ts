@@ -1,25 +1,21 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common
-import loginCommon from '@commonTests/BO/loginBO';
 import {resetSmtpConfigTest, setupSmtpConfigTest} from '@commonTests/BO/advancedParameters/smtp';
 import {createProductTest} from '@commonTests/BO/catalog/product';
-
-// Import pages
-import logsPage from '@pages/BO/advancedParameters/logs';
-import createProductsPage from '@pages/BO/catalog/products/add';
-
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
 import {faker} from '@faker-js/faker';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boLogsPage,
   boProductsPage,
+  boProductsCreatePage,
+  type BrowserContext,
   dataEmployees,
   FakerProduct,
   type MailDev,
   type MailDevEmail,
+  type Page,
   utilsMail,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -70,38 +66,44 @@ describe('BO - Advanced Parameters - Logs : Logs by email', async () => {
 
   describe('Logs by email', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Advanced Parameters > Logs\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToLogsPageToEraseLogs', baseContext);
 
       await boDashboardPage.goToSubMenu(page, boDashboardPage.advancedParametersLink, boDashboardPage.logsLink);
-      await logsPage.closeSfToolBar(page);
+      await boLogsPage.closeSfToolBar(page);
 
-      const pageTitle = await logsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(logsPage.pageTitle);
+      const pageTitle = await boLogsPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boLogsPage.pageTitle);
     });
 
     it('should enter an invalid email in \'Send emails to\' input and check the error message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setInvalidEmail', baseContext);
 
-      const errorMessage = await logsPage.setEmail(page, 'demo@prestashop.');
+      const errorMessage = await boLogsPage.setEmail(page, 'demo@prestashop.');
       expect(errorMessage).to.eq('Invalid email: demo@prestashop..');
     });
 
     it('should enter a valid email in \'Send emails to\' input', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setValidEmail', baseContext);
 
-      const errorMessage = await logsPage.setEmail(page, dataEmployees.defaultEmployee.email);
-      expect(errorMessage).to.eq(logsPage.successfulUpdateMessage);
+      const errorMessage = await boLogsPage.setEmail(page, dataEmployees.defaultEmployee.email);
+      expect(errorMessage).to.eq(boLogsPage.successfulUpdateMessage);
     });
 
     it('should choose \'Informative Only\' in minimum severity level', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseSeverity', baseContext);
 
-      const errorMessage = await logsPage.setMinimumSeverityLevel(page, 'Informative only');
-      expect(errorMessage).to.eq(logsPage.successfulUpdateMessage);
+      const errorMessage = await boLogsPage.setMinimumSeverityLevel(page, 'Informative only');
+      expect(errorMessage).to.eq(boLogsPage.successfulUpdateMessage);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -122,17 +124,17 @@ describe('BO - Advanced Parameters - Logs : Logs by email', async () => {
 
       await boProductsPage.goToProductPage(page, 1);
 
-      const pageTitle = await createProductsPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductsPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should edit the product name', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'editProductNameEn', baseContext);
 
-      await createProductsPage.setProductName(page, faker.commerce.productName(), 'en');
+      await boProductsCreatePage.setProductName(page, faker.commerce.productName(), 'en');
 
-      const message = await createProductsPage.saveProduct(page);
-      expect(message).to.eq(createProductsPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check the confirmation email', async function () {
@@ -148,7 +150,7 @@ describe('BO - Advanced Parameters - Logs : Logs by email', async () => {
     it('should delete product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteProduct', baseContext);
 
-      const createProductMessage = await createProductsPage.deleteProduct(page);
+      const createProductMessage = await boProductsCreatePage.deleteProduct(page);
       expect(createProductMessage).to.equal(boProductsPage.successfulDeleteMessage);
     });
   });

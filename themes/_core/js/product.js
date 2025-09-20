@@ -135,7 +135,9 @@ function updateProduct(event, eventType, updateUrl) {
   }
 
   if (preview !== null) {
-    preview = `&preview=${preview}`;
+    const adtoken = psGetRequestParameter('adtoken');
+    const idEmployee = psGetRequestParameter('id_employee');
+    preview = `&preview=${preview}&adtoken=${adtoken}&id_employee=${idEmployee}`;
   } else {
     preview = '';
   }

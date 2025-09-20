@@ -1,15 +1,14 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import {BrowserContext, Page} from 'playwright';
 import {
   boDashboardPage,
+  boLoginPage,
   boModuleManagerPage,
+  type BrowserContext,
   dataModules,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -30,7 +29,13 @@ describe('BO - Modules - Module Manager : Bulk actions', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Modules > Module Manager\' page', async function () {
@@ -54,10 +59,10 @@ describe('BO - Modules - Module Manager : Bulk actions', async () => {
     expect(isBulkActionsDisabled).to.eq(true);
   });
 
-  it(`should select the module '${dataModules.availableQuantities.name}' and check the bulk actions button`, async function () {
+  it(`should select the module '${dataModules.statsstock.name}' and check the bulk actions button`, async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'checkBulkActionButtonEnabled', baseContext);
 
-    await boModuleManagerPage.selectModule(page, dataModules.availableQuantities.tag);
+    await boModuleManagerPage.selectModule(page, dataModules.statsstock.tag);
 
     const isBulkActionsDisabled = await boModuleManagerPage.isBulkActionsButtonDisabled(page);
     expect(isBulkActionsDisabled).to.eq(false);
@@ -67,23 +72,23 @@ describe('BO - Modules - Module Manager : Bulk actions', async () => {
     {
       args: {
         action: 'Disable',
-        message: boModuleManagerPage.disableModuleSuccessMessage(dataModules.availableQuantities.tag),
+        message: boModuleManagerPage.disableModuleSuccessMessage(dataModules.statsstock.tag),
       },
     },
-    {args: {action: 'Enable', message: boModuleManagerPage.enableModuleSuccessMessage(dataModules.availableQuantities.tag)}},
+    {args: {action: 'Enable', message: boModuleManagerPage.enableModuleSuccessMessage(dataModules.statsstock.tag)}},
     {
       args: {
         action: 'Uninstall',
-        message: boModuleManagerPage.uninstallModuleSuccessMessage(dataModules.availableQuantities.tag),
+        message: boModuleManagerPage.uninstallModuleSuccessMessage(dataModules.statsstock.tag),
       },
     },
     {
       args: {
         action: 'Install',
-        message: boModuleManagerPage.installModuleSuccessMessage(dataModules.availableQuantities.tag),
+        message: boModuleManagerPage.installModuleSuccessMessage(dataModules.statsstock.tag),
       },
     },
-    {args: {action: 'Reset', message: boModuleManagerPage.resetModuleSuccessMessage(dataModules.availableQuantities.tag)}},
+    {args: {action: 'Reset', message: boModuleManagerPage.resetModuleSuccessMessage(dataModules.statsstock.tag)}},
   ].forEach((test, index: number) => {
     it(`should '${test.args.action}' with bulk actions`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `bulkActions${index}`, baseContext);

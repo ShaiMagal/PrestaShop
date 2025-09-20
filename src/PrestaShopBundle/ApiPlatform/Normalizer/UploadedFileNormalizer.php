@@ -76,8 +76,6 @@ class UploadedFileNormalizer implements DenormalizerInterface, NormalizerInterfa
     public function getSupportedTypes(?string $format): array
     {
         return [
-            'object' => null,
-            '*' => false,
             File::class => true,
         ];
     }

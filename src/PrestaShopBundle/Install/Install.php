@@ -31,6 +31,7 @@ use Exception;
 use FileLogger as LegacyFileLogger;
 use Language as LanguageLegacy;
 use PhpEncryption;
+use PrestaShop\PrestaShop\Adapter\Bundle\AssetsInstaller;
 use PrestaShop\PrestaShop\Adapter\Entity\Cache;
 use PrestaShop\PrestaShop\Adapter\Entity\Cart;
 use PrestaShop\PrestaShop\Adapter\Entity\Category;
@@ -56,8 +57,10 @@ use PrestaShop\PrestaShop\Adapter\Entity\ShopUrl;
 use PrestaShop\PrestaShop\Adapter\Entity\Tools;
 use PrestaShop\PrestaShop\Adapter\Entity\Validate;
 use PrestaShop\PrestaShop\Adapter\Module\Module;
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
 use PrestaShop\PrestaShop\Core\Addon\Theme\ThemeManagerBuilder;
+use PrestaShop\PrestaShop\Core\Context\ContextBuilderPreparer;
 use PrestaShop\PrestaShop\Core\Module\ConfigReader as ModuleConfigReader;
 use PrestaShop\PrestaShop\Core\Theme\ConfigReader as ThemeConfigReader;
 use PrestaShop\PrestaShop\Core\Version;
@@ -68,10 +71,11 @@ use PrestaShopLoggerInterface;
 use PSRLoggerAdapter;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 
 class Install extends AbstractInstall
 {
-    public const SETTINGS_FILE = 'config/settings.inc.php';
+    public const SETTINGS_FILE = 'app/config/parameters.php';
     public const BOOTSTRAP_FILE = 'config/bootstrap.php';
 
     public const DEFAULT_THEME = 'classic';
@@ -133,6 +137,10 @@ class Install extends AbstractInstall
 
     public function setError($errors)
     {
+        if (empty($errors)) {
+            return;
+        }
+
         if (!is_array($errors)) {
             $errors = [$errors];
         }
@@ -228,15 +236,6 @@ class Install extends AbstractInstall
             $parameters
         );
 
-        $settings_content = "<?php\n";
-        $settings_content .= '//@deprecated 1.7';
-
-        if (!file_put_contents(_PS_ROOT_DIR_ . '/' . $this->settingsFile, $settings_content)) {
-            $this->setError($this->translator->trans('Cannot write settings file', [], 'Install'));
-
-            return false;
-        }
-
         if (!$this->processParameters($parameters)) {
             return false;
         }
@@ -254,8 +253,8 @@ class Install extends AbstractInstall
     public function processParameters($parameters)
     {
         $parametersContent = sprintf('<?php return %s;', var_export($parameters, true));
-        if (!file_put_contents(_PS_ROOT_DIR_ . '/app/config/parameters.php', $parametersContent)) {
-            $this->setError($this->translator->trans('Cannot write app/config/parameters.php file', [], 'Install'));
+        if (!file_put_contents(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . $this->settingsFile, $parametersContent)) {
+            $this->setError($this->translator->trans('%file% file is not writable (check permissions)', ['%file%' => $this->settingsFile], 'Install'));
 
             return false;
         } else {
@@ -321,7 +320,7 @@ class Install extends AbstractInstall
 
         try {
             $sql_loader->parse_file(_PS_INSTALL_DATA_PATH_ . 'db_structure.sql');
-        } catch (PrestashopInstallerException $e) {
+        } catch (PrestashopInstallerException) {
             $this->setError($this->translator->trans('Database structure file not found', [], 'Install'));
 
             return false;
@@ -375,6 +374,7 @@ class Install extends AbstractInstall
         $context = Context::getContext();
         $context->shop = new Shop(1);
         Shop::setContext(Shop::CONTEXT_SHOP, 1);
+        Configuration::resetStaticCache();
         Configuration::loadConfiguration();
         if (!isset($context->language) || !Validate::isLoadedObject($context->language)) {
             $context->language = new Language('en');
@@ -409,6 +409,15 @@ class Install extends AbstractInstall
         require_once _PS_ROOT_DIR_ . '/config/smarty.config.inc.php';
 
         $context->smarty = $smarty;
+
+        $container = SymfonyContainer::getInstance();
+        /** @var ContextBuilderPreparer $preparer */
+        $preparer = $container->get(ContextBuilderPreparer::class);
+        $preparer->prepareFromLegacyContext(Context::getContext());
+        // No persisted language is available in the Context at the beginning of the process,
+        // so we hard-code it because it will become available later when LanguageContext is
+        // actually used
+        $preparer->prepareLanguageId(1);
     }
 
     /**
@@ -447,7 +456,7 @@ class Install extends AbstractInstall
             } else {
                 $languages = $this->installLanguages();
             }
-        } catch (PrestashopInstallerException $e) {
+        } catch (Throwable $e) {
             $this->setError($e->getMessage());
 
             return false;
@@ -455,6 +464,9 @@ class Install extends AbstractInstall
 
         $flip_languages = array_flip($languages);
         $id_lang = (!empty($flip_languages[$this->language->getLanguageIso()])) ? $flip_languages[$this->language->getLanguageIso()] : 1;
+
+        Configuration::resetStaticCache();
+        Configuration::loadConfiguration();
         Configuration::updateGlobalValue('PS_LANG_DEFAULT', $id_lang);
         Configuration::updateGlobalValue('PS_VERSION_DB', _PS_INSTALL_VERSION_);
         Configuration::updateGlobalValue('PS_INSTALL_VERSION', _PS_INSTALL_VERSION_);
@@ -525,7 +537,7 @@ class Install extends AbstractInstall
                     return false;
                 }
             }
-        } catch (PrestashopInstallerException $e) {
+        } catch (Throwable $e) {
             $this->setError($e->getMessage());
 
             return false;
@@ -536,6 +548,8 @@ class Install extends AbstractInstall
 
     public function createShop($shop_name)
     {
+        $this->getLogger()->log('Creating shop');
+
         // Create default group shop
         $shop_group = new ShopGroup();
         $shop_group->name = 'Default';
@@ -592,6 +606,7 @@ class Install extends AbstractInstall
         if ($languages_list === null || (is_array($languages_list) && !count($languages_list))) {
             $languages_list = $this->language->getIsoList();
         }
+        $this->getLogger()->log('Installing languages: ' . implode(', ', $languages_list));
 
         $languages_list = array_unique($languages_list);
 
@@ -759,6 +774,7 @@ class Install extends AbstractInstall
         }
 
         Context::getContext()->shop = new Shop(1);
+        Configuration::resetStaticCache();
         Configuration::loadConfiguration();
 
         $id_country = (int) Country::getByIso($data['shop_country']);
@@ -1045,16 +1061,17 @@ class Install extends AbstractInstall
             }
 
             if (!$moduleActionIsExecuted) {
-                $moduleErrors = [
-                    str_replace(
-                        '%module%',
-                        $module_name,
-                        $errorMessage
-                    ),
+                $moduleErrors = [str_replace(
+                    '%module%',
+                    $module_name,
+                    $errorMessage
+                ),
                 ];
 
                 if (!empty($moduleException)) {
                     $moduleErrors[] = $moduleException;
+                } else {
+                    $moduleErrors[] = $moduleManager->getError($module_name);
                 }
 
                 $errors[$module_name] = $moduleErrors;
@@ -1172,10 +1189,7 @@ class Install extends AbstractInstall
 
         if (!($theme_manager->install($themeName) && $theme_manager->enable($themeName))) {
             $this->getLogger()->logError('Could not install theme');
-            $errors = $theme_manager->getErrors($themeName);
-            foreach ($errors as $error) {
-                $this->getLogger()->logError($error);
-            }
+            $this->setError($theme_manager->getErrors($themeName));
 
             return false;
         }
@@ -1196,6 +1210,8 @@ class Install extends AbstractInstall
     public function finalize(?string $randomizedAdminFolderName = null): bool
     {
         $adminFolder = 'admin-dev';
+
+        // If we need, we generate a random name for admin folder (for security purpose!)
         if (file_exists(_PS_ROOT_DIR_ . '/admin/')) {
             $randomizedAdminFolderName = $randomizedAdminFolderName ?? sprintf(
                 'admin%03d%s/',
@@ -1215,9 +1231,18 @@ class Install extends AbstractInstall
                 return false;
             }
         }
+
+        // We need also to run "assets:install" to install some bundles assets via symlink
+        // or hard copy if symlink aren't possible in this environment.
+        SymfonyContainer::getInstance()
+            ->get(AssetsInstaller::class)
+            ->installAssets($adminFolder);
+
+        // And then, we build url and log this information!
         Context::getContext()->shop = new Shop(1);
         Context::getContext()->link = new Link();
         $adminUrl = rtrim(Context::getContext()->link->getAdminBaseLink(), '/') . '/' . $adminFolder;
+
         $this->getLogger()->log(sprintf('You can now access your backoffice at %s.', $adminUrl));
 
         return true;

@@ -42,7 +42,7 @@ class OpenSSL implements OpenSSLInterface
         // @see https://www.php.net/manual/en/function.openssl-random-pseudo-bytes.php
         try {
             return \openssl_random_pseudo_bytes($length);
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             throw new RuntimeException('OpenSSL is not supported');
         }
     }

@@ -63,6 +63,7 @@ export default class EmployeeForm {
       employeeFormMap.confirmNewPasswordInput,
       employeeFormMap.generatedPasswordDisplayInput,
       employeeFormMap.passwordStrengthFeedbackContainer,
+      employeeFormMap.generatedPasswordButton,
     );
 
     const passwordHandler = new ChangePasswordHandler(
@@ -88,6 +89,9 @@ export default class EmployeeForm {
 
     // Reload tabs dropdown when employee profile is changed.
     $(document).on('change', this.employeeProfileSelector, (event) => {
+      const $tabsDropdown = $(this.tabsDropdownSelector);
+      $tabsDropdown.empty();
+      $tabsDropdown.prop('disabled', true);
       $.get(
         getTabsUrl,
         {
@@ -137,6 +141,7 @@ export default class EmployeeForm {
         );
       }
     });
+    $tabsDropdown.prop('disabled', false);
   }
 
   /**

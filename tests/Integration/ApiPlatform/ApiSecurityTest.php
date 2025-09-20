@@ -28,6 +28,9 @@ declare(strict_types=1);
 
 namespace Tests\Integration\ApiPlatform;
 
+use Lcobucci\JWT\Encoding\JoseEncoder;
+use Lcobucci\JWT\Token\Parser;
+use Lcobucci\JWT\Token\Plain;
 use Tests\Integration\ApiPlatform\EndPoint\ApiTestCase;
 use Tests\Resources\Resetter\ApiClientResetter;
 
@@ -127,5 +130,72 @@ class ApiSecurityTest extends ApiTestCase
         ]);
 
         self::assertResponseStatusCodeSame(403);
+    }
+
+    /**
+     * @dataProvider getValidScopeParameters
+     *
+     * @param string $scopeParameter
+     * @param string|array $scopes
+     * @param array $expectedScopes
+     *
+     * @return void
+     */
+    public function testAuthenticationWithDifferentScopesSuccess(string $scopeParameter, string|array $scopes, array $expectedScopes): void
+    {
+        self::createApiClient(['product_read', 'product_write']);
+        $options = [
+            'extra' => [
+                'parameters' => [
+                    'client_id' => static::CLIENT_ID,
+                    'client_secret' => static::$clientSecret,
+                    'grant_type' => 'client_credentials',
+                ],
+            ],
+            'headers' => [
+                'content-type' => 'application/x-www-form-urlencoded',
+            ],
+        ];
+        $options['extra']['parameters'][$scopeParameter] = $scopes;
+        $response = static::createClient([], [])->request('POST', '/access_token', $options);
+        self::assertResponseStatusCodeSame(200);
+        $parsedResponse = json_decode($response->getContent(), true);
+        $this->assertNotEmpty($parsedResponse);
+        $this->assertArrayHasKey('access_token', $parsedResponse);
+        $accessToken = $parsedResponse['access_token'];
+        $this->assertNotEmpty($accessToken);
+
+        $tokenParser = new Parser(new JoseEncoder());
+        $token = $tokenParser->parse($accessToken);
+        $this->assertInstanceOf(Plain::class, $token);
+        $this->assertTrue($token->claims()->has('scopes'));
+        $tokenScopes = $token->claims()->get('scopes');
+        $this->assertIsArray($tokenScopes);
+        $this->assertEquals($expectedScopes, $tokenScopes);
+    }
+
+    public function getValidScopeParameters(): iterable
+    {
+        yield 'empty string scope' => ['scope', '', ['is_authenticated']];
+        yield 'single string scope' => ['scope', 'product_read', ['is_authenticated', 'product_read']];
+        yield 'multiple string scope with comma' => ['scope', 'product_read,product_write', ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple string scope with space' => ['scope', 'product_read product_write', ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple string scope with comma and space' => ['scope', 'product_read, product_write', ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple string scope with comma and many spaces' => ['scope', '  product_read ,  product_write ', ['is_authenticated', 'product_read', 'product_write']];
+
+        yield 'single array scope' => ['scope', ['product_read'], ['is_authenticated', 'product_read']];
+        yield 'multiple array scope' => ['scope', ['product_read', 'product_write'], ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple array scope with spaces' => ['scope', [' product_read', 'product_write '], ['is_authenticated', 'product_read', 'product_write']];
+
+        yield 'empty string scopes' => ['scopes', '', ['is_authenticated']];
+        yield 'single string scopes' => ['scopes', 'product_read', ['is_authenticated', 'product_read']];
+        yield 'multiple string scopes with comma' => ['scopes', 'product_read,product_write', ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple string scopes with space' => ['scopes', 'product_read product_write', ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple string scopes with comma and space' => ['scopes', 'product_read, product_write', ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple string scopes with comma and many spaces' => ['scopes', '  product_read ,  product_write ', ['is_authenticated', 'product_read', 'product_write']];
+
+        yield 'single array scopes' => ['scopes', ['product_read'], ['is_authenticated', 'product_read']];
+        yield 'multiple array scopes' => ['scopes', ['product_read', 'product_write'], ['is_authenticated', 'product_read', 'product_write']];
+        yield 'multiple array scopes with spaces' => ['scopes', [' product_read', 'product_write '], ['is_authenticated', 'product_read', 'product_write']];
     }
 }

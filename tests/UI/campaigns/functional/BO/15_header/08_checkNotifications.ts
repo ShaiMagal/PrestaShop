@@ -1,21 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
+import {faker} from '@faker-js/faker';
 
-// import common tests
 import {createOrderByCustomerTest, createOrderByGuestTest} from '@commonTests/FO/classic/order';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import {orderHistoryPage} from '@pages/FO/classic/myAccount/orderHistory';
-import {orderDetailsPage} from '@pages/FO/classic/myAccount/orderDetails';
-import customerServicePage from '@pages/BO/customerService/customerService';
-import viewOrderMessagePage from '@pages/BO/customerService/orderMessages/add';
-import viewCustomerPage from '@pages/BO/customers/view';
 
 import {
+  boCustomerServicePage,
+  boCustomersViewPage,
   boDashboardPage,
+  boLoginPage,
+  boOrderMessagesCreatePage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   dataProducts,
@@ -25,12 +22,11 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
+  foClassicMyOrderDetailsPage,
+  foClassicMyOrderHistoryPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-import {faker} from '@faker-js/faker';
 
 const baseContext: string = 'functional_BO_header_checkNotifications';
 
@@ -97,7 +93,13 @@ describe('BO - Header : Check notifications', async () => {
 
   describe('Send message from FO then check the notification in BO', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should check notifications number', async function () {
@@ -160,17 +162,17 @@ describe('BO - Header : Check notifications', async () => {
       await foClassicHomePage.goToMyAccountPage(page);
       await foClassicMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foClassicMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foClassicMyOrderHistoryPage.pageTitle);
     });
 
     it('Go to order details and send message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sendMessage', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foClassicMyOrderHistoryPage.goToDetailsPage(page);
 
-      const successMessageText = await orderDetailsPage.addAMessage(page, messageOption, messageSend);
-      expect(successMessageText).to.equal(orderDetailsPage.successMessageText);
+      const successMessageText = await foClassicMyOrderDetailsPage.addAMessage(page, messageOption, messageSend);
+      expect(successMessageText).to.equal(foClassicMyOrderDetailsPage.successMessageText);
     });
 
     it('should go back to BO', async function () {
@@ -213,8 +215,8 @@ describe('BO - Header : Check notifications', async () => {
 
       await boDashboardPage.clickOnNotification(page, 'messages');
 
-      const pageTitle = await customerServicePage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServicePage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
   });
 
@@ -225,7 +227,7 @@ describe('BO - Header : Check notifications', async () => {
     it('should click on notifications icon', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNotificationsLink3', baseContext);
 
-      await viewOrderMessagePage.goToDashboardPage(page);
+      await boOrderMessagesCreatePage.goToDashboardPage(page);
 
       const isNotificationsVisible = await boDashboardPage.clickOnNotificationsLink(page);
       expect(isNotificationsVisible).to.eq(true);
@@ -250,7 +252,7 @@ describe('BO - Header : Check notifications', async () => {
     it('should click on customers tab', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnCustomersTab', baseContext);
 
-      await viewOrderMessagePage.goToDashboardPage(page);
+      await boOrderMessagesCreatePage.goToDashboardPage(page);
       await boDashboardPage.clickOnNotificationsLink(page);
       await boDashboardPage.clickOnNotificationsTab(page, 'customers');
 
@@ -265,8 +267,8 @@ describe('BO - Header : Check notifications', async () => {
 
       const customerName: string = `${customerData.firstName[0]}. ${customerData.lastName}`;
 
-      const pageTitle = await viewCustomerPage.getPageTitle(page);
-      expect(pageTitle).to.contains(viewCustomerPage.pageTitle(customerName));
+      const pageTitle = await boCustomersViewPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomersViewPage.pageTitle(customerName));
     });
   });
 });

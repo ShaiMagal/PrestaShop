@@ -1,21 +1,16 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import customerServicePage from '@pages/BO/customerService/customerService';
-import viewPage from '@pages/BO/customerService/customerService/view';
-// Import FO pages
-import {contactUsPage} from '@pages/FO/classic/contactUs';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boCustomerServicePage,
+  boCustomerServiceViewPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   FakerContactMessage,
+  foClassicContactUsPage,
   foClassicHomePage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -49,7 +44,13 @@ describe('BO - Customer Service : Contact options', async () => {
 
   describe('BO : Update default message', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Customer Service > Customer Service\' page', async function () {
@@ -61,15 +62,15 @@ describe('BO - Customer Service : Contact options', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServicePage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServicePage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should update default message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateDefaultMessage', baseContext);
 
-      const result = await customerServicePage.setDefaultMessage(page, 'Test default message');
-      expect(result).to.contains(customerServicePage.successfulUpdateMessage);
+      const result = await boCustomerServicePage.setDefaultMessage(page, 'Test default message');
+      expect(result).to.contains(boCustomerServicePage.successfulUpdateMessage);
     });
   });
 
@@ -77,7 +78,7 @@ describe('BO - Customer Service : Contact options', async () => {
     it('should go to FO page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFoToOrder', baseContext);
 
-      page = await customerServicePage.viewMyShop(page);
+      page = await boCustomerServicePage.viewMyShop(page);
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
       expect(isHomePage, 'Fail to open FO home page').to.eq(true);
@@ -89,19 +90,19 @@ describe('BO - Customer Service : Contact options', async () => {
       // Go to contact us page
       await foClassicHomePage.goToFooterLink(page, 'Contact us');
 
-      const pageTitle = await contactUsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(contactUsPage.pageTitle);
+      const pageTitle = await foClassicContactUsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foClassicContactUsPage.pageTitle);
     });
 
     it('should send message to customer service then close the page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'sendMessage', baseContext);
 
-      await contactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.jpg`);
+      await foClassicContactUsPage.sendMessage(page, contactUsData, `${contactUsData.fileName}.jpg`);
 
-      const validationMessage = await contactUsPage.getAlertSuccess(page);
-      expect(validationMessage).to.equal(contactUsPage.validationMessage);
+      const validationMessage = await foClassicContactUsPage.getAlertSuccess(page);
+      expect(validationMessage).to.equal(foClassicContactUsPage.validationMessage);
 
-      page = await contactUsPage.closePage(browserContext, page, 0);
+      page = await foClassicContactUsPage.closePage(browserContext, page, 0);
     });
   });
 
@@ -109,17 +110,17 @@ describe('BO - Customer Service : Contact options', async () => {
     it('should go to view message page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToViewMessagePage', baseContext);
 
-      await customerServicePage.reloadPage(page);
-      await customerServicePage.goToViewMessagePage(page);
+      await boCustomerServicePage.reloadPage(page);
+      await boCustomerServicePage.goToViewMessagePage(page);
 
-      const pageTitle = await viewPage.getPageTitle(page);
-      expect(pageTitle).to.contains(viewPage.pageTitle);
+      const pageTitle = await boCustomerServiceViewPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServiceViewPage.pageTitle);
     });
 
     it('should check your answer form', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkYourAnswerForm', baseContext);
 
-      const formContent = await viewPage.getYourAnswerFormContent(page);
+      const formContent = await boCustomerServiceViewPage.getYourAnswerFormContent(page);
       expect(formContent).to.contains('Test default message');
     });
 
@@ -132,15 +133,15 @@ describe('BO - Customer Service : Contact options', async () => {
         boDashboardPage.customerServiceLink,
       );
 
-      const pageTitle = await customerServicePage.getPageTitle(page);
-      expect(pageTitle).to.contains(customerServicePage.pageTitle);
+      const pageTitle = await boCustomerServicePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
     });
 
     it('should go back to default message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToDefaultMessage', baseContext);
 
-      const result = await customerServicePage.setDefaultMessage(page, 'Dear Customer,\n\n Regards,\nCustomer service');
-      expect(result).to.contains(customerServicePage.successfulUpdateMessage);
+      const result = await boCustomerServicePage.setDefaultMessage(page, 'Dear Customer,\n\n Regards,\nCustomer service');
+      expect(result).to.contains(boCustomerServicePage.successfulUpdateMessage);
     });
   });
 
@@ -152,14 +153,14 @@ describe('BO - Customer Service : Contact options', async () => {
       it(`should ${test.args.action} Allow file uploading`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}FileUploading`, baseContext);
 
-        const result = await customerServicePage.allowFileUploading(page, test.args.enable);
-        expect(result).to.contains(customerServicePage.successfulUpdateMessage);
+        const result = await boCustomerServicePage.allowFileUploading(page, test.args.enable);
+        expect(result).to.contains(boCustomerServicePage.successfulUpdateMessage);
       });
 
       it('should view my shop', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${index}`, baseContext);
 
-        page = await customerServicePage.viewMyShop(page);
+        page = await boCustomerServicePage.viewMyShop(page);
 
         const isHomePage = await foClassicHomePage.isHomePage(page);
         expect(isHomePage, 'Fail to open FO home page').to.eq(true);
@@ -170,24 +171,24 @@ describe('BO - Customer Service : Contact options', async () => {
 
         await foClassicHomePage.clickOnHeaderLink(page, 'Contact us');
 
-        const pageTitle = await contactUsPage.getPageTitle(page);
-        expect(pageTitle).to.equal(contactUsPage.pageTitle);
+        const pageTitle = await foClassicContactUsPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foClassicContactUsPage.pageTitle);
       });
 
       it('should check the existence of attachment input in contact us form', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `checkUploadFile${index}`, baseContext);
 
-        const isVisible = await contactUsPage.isAttachmentInputVisible(page);
+        const isVisible = await foClassicContactUsPage.isAttachmentInputVisible(page);
         expect(isVisible).to.be.equal(test.args.enable);
       });
 
       it('should go back to BO', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goBackToBO${index}`, baseContext);
 
-        page = await contactUsPage.closePage(browserContext, page, 0);
+        page = await foClassicContactUsPage.closePage(browserContext, page, 0);
 
-        const pageTitle = await customerServicePage.getPageTitle(page);
-        expect(pageTitle).to.contains(customerServicePage.pageTitle);
+        const pageTitle = await boCustomerServicePage.getPageTitle(page);
+        expect(pageTitle).to.contains(boCustomerServicePage.pageTitle);
       });
     });
   });
@@ -196,8 +197,8 @@ describe('BO - Customer Service : Contact options', async () => {
     it('should delete the message', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteMessage', baseContext);
 
-      const textResult = await customerServicePage.deleteMessage(page, 1);
-      expect(textResult).to.contains(customerServicePage.successfulDeleteMessage);
+      const textResult = await boCustomerServicePage.deleteMessage(page, 1);
+      expect(textResult).to.contains(boCustomerServicePage.successfulDeleteMessage);
     });
   });
 });

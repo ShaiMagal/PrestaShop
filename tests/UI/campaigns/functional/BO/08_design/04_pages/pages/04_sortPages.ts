@@ -1,16 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import pagesPage from '@pages/BO/design/pages';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boCMSPagesPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -35,7 +31,13 @@ describe('BO - design - Pages : Sort Pages table', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Design > Pages\' page', async function () {
@@ -46,10 +48,10 @@ describe('BO - design - Pages : Sort Pages table', async () => {
       boDashboardPage.designParentLink,
       boDashboardPage.pagesLink,
     );
-    await pagesPage.closeSfToolBar(page);
+    await boCMSPagesPage.closeSfToolBar(page);
 
-    const pageTitle = await pagesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(pagesPage.pageTitle);
+    const pageTitle = await boCMSPagesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCMSPagesPage.pageTitle);
   });
 
   // Sort pages table
@@ -91,10 +93,10 @@ describe('BO - design - Pages : Sort Pages table', async () => {
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await pagesPage.getAllRowsColumnContentTableCmsPage(page, test.args.sortBy);
-        await pagesPage.sortTableCmsPage(page, test.args.sortBy, test.args.sortDirection);
+        const nonSortedTable = await boCMSPagesPage.getAllRowsColumnContentTableCmsPage(page, test.args.sortBy);
+        await boCMSPagesPage.sortTableCmsPage(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await pagesPage.getAllRowsColumnContentTableCmsPage(page, test.args.sortBy);
+        const sortedTable = await boCMSPagesPage.getAllRowsColumnContentTableCmsPage(page, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));

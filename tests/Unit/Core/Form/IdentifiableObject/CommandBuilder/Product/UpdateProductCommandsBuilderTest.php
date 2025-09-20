@@ -41,7 +41,7 @@ use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\CommandBuilder\Product\UpdateProductCommandsBuilder;
 use PrestaShopBundle\Form\Extension\DisablingSwitchExtension;
 
-class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
+class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTestCase
 {
     /**
      * @dataProvider getExpectedCommands
@@ -1018,7 +1018,7 @@ class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
             ->getSingleShopCommand()
             ->setLocalizedMetaTitles($localizedMetaTitles)
         ;
-        yield 'meta title' => [
+        yield 'meta title multishop' => [
             [
                 'seo' => [
                     'meta_title' => $localizedMetaTitles,
@@ -1031,7 +1031,7 @@ class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
             ->getSingleShopCommand()
             ->setLocalizedMetaDescriptions($localizedMetaDescriptions)
         ;
-        yield 'meta description' => [
+        yield 'meta description multishop' => [
             [
                 'seo' => [
                     'meta_description' => $localizedMetaDescriptions,
@@ -1048,7 +1048,7 @@ class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
             ->getSingleShopCommand()
             ->setLocalizedLinkRewrites($localizedLinkRewrites)
         ;
-        yield 'link rewrite' => [
+        yield 'link rewrite multishop' => [
             [
                 'seo' => [
                     'link_rewrite' => $localizedLinkRewrites,
@@ -1061,7 +1061,7 @@ class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
             ->getSingleShopCommand()
             ->setRedirectOption(RedirectType::TYPE_NOT_FOUND, 0)
         ;
-        yield 'redirect not found' => [
+        yield 'redirect not found multishop' => [
             [
                 'seo' => [
                     'redirect_option' => [
@@ -1076,7 +1076,7 @@ class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
             ->getSingleShopCommand()
             ->setRedirectOption(RedirectType::TYPE_PRODUCT_TEMPORARY, 42)
         ;
-        yield 'redirect to product' => [
+        yield 'redirect to product multishop' => [
             [
                 'seo' => [
                     'redirect_option' => [
@@ -1094,7 +1094,7 @@ class UpdateProductCommandsBuilderTest extends AbstractProductCommandBuilderTest
             ->getSingleShopCommand()
             ->setRedirectOption(RedirectType::TYPE_CATEGORY_TEMPORARY, 51)
         ;
-        yield 'redirect to category' => [
+        yield 'redirect to category multishop' => [
             [
                 'seo' => [
                     'redirect_option' => [

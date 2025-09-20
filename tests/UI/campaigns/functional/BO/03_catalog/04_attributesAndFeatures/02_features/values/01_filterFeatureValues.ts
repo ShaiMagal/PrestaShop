@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import attributesPage from '@pages/BO/catalog/attributes';
-import featuresPage from '@pages/BO/catalog/features';
-import viewFeaturePage from '@pages/BO/catalog/features/view';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boAttributesPage,
   boDashboardPage,
+  boFeaturesPage,
+  boFeaturesViewPage,
+  boLoginPage,
+  type BrowserContext,
   dataFeatures,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -36,7 +32,13 @@ describe('BO - Catalog - Attributes & Features : Filter feature values table', a
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Attributes & Features\' page', async function () {
@@ -47,44 +49,44 @@ describe('BO - Catalog - Attributes & Features : Filter feature values table', a
       boDashboardPage.catalogParentLink,
       boDashboardPage.attributesAndFeaturesLink,
     );
-    await attributesPage.closeSfToolBar(page);
+    await boAttributesPage.closeSfToolBar(page);
 
-    const pageTitle = await attributesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(attributesPage.pageTitle);
+    const pageTitle = await boAttributesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boAttributesPage.pageTitle);
   });
 
   it('should go to Features page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToFeaturesPage', baseContext);
 
-    await attributesPage.goToFeaturesPage(page);
+    await boAttributesPage.goToFeaturesPage(page);
 
-    const pageTitle = await featuresPage.getPageTitle(page);
-    expect(pageTitle).to.contains(featuresPage.pageTitle);
+    const pageTitle = await boFeaturesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boFeaturesPage.pageTitle);
   });
 
   it('should filter by name \'Composition\'', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'filterFeatures', baseContext);
 
-    await featuresPage.resetFilter(page);
-    await featuresPage.filterTable(page, 'name', dataFeatures.composition.name);
+    await boFeaturesPage.resetFilter(page);
+    await boFeaturesPage.filterTable(page, 'name', dataFeatures.composition.name);
 
-    const textColumn = await featuresPage.getTextColumn(page, 1, 'name', 'id_feature');
+    const textColumn = await boFeaturesPage.getTextColumn(page, 1, 'name', 'id_feature');
     expect(textColumn).to.contains(dataFeatures.composition.name);
   });
 
   it('should view feature', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'viewFeature', baseContext);
 
-    await featuresPage.viewFeature(page, 1);
+    await boFeaturesPage.viewFeature(page, 1);
 
-    const pageTitle = await viewFeaturePage.getPageTitle(page);
+    const pageTitle = await boFeaturesViewPage.getPageTitle(page);
     expect(pageTitle).to.contains(`${dataFeatures.composition.name} • ${global.INSTALL.SHOP_NAME}`);
   });
 
   it('should reset all filters and get number of features in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfFeaturesValues = await viewFeaturePage.resetAndGetNumberOfLines(page);
+    numberOfFeaturesValues = await boFeaturesViewPage.resetAndGetNumberOfLines(page);
     expect(numberOfFeaturesValues).to.be.above(0);
   });
 
@@ -112,23 +114,23 @@ describe('BO - Catalog - Attributes & Features : Filter feature values table', a
       it(`should filter by ${test.args.filterBy} '${test.args.filterValue}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        await viewFeaturePage.filterTable(
+        await boFeaturesViewPage.filterTable(
           page,
           test.args.filterBy,
           test.args.filterValue,
         );
 
-        const numberOfFeaturesValuesAfterFilter = await viewFeaturePage.getNumberOfElementInGrid(page);
+        const numberOfFeaturesValuesAfterFilter = await boFeaturesViewPage.getNumberOfElementInGrid(page);
         expect(numberOfFeaturesValuesAfterFilter).to.be.at.most(numberOfFeaturesValues);
 
-        const textColumn = await viewFeaturePage.getTextColumn(page, 1, test.args.filterBy);
+        const textColumn = await boFeaturesViewPage.getTextColumn(page, 1, test.args.filterBy);
         expect(textColumn).to.contains(test.args.filterValue);
       });
 
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.testIdentifier}Reset`, baseContext);
 
-        const numberOfFeaturesValuesAfterReset = await viewFeaturePage.resetAndGetNumberOfLines(page);
+        const numberOfFeaturesValuesAfterReset = await boFeaturesViewPage.resetAndGetNumberOfLines(page);
         expect(numberOfFeaturesValuesAfterReset).to.equal(numberOfFeaturesValues);
       });
     });

@@ -46,14 +46,12 @@ use PrestaShop\PrestaShop\Core\Localization\Locale;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Number as NumberSpecification;
 use PrestaShop\PrestaShop\Core\Localization\Specification\NumberInterface;
 use PrestaShop\PrestaShop\Core\Localization\Specification\NumberSymbolList;
-use PrestaShopBundle\Controller\Admin\MultistoreController;
 use PrestaShopBundle\Security\Admin\UserTokenManager;
 use ReflectionMethod;
 use ReflectionObject;
 use Shop;
 use Smarty;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\HttpFoundation\Response;
 use Tests\Integration\Utility\ContextMockerTrait;
 use Tools;
 
@@ -270,9 +268,6 @@ class AdminControllerTest extends TestCase
                 if ($param === Controller::SERVICE_LOCALE_REPOSITORY) {
                     return $this->getMockLocaleRepository();
                 }
-                if ($param === 'prestashop.core.admin.multistore') {
-                    return $this->getMockMultistoreController();
-                }
                 if ($param === 'prestashop.adapter.multistore_feature') {
                     return $this->getMockFeatureInterface();
                 }
@@ -344,20 +339,6 @@ class AdminControllerTest extends TestCase
             ->willReturn($this->getMockLocale());
 
         return $mockLocaleRepository;
-    }
-
-    private function getMockMultistoreController(): MultistoreController
-    {
-        $mockResponse = $this->getMockBuilder(Response::class)->getMock();
-        $mockResponse->method('getContent')->willReturn('');
-
-        $mockMultistoreController = $this
-            ->getMockBuilder(MultistoreController::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $mockMultistoreController->method('header')->withAnyParameters()->willReturn($mockResponse);
-
-        return $mockMultistoreController;
     }
 
     private function getMockedAvifExtensionChecker(): AvifExtensionChecker

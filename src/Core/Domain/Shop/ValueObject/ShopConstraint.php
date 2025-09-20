@@ -39,15 +39,9 @@ class ShopConstraint
     public const SHOP_GROUP = 2;
     public const ALL_SHOPS = 4;
 
-    /**
-     * @var ShopId|null
-     */
-    protected $shopId;
+    protected ?ShopId $shopId = null;
 
-    /**
-     * @var ShopGroupId|null
-     */
-    protected $shopGroupId;
+    protected ?ShopGroupId $shopGroupId = null;
 
     /**
      * Indicate if the value returned matches the constraints strictly, else it fallbacks to Shop > Group > Global value
@@ -57,7 +51,7 @@ class ShopConstraint
     protected $strict;
 
     /**
-     * Constraint to get configuration for a specific shop
+     * Constraint to target a specific shop
      *
      * @param int $shopId
      * @param bool $isStrict
@@ -72,7 +66,7 @@ class ShopConstraint
     }
 
     /**
-     * Constraint to get configuration for a specific shop group
+     * Constraint to target a specific shop group
      *
      * @param int $shopGroupId
      * @param bool $isStrict
@@ -87,7 +81,7 @@ class ShopConstraint
     }
 
     /**
-     * Constraint to get configuration for all shops (the global value)
+     * Constraint to target all shops
      *
      * @param bool $isStrict
      *
@@ -110,6 +104,20 @@ class ShopConstraint
         $this->shopId = null !== $shopId ? new ShopId($shopId) : null;
         $this->shopGroupId = null !== $shopGroupId ? new ShopGroupId($shopGroupId) : null;
         $this->strict = $strict;
+    }
+
+    /**
+     * Clone the constraint, you can specify a force $strict value, if not set the same value is kept.
+     *
+     * @param bool|null $strict
+     *
+     * @return static
+     *
+     * @throws ShopException
+     */
+    public function clone(?bool $strict = null): self
+    {
+        return new static($this->shopId?->getValue(), $this->shopGroupId?->getValue(), $strict !== null ? $strict : $this->strict);
     }
 
     /**

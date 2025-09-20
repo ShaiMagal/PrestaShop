@@ -1,17 +1,15 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 // Import data
 import {
   boCarriersCreatePage,
   boCarriersPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   dataCarriers,
   dataCountries,
   dataCustomers,
@@ -27,6 +25,7 @@ import {
   foClassicHomePage,
   foClassicProductPage,
   foClassicSearchResultsPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -150,6 +149,7 @@ describe('BO - Shipping - Carriers : General Settings', async () => {
     // Create images
     await Promise.all([
       utilsFile.generateImage(`${carrierData.name}.jpg`),
+      utilsFile.generateImage(`${carrierDataName.name}.jpg`),
     ]);
   });
 
@@ -159,11 +159,18 @@ describe('BO - Shipping - Carriers : General Settings', async () => {
     // Delete the generated images
     await Promise.all([
       utilsFile.deleteFile(`${carrierData.name}.jpg`),
+      utilsFile.deleteFile(`${carrierDataName.name}.jpg`),
     ]);
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Shipping > Carriers\' page', async function () {
@@ -200,6 +207,19 @@ describe('BO - Shipping - Carriers : General Settings', async () => {
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierData);
     expect(textResult).to.contains(boCarriersPage.successfulCreationMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriers', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
 
     const numberCarriersAfterCreation = await boCarriersPage.getNumberOfElementInGrid(page);
     expect(numberCarriersAfterCreation).to.be.equal(numberOfCarriers + 1);
@@ -322,6 +342,22 @@ describe('BO - Shipping - Carriers : General Settings', async () => {
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataEnabled);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierStatus', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -355,6 +391,22 @@ describe('BO - Shipping - Carriers : General Settings', async () => {
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataName);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierName', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });
@@ -394,6 +446,22 @@ describe('BO - Shipping - Carriers : General Settings', async () => {
 
     const textResult = await boCarriersCreatePage.createEditCarrier(page, carrierDataGuest);
     expect(textResult).to.contains(boCarriersPage.successfulUpdateMessage);
+  });
+
+  it('should return to carriers page', async function () {
+    await testContext.addContextItem(this, 'testIdentifier', 'returnToCarriersAfterUpdateCarrierGroupAccess', baseContext);
+
+    await boDashboardPage.goToSubMenu(
+      page,
+      boDashboardPage.shippingLink,
+      boDashboardPage.carriersLink,
+    );
+
+    const pageTitle = await boCarriersPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boCarriersPage.pageTitle);
+
+    const numberCarriersAfterUpdate = await boCarriersPage.getNumberOfElementInGrid(page);
+    expect(numberCarriersAfterUpdate).to.be.equal(1);
 
     idCarrier = parseInt(await boCarriersPage.getTextColumn(page, 1, 'id_carrier'), 10);
   });

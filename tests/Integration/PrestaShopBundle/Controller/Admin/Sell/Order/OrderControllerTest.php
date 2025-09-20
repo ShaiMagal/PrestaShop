@@ -64,7 +64,7 @@ class OrderControllerTest extends WebTestCase
 
         // Enable debug mode (for data)
         $configurationMock = $this->getMockBuilder(Configuration::class)
-            ->setMethods(['get'])
+            ->onlyMethods(['get'])
             ->disableOriginalConstructor()
             ->disableAutoload()
             ->getMock();

@@ -82,7 +82,7 @@ elif [ "$DB_SERVER" != "<to be defined>" -a $PS_INSTALL_AUTO = 1 ]; then
     RET=1
     while [ $RET -ne 0 ]; do
         echo "\n* Checking if $DB_SERVER is available..."
-        mysql -h $DB_SERVER -P $DB_PORT -u $DB_USER -p$DB_PASSWD -e "status" > /dev/null 2>&1
+        mysql -h $DB_SERVER -P $DB_PORT -u $DB_USER -p$DB_PASSWD --ssl=0 -e "status" > /dev/null 2>&1
         RET=$?
 
         if [ $RET -ne 0 ]; then
@@ -106,7 +106,7 @@ else
   echo "error_log=/var/www/html/var/logs/php.log" >> /usr/local/etc/php/php.ini
 fi
 
-if [ ! -f ./config/settings.inc.php ]; then
+if [ ! -f ./app/config/parameters.php ]; then
     if [ $PS_INSTALL_AUTO = 1 ]; then
 
         echo "\n* Installing PrestaShop, this may take a while ...";
@@ -135,7 +135,7 @@ if [ ! -f ./config/settings.inc.php ]; then
         --domain="$PS_DOMAIN" --db_server=$DB_SERVER:$DB_PORT --db_name="$DB_NAME" --db_user=$DB_USER \
         --db_password=$DB_PASSWD --prefix="$DB_PREFIX" --firstname="Marc" --lastname="Beier" \
         --password="$ADMIN_PASSWD" --email="$ADMIN_MAIL" --language=$PS_LANGUAGE --country=$PS_COUNTRY \
-        --all_languages=$PS_ALL_LANGUAGES --newsletter=0 --send_email=0 --ssl=$PS_ENABLE_SSL
+        --all_languages=$PS_ALL_LANGUAGES --newsletter=0 --send_email=0 --ssl=$PS_ENABLE_SSL --fixtures=$PS_INSTALL_DEMO_PRODUCTS
 
         if [ $? -ne 0 ]; then
             echo 'warning: PrestaShop installation failed.'

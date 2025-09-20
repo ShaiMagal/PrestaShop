@@ -78,7 +78,7 @@ class QuickAccess
             $quickAccesses = $this->quickAccessGenerator->getTokenizedQuickAccesses();
 
             // Prepare quick accesses to render the component view properly.
-            foreach ($quickAccesses as $index => &$quick) {
+            foreach ($quickAccesses as &$quick) {
                 // Verify if the link matches with the current page
                 $cleanLink = $this->quickAccessGenerator->cleanQuickLink($quick['link']);
                 $quick['active'] = $this->isCurrentPage($cleanLink);

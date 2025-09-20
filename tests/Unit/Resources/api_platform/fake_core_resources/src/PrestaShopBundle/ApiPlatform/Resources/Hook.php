@@ -35,42 +35,11 @@ use ApiPlatform\Metadata\Put;
 use PrestaShop\PrestaShop\Core\Domain\Hook\Command\UpdateHookStatusCommand;
 use PrestaShop\PrestaShop\Core\Domain\Hook\Exception\HookNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Hook\Query\GetHook;
-use PrestaShop\PrestaShop\Core\Domain\Hook\Query\GetHookStatus;
 use PrestaShopBundle\ApiPlatform\Processor\CommandProcessor;
 use PrestaShopBundle\ApiPlatform\Provider\QueryProvider;
 
 #[ApiResource(
     operations: [
-        new Get(
-            uriTemplate: '/hook-status/{id}',
-            requirements: ['id' => '\d+'],
-            openapiContext: [
-                'summary' => 'Get hook status A',
-                'description' => 'Get hook status B',
-                'parameters' => [
-                    [
-                        'name' => 'id',
-                        'in' => 'path',
-                        'required' => true,
-                        'schema' => [
-                            'type' => 'string',
-                        ],
-                        'description' => 'Id of the hook you are requesting the status from',
-                    ],
-                    [
-                        'name' => 'Authorization',
-                        'in' => 'scopes',
-                        'description' => 'hook_read <br> hook_write ',
-                    ],
-                ],
-            ],
-            exceptionToStatus: [HookNotFoundException::class => 404],
-            provider: QueryProvider::class,
-            extraProperties: [
-                'query' => GetHookStatus::class,
-                'scopes' => ['hook_read'],
-            ]
-        ),
         new Put(
             uriTemplate: '/hook-status',
             processor: CommandProcessor::class,
@@ -80,7 +49,7 @@ use PrestaShopBundle\ApiPlatform\Provider\QueryProvider;
             ]
         ),
         new Get(
-            uriTemplate: '/hooks/{id}',
+            uriTemplate: '/hook/{id}',
             requirements: ['id' => '\d+'],
             exceptionToStatus: [HookNotFoundException::class => 404],
             provider: QueryProvider::class,

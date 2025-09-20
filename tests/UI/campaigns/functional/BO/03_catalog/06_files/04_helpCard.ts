@@ -1,16 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
 
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import filesPage from '@pages/BO/catalog/files';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boFilesPage,
+  boLoginPage,
+  type BrowserContext,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -31,7 +28,13 @@ describe('BO - Catalog - Files : Help card on files page', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Files\' page', async function () {
@@ -42,26 +45,26 @@ describe('BO - Catalog - Files : Help card on files page', async () => {
       boDashboardPage.catalogParentLink,
       boDashboardPage.filesLink,
     );
-    await filesPage.closeSfToolBar(page);
+    await boFilesPage.closeSfToolBar(page);
 
-    const pageTitle = await filesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(filesPage.pageTitle);
+    const pageTitle = await boFilesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boFilesPage.pageTitle);
   });
 
   it('should open the help side bar and check the document language', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'openHelpSidebar', baseContext);
 
-    const isHelpSidebarVisible = await filesPage.openHelpSideBar(page);
+    const isHelpSidebarVisible = await boFilesPage.openHelpSideBar(page);
     expect(isHelpSidebarVisible).to.eq(true);
 
-    const documentURL = await filesPage.getHelpDocumentURL(page);
+    const documentURL = await boFilesPage.getHelpDocumentURL(page);
     expect(documentURL).to.contains('country=en');
   });
 
   it('should close the help side bar', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'closeHelpSidebar', baseContext);
 
-    const isHelpSidebarClosed = await filesPage.closeHelpSideBar(page);
+    const isHelpSidebarClosed = await boFilesPage.closeHelpSideBar(page);
     expect(isHelpSidebarClosed).to.eq(true);
   });
 });

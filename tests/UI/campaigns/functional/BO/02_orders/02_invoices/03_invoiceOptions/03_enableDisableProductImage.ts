@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-// Import BO pages
-import invoicesPage from '@pages/BO/orders/invoices';
+import {expect} from 'chai';
 
 import {
   boDashboardPage,
+  boInvoicesPage,
+  boLoginPage,
   boOrdersPage,
   boOrdersViewBlockTabListPage,
+  type BrowserContext,
   dataCustomers,
   dataOrderStatuses,
   dataPaymentMethods,
@@ -21,12 +17,10 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicProductPage,
+  type Page,
   utilsFile,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_orders_invoices_invoiceOptions_enableDisableProductImage';
 
@@ -56,7 +50,13 @@ describe('BO - Orders - Invoices : Enable/Disable product image in invoices', as
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   [
@@ -73,19 +73,19 @@ describe('BO - Orders - Invoices : Enable/Disable product image in invoices', as
             boDashboardPage.ordersParentLink,
             boDashboardPage.invoicesLink,
           );
-          await invoicesPage.closeSfToolBar(page);
+          await boInvoicesPage.closeSfToolBar(page);
 
-          const pageTitle = await invoicesPage.getPageTitle(page);
-          expect(pageTitle).to.contains(invoicesPage.pageTitle);
+          const pageTitle = await boInvoicesPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boInvoicesPage.pageTitle);
         });
 
         it(`should ${test.args.action} product image`, async function () {
           await testContext.addContextItem(this, 'testIdentifier', `${test.args.action}ProductImage`, baseContext);
 
-          await invoicesPage.enableProductImage(page, test.args.enable);
+          await boInvoicesPage.enableProductImage(page, test.args.enable);
 
-          const textMessage = await invoicesPage.saveInvoiceOptions(page);
-          expect(textMessage).to.contains(invoicesPage.successfulUpdateMessage);
+          const textMessage = await boInvoicesPage.saveInvoiceOptions(page);
+          expect(textMessage).to.contains(boInvoicesPage.successfulUpdateMessage);
         });
       });
 
@@ -94,7 +94,7 @@ describe('BO - Orders - Invoices : Enable/Disable product image in invoices', as
           await testContext.addContextItem(this, 'testIdentifier', `goToFO${index}`, baseContext);
 
           // Click on view my shop
-          page = await invoicesPage.viewMyShop(page);
+          page = await boInvoicesPage.viewMyShop(page);
           // Change FO language
           await foClassicHomePage.changeLanguage(page, 'en');
 
@@ -179,8 +179,8 @@ describe('BO - Orders - Invoices : Enable/Disable product image in invoices', as
           // Close page and init page objects
           page = await foClassicCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
 
-          const pageTitle = await invoicesPage.getPageTitle(page);
-          expect(pageTitle).to.contains(invoicesPage.pageTitle);
+          const pageTitle = await boInvoicesPage.getPageTitle(page);
+          expect(pageTitle).to.contains(boInvoicesPage.pageTitle);
         });
       });
 
@@ -188,10 +188,10 @@ describe('BO - Orders - Invoices : Enable/Disable product image in invoices', as
         it('should go to \'Orders > Orders\' page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `goToOrdersPage${index}`, baseContext);
 
-          await invoicesPage.goToSubMenu(
+          await boInvoicesPage.goToSubMenu(
             page,
-            invoicesPage.ordersParentLink,
-            invoicesPage.ordersLink,
+            boInvoicesPage.ordersParentLink,
+            boInvoicesPage.ordersLink,
           );
 
           const pageTitle = await boOrdersPage.getPageTitle(page);

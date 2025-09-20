@@ -1,14 +1,11 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import common tests
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
 
-// Import FO pages
-import {orderDetailsPage} from '@pages/FO/classic/myAccount/orderDetails';
-import {orderHistoryPage} from '@pages/FO/classic/myAccount/orderHistory';
-
 import {
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   dataProducts,
@@ -18,13 +15,12 @@ import {
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
+  foClassicMyOrderDetailsPage,
+  foClassicMyOrderHistoryPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
-// context
 const baseContext: string = 'functional_FO_classic_userAccount_orderHistory_reorderFromOrderList';
 
 /*
@@ -109,14 +105,14 @@ describe('FO - Account - Order history : Reorder from order list', async () => {
 
       await foClassicMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foClassicMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foClassicMyOrderHistoryPage.pageTitle);
     });
 
     it('should reorder the last order', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'reorderLastOrder', baseContext);
 
-      await orderHistoryPage.clickOnReorderLink(page);
+      await foClassicMyOrderHistoryPage.clickOnReorderLink(page);
 
       const isCheckoutPage = await foClassicCheckoutPage.isCheckoutPage(page);
       expect(isCheckoutPage, 'Browser is not in checkout Page').to.eq(true);
@@ -164,23 +160,23 @@ describe('FO - Account - Order history : Reorder from order list', async () => {
 
       await foClassicMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foClassicMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foClassicMyOrderHistoryPage.pageTitle);
     });
 
     it('should go to order details page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFoToOrderDetails', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foClassicMyOrderHistoryPage.goToDetailsPage(page);
 
-      const pageTitle = await orderDetailsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(orderDetailsPage.pageTitle);
+      const pageTitle = await foClassicMyOrderDetailsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(foClassicMyOrderDetailsPage.pageTitle);
     });
 
     it('should check the ordered product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTheOrderedProduct', baseContext);
 
-      const orderedProduct = await orderDetailsPage.getProductName(page);
+      const orderedProduct = await foClassicMyOrderDetailsPage.getProductName(page);
       expect(orderedProduct).to.contain(dataProducts.demo_1.name);
     });
 

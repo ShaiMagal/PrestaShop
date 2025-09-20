@@ -1,14 +1,11 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
 // Import commonTests
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import FO pages
-import orderHistoryPage from '@pages/FO/hummingbird/myAccount/orderHistory';
-import orderDetailsPage from '@pages/FO/hummingbird/myAccount/orderDetails';
-
 import {
+  type BrowserContext,
   dataCarriers,
   dataCustomers,
   dataPaymentMethods,
@@ -18,12 +15,12 @@ import {
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
   foHummingbirdMyAccountPage,
+  foHummingbirdMyOrderDetailsPage,
+  foHummingbirdMyOrderHistoryPage,
   foHummingbirdProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_hummingbird_checkout_shippingMethods_addOrderMessage';
 
@@ -162,16 +159,16 @@ describe('FO - Checkout - Shipping methods : Add order message', async () => {
       await foHummingbirdHomePage.goToMyAccountPage(page);
       await foHummingbirdMyAccountPage.goToHistoryAndDetailsPage(page);
 
-      const pageHeaderTitle = await orderHistoryPage.getPageTitle(page);
-      expect(pageHeaderTitle).to.equal(orderHistoryPage.pageTitle);
+      const pageHeaderTitle = await foHummingbirdMyOrderHistoryPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foHummingbirdMyOrderHistoryPage.pageTitle);
     });
 
     it('should go to order details and check the messages box', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToFoToOrderDetailsPage', baseContext);
 
-      await orderHistoryPage.goToDetailsPage(page);
+      await foHummingbirdMyOrderHistoryPage.goToDetailsPage(page);
 
-      const orderMessage = await orderDetailsPage.getBoxMessages(page);
+      const orderMessage = await foHummingbirdMyOrderDetailsPage.getBoxMessages(page);
       expect(orderMessage).to.contain(editMessage);
     });
   });

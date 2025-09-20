@@ -81,11 +81,8 @@ class LanguageList
         uasort($this->languages, function ($a, $b) {
             $aname = $a->getName();
             $bname = $b->getName();
-            if ($aname == $bname) {
-                return 0;
-            }
 
-            return ($aname < $bname) ? -1 : 1;
+            return $aname <=> $bname;
         });
     }
 

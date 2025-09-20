@@ -38,14 +38,9 @@ class ValidateTest extends TestCase
      */
     private $validate;
 
-    /**
-     * @param string $name
-     * @param array $data
-     * @param string $dataName
-     */
-    public function __construct($name = null, array $data = [], $dataName = '')
+    public function __construct(?string $name = null)
     {
-        parent::__construct($name, $data, $dataName);
+        parent::__construct($name);
 
         $this->validate = new Validate();
     }

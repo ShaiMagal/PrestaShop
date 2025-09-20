@@ -40,7 +40,9 @@ use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
 use PrestaShopBundle\Translation\TranslatorComponent as Translator;
 use Shop;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Tests\Integration\Utility\ContextMockerTrait;
+use Twig\Environment;
 
 abstract class ContextStateTestCase extends TestCase
 {
@@ -61,18 +63,12 @@ abstract class ContextStateTestCase extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $contextMock
-            ->method('getTranslator')
-            ->willReturn(
-                $this
-                    ->getMockBuilder(Translator::class)
-                    ->disableOriginalConstructor()
-                    ->setMethodsExcept([
-                        'setLocale',
-                        'getLocale',
-                    ])
-                    ->getMock()
-            );
+        $locale = 'en';
+        if (isset($contextFields['language']) && $contextFields['language'] instanceof Language) {
+            $locale = $contextFields['language']->locale;
+        }
+        $translator = new Translator($locale);
+        $contextMock->method('getTranslator')->willReturn($translator);
 
         foreach ($contextFields as $fieldName => $contextValue) {
             $contextMock->$fieldName = $contextValue;
@@ -128,8 +124,15 @@ abstract class ContextStateTestCase extends TestCase
                 42,
                 'token',
                 '',
-                'index.php',
+                'index.php?controller=' . $controllerName,
                 'configuration',
+                $this->createMock(Request::class),
+                1,
+                'http://localhost',
+                'admin-dev',
+                false,
+                '9.0.0',
+                $this->createMock(Environment::class),
             ])
         ;
 

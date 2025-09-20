@@ -226,7 +226,10 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
             $this->getLinkedOrders($order),
             $this->addressFormatter->format(new AddressId((int) $order->id_address_delivery)),
             $this->addressFormatter->format(new AddressId((int) $order->id_address_invoice)),
-            (string) $order->note
+            (string) $order->note,
+            (string) $order->payment,
+            (string) $order->module,
+            (int) $order->id_cart
         );
     }
 
@@ -240,7 +243,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         $currency = new Currency($order->id_currency);
         $customer = new Customer($order->id_customer);
         $genderName = '';
-        $totalSpentSinceRegistration = null;
+        $totalSpentSinceRegistration = 0;
 
         if (!Validate::isLoadedObject($customer)) {
             $customer = $this->buildFakeCustomerObject($order, $invoiceAddress);
@@ -287,7 +290,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
             $genderName,
             $customer->email,
             new DateTimeImmutable($customer->date_add ?? 'now'),
-            $totalSpentSinceRegistration !== null ? $this->locale->formatPrice($totalSpentSinceRegistration, $currency->iso_code) : '',
+            $this->locale->formatPrice((float) $totalSpentSinceRegistration, $currency->iso_code),
             $customerStats['nb_orders'],
             $customer->note,
             (bool) $customer->is_guest,
@@ -708,7 +711,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
 
             $messages[] = new OrderMessageForViewing(
                 (int) $orderMessage['id_customer_message'],
-                $orderMessage['message'],
+                (string) $orderMessage['message'],
                 new OrderMessageDateForViewing(
                     new DateTimeImmutable($orderMessage['date_add']),
                     $this->context->language->date_format_full

@@ -54,9 +54,9 @@ Feature: Copy product from shop to shop.
     And single shop context is loaded
     And manufacturer studioDesign named "Studio Design" exists
     And I create carrier "carrier1" with specified properties:
-      | name        | ecoCarrier |
+      | name | ecoCarrier |
     And I create carrier "carrier2" with specified properties:
-      | name        | Fast carry |
+      | name | Fast carry |
     # Prepare a few data
     And I add new tax "us-tax-state-1" with following properties:
       | name       | US Tax (6%) |
@@ -206,9 +206,9 @@ Feature: Copy product from shop to shop.
       | en-US  | Its so smart |
       | fr-FR  | lel joke     |
     And product "productWithFieldsCopy" localized "link_rewrite" for shops shop1 should be:
-      | locale | value              |
-      | en-US  | smart-sunglasses   |
-      | fr-FR  | lunettes-de-soleil |
+      | locale | value                       |
+      | en-US  | copy-of-smart-sunglasses    |
+      | fr-FR  | copie-de-lunettes-de-soleil |
     And product productWithFieldsCopy should have following seo options for shops shop1:
       | redirect_type   | 301-product           |
       | redirect_target | productForRedirection |
@@ -281,9 +281,9 @@ Feature: Copy product from shop to shop.
       | en-US  | Its so smart3 |
       | fr-FR  | lel joke3     |
     And product "productWithFieldsCopy3" localized "link_rewrite" for shops shop3 should be:
-      | locale | value               |
-      | en-US  | smart-sunglasses3   |
-      | fr-FR  | lunettes-de-soleil3 |
+      | locale | value                        |
+      | en-US  | copy-of-smart-sunglasses3    |
+      | fr-FR  | copie-de-lunettes-de-soleil3 |
     And product productWithFieldsCopy3 should have following seo options for shops shop3:
       | redirect_type   | 302-product            |
       | redirect_target | productForRedirection2 |
@@ -356,9 +356,9 @@ Feature: Copy product from shop to shop.
       | en-US  | Its so smart |
       | fr-FR  | lel joke     |
     And product "productWithFieldsOnAllShops" localized "link_rewrite" for shops "shop1,shop2" should be:
-      | locale | value              |
-      | en-US  | smart-sunglasses   |
-      | fr-FR  | lunettes-de-soleil |
+      | locale | value                       |
+      | en-US  | copy-of-smart-sunglasses    |
+      | fr-FR  | copie-de-lunettes-de-soleil |
     And product productWithFieldsOnAllShops should have following seo options for shops "shop1,shop2":
       | redirect_type   | 301-product           |
       | redirect_target | productForRedirection |
@@ -425,8 +425,8 @@ Feature: Copy product from shop to shop.
       | fr-FR  | lel joke3     |
     And product "productWithFieldsOnAllShops" localized "link_rewrite" for shops shop3 should be:
       | locale | value               |
-      | en-US  | smart-sunglasses3   |
-      | fr-FR  | lunettes-de-soleil3 |
+      | en-US  | copy-of-smart-sunglasses3   |
+      | fr-FR  | copie-de-lunettes-de-soleil3 |
     And product productWithFieldsOnAllShops should have following seo options for shops shop3:
       | redirect_type   | 302-product            |
       | redirect_target | productForRedirection2 |
@@ -500,9 +500,9 @@ Feature: Copy product from shop to shop.
       | en-US  | Its so smart |
       | fr-FR  | lel joke     |
     And product "productWithFieldsDefaultGroup" localized "link_rewrite" for shops "shop1,shop2" should be:
-      | locale | value              |
-      | en-US  | smart-sunglasses   |
-      | fr-FR  | lunettes-de-soleil |
+      | locale | value                       |
+      | en-US  | copy-of-smart-sunglasses    |
+      | fr-FR  | copie-de-lunettes-de-soleil |
     And product productWithFieldsDefaultGroup should have following seo options for shops "shop1,shop2":
       | redirect_type   | 301-product           |
       | redirect_target | productForRedirection |
@@ -576,9 +576,9 @@ Feature: Copy product from shop to shop.
       | en-US  | Its so smart3 |
       | fr-FR  | lel joke3     |
     And product "productWithFieldsSecondGroup" localized "link_rewrite" for shops shop3 should be:
-      | locale | value               |
-      | en-US  | smart-sunglasses3   |
-      | fr-FR  | lunettes-de-soleil3 |
+      | locale | value                        |
+      | en-US  | copy-of-smart-sunglasses3    |
+      | fr-FR  | copie-de-lunettes-de-soleil3 |
     And product productWithFieldsSecondGroup should have following seo options for shops shop3:
       | redirect_type   | 302-product            |
       | redirect_target | productForRedirection2 |

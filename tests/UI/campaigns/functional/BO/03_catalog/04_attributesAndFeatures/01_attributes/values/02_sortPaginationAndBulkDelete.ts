@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import attributesPage from '@pages/BO/catalog/attributes';
-import addValuePage from '@pages/BO/catalog/attributes/addValue';
-import viewAttributePage from '@pages/BO/catalog/attributes/view';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
+  boAttributesPage,
+  boAttributesValueCreatePage,
+  boAttributesViewPage,
   boDashboardPage,
+  boLoginPage,
+  type BrowserContext,
   FakerAttributeValue,
+  type Page,
   utilsCore,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -45,7 +41,13 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Catalog > Attributes & Features\' page', async function () {
@@ -56,40 +58,40 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
       boDashboardPage.catalogParentLink,
       boDashboardPage.attributesAndFeaturesLink,
     );
-    await attributesPage.closeSfToolBar(page);
+    await boAttributesPage.closeSfToolBar(page);
 
-    const pageTitle = await attributesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(attributesPage.pageTitle);
+    const pageTitle = await boAttributesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boAttributesPage.pageTitle);
   });
 
   it('should reset all filters', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetAttributeFilter', baseContext);
 
-    const numberOfAttributesAfterReset = await attributesPage.resetAndGetNumberOfLines(page);
+    const numberOfAttributesAfterReset = await boAttributesPage.resetAndGetNumberOfLines(page);
     expect(numberOfAttributesAfterReset).to.be.above(0);
   });
 
   it('should filter list of attributes by name \'Color\'', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'filterToBulkDeleteAttributes', baseContext);
 
-    await attributesPage.filterTable(page, 'name', 'Color');
+    await boAttributesPage.filterTable(page, 'name', 'Color');
 
-    const textColumn = await attributesPage.getTextColumn(page, 1, 'name');
+    const textColumn = await boAttributesPage.getTextColumn(page, 1, 'name');
     expect(textColumn).to.contains('Color');
 
-    idAttribute = parseInt(await attributesPage.getTextColumn(page, 1, 'id_attribute_group'), 10);
+    idAttribute = parseInt(await boAttributesPage.getTextColumn(page, 1, 'id_attribute_group'), 10);
     expect(idAttribute).to.be.gt(0);
   });
 
   it('should view attribute \'Color\'', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'viewAttributeColor1', baseContext);
 
-    await attributesPage.viewAttribute(page, 1);
+    await boAttributesPage.viewAttribute(page, 1);
 
-    const pageTitle = await viewAttributePage.getPageTitle(page);
-    expect(pageTitle).to.equal(viewAttributePage.pageTitle('Color'));
+    const pageTitle = await boAttributesViewPage.getPageTitle(page);
+    expect(pageTitle).to.equal(boAttributesViewPage.pageTitle('Color'));
 
-    numberOfValues = await viewAttributePage.resetAndGetNumberOfLines(page);
+    numberOfValues = await boAttributesViewPage.resetAndGetNumberOfLines(page);
     expect(numberOfValues).to.be.above(0);
   });
 
@@ -99,10 +101,10 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
     it('should go to add new value page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToAddNewValuePage', baseContext);
 
-      await viewAttributePage.goToAddNewValuePage(page);
+      await boAttributesViewPage.goToAddNewValuePage(page);
 
-      const pageTitle = await addValuePage.getPageTitle(page);
-      expect(pageTitle).to.contains(addValuePage.createPageTitle);
+      const pageTitle = await boAttributesValueCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boAttributesValueCreatePage.createPageTitle);
     });
 
     creationTests.forEach((test: number, index: number) => {
@@ -115,18 +117,18 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
           value: `todelete${index}`,
         });
 
-        const textResult = await addValuePage.addEditValue(page, createValueData, index !== 6);
-        expect(textResult).to.contains(attributesPage.successfulCreationMessage);
+        const textResult = await boAttributesValueCreatePage.addEditValue(page, createValueData, index !== 6);
+        expect(textResult).to.contains(boAttributesPage.successfulCreationMessage);
       });
     });
 
     it('should check number of values after creation', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkNumberAfterCreation', baseContext);
 
-      const pageTitle = await viewAttributePage.getPageTitle(page);
-      expect(pageTitle).to.equal(viewAttributePage.pageTitle('Color'));
+      const pageTitle = await boAttributesViewPage.getPageTitle(page);
+      expect(pageTitle).to.equal(boAttributesViewPage.pageTitle('Color'));
 
-      const numberOfValuesAfterCreation = await viewAttributePage.resetAndGetNumberOfLines(page);
+      const numberOfValuesAfterCreation = await boAttributesViewPage.resetAndGetNumberOfLines(page);
       expect(numberOfValuesAfterCreation).to.equal(numberOfValues + 7);
     });
   });
@@ -136,28 +138,28 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
     it('should change the items number to 20 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo20', baseContext);
 
-      const paginationNumber = await viewAttributePage.selectPaginationLimit(page, 20);
+      const paginationNumber = await boAttributesViewPage.selectPaginationLimit(page, 20);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should click on next', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnNext', baseContext);
 
-      const paginationNumber = await viewAttributePage.paginationNext(page);
+      const paginationNumber = await boAttributesViewPage.paginationNext(page);
       expect(paginationNumber).to.contains('(page 2 / 2)');
     });
 
     it('should click on previous', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnPrevious', baseContext);
 
-      const paginationNumber = await viewAttributePage.paginationPrevious(page);
+      const paginationNumber = await boAttributesViewPage.paginationPrevious(page);
       expect(paginationNumber).to.contains('(page 1 / 2)');
     });
 
     it('should change the items number to 50 per page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'changeItemsNumberTo50', baseContext);
 
-      const paginationNumber = await viewAttributePage.selectPaginationLimit(page, 50);
+      const paginationNumber = await boAttributesViewPage.selectPaginationLimit(page, 50);
       expect(paginationNumber).to.contains('(page 1 / 1)');
     });
   });
@@ -211,11 +213,11 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
       it(`should sort by '${test.args.sortBy}' '${test.args.sortDirection}' and check result`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        const nonSortedTable = await viewAttributePage.getAllRowsColumnContent(page, test.args.sortBy);
+        const nonSortedTable = await boAttributesViewPage.getAllRowsColumnContent(page, test.args.sortBy);
 
-        await viewAttributePage.sortTable(page, test.args.sortBy, test.args.sortDirection);
+        await boAttributesViewPage.sortTable(page, test.args.sortBy, test.args.sortDirection);
 
-        const sortedTable = await viewAttributePage.getAllRowsColumnContent(page, test.args.sortBy);
+        const sortedTable = await boAttributesViewPage.getAllRowsColumnContent(page, test.args.sortBy);
 
         if (test.args.isFloat) {
           const nonSortedTableFloat: number[] = nonSortedTable.map((text: string): number => parseFloat(text));
@@ -246,23 +248,23 @@ describe('BO - Catalog - Attributes & Features : Sort, pagination and bulk delet
     it('should filter by value name \'toDelete\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'filterToBulkDelete', baseContext);
 
-      await viewAttributePage.filterTable(page, 'name', 'toDelete');
+      await boAttributesViewPage.filterTable(page, 'name', 'toDelete');
 
-      const numberOfValuesAfterFilter = await viewAttributePage.getNumberOfElementInGrid(page);
+      const numberOfValuesAfterFilter = await boAttributesViewPage.getNumberOfElementInGrid(page);
       expect(numberOfValuesAfterFilter).to.be.at.most(numberOfValues);
     });
 
     it('should delete values with Bulk Actions and check result', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'bulkDeleteAttributes', baseContext);
 
-      const deleteTextResult = await viewAttributePage.bulkDeleteValues(page);
-      expect(deleteTextResult).to.be.contains(viewAttributePage.successfulDeleteMessage);
+      const deleteTextResult = await boAttributesViewPage.bulkDeleteValues(page);
+      expect(deleteTextResult).to.be.contains(boAttributesViewPage.successfulDeleteMessage);
     });
 
     it('should reset all filters', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'resetFilter', baseContext);
 
-      const numberOfValuesAfterReset = await viewAttributePage.resetAndGetNumberOfLines(page);
+      const numberOfValuesAfterReset = await boAttributesViewPage.resetAndGetNumberOfLines(page);
       expect(numberOfValuesAfterReset).to.equal(numberOfValues);
     });
   });

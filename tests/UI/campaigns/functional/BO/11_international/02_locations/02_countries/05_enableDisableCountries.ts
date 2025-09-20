@@ -1,15 +1,12 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import zonesPage from '@pages/BO/international/locations';
+import {expect} from 'chai';
 
 import {
   boCountriesPage,
   boDashboardPage,
+  boLoginPage,
+  boZonesPage,
+  type BrowserContext,
   dataCountries,
   dataPaymentMethods,
   FakerAddress,
@@ -19,11 +16,9 @@ import {
   foClassicCheckoutOrderConfirmationPage,
   foClassicHomePage,
   foClassicProductPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_BO_international_locations_countries_enableDisableCountries';
 
@@ -48,7 +43,13 @@ describe('BO - International - Countries : Enable / Disable Countries', async ()
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'International > Locations\' page', async function () {
@@ -59,16 +60,16 @@ describe('BO - International - Countries : Enable / Disable Countries', async ()
       boDashboardPage.internationalParentLink,
       boDashboardPage.locationsLink,
     );
-    await zonesPage.closeSfToolBar(page);
+    await boZonesPage.closeSfToolBar(page);
 
-    const pageTitle = await zonesPage.getPageTitle(page);
-    expect(pageTitle).to.contains(zonesPage.pageTitle);
+    const pageTitle = await boZonesPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boZonesPage.pageTitle);
   });
 
   it('should go to \'Countries\' page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToCountriesPage', baseContext);
 
-    await zonesPage.goToSubTabCountries(page);
+    await boZonesPage.goToSubTabCountries(page);
 
     const pageTitle = await boCountriesPage.getPageTitle(page);
     expect(pageTitle).to.contains(boCountriesPage.pageTitle);

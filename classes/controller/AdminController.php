@@ -596,24 +596,6 @@ class AdminControllerCore extends Controller
     }
 
     /**
-     * Gets the multistore header and assigns its html content to a smarty variable
-     *
-     * @see PrestaShopBundle\Controller\Admin\MultistoreController
-     *
-     * (the decision to display it or not is taken by the MultistoreController)
-     */
-    public function initMultistoreHeader(): void
-    {
-        if (!isset($this->lockedToAllShopContext)) {
-            return;
-        }
-
-        $this->context->smarty->assign([
-            'multistore_header' => $this->get('prestashop.core.admin.multistore')->header($this->lockedToAllShopContext)->getContent(),
-        ]);
-    }
-
-    /**
      * Set breadcrumbs array for the controller page.
      *
      * @param int|null $tab_id
@@ -754,6 +736,7 @@ class AdminControllerCore extends Controller
                         /** @var bool|string $val */
                         $filter_value = '';
                         if (isset($t['type']) && $t['type'] == 'bool') {
+                            // @phpstan-ignore-next-line
                             $filter_value = ((bool) $val) ? $this->trans('Yes', [], 'Admin.Global') : $this->trans('No', [], 'Admin.Global');
                         } elseif (isset($t['type']) && $t['type'] == 'date' || isset($t['type']) && $t['type'] == 'datetime') {
                             $date = json_decode($val, true);
@@ -1112,7 +1095,7 @@ class AdminControllerCore extends Controller
                 }
             }
         }
-        fputcsv($fd, $headers, ';', $text_delimiter);
+        fputcsv($fd, $headers, ';', $text_delimiter, '');
 
         foreach ($this->_list as $i => $row) {
             $content = [];
@@ -1134,7 +1117,7 @@ class AdminControllerCore extends Controller
                 }
                 $content[] = $field_value;
             }
-            fputcsv($fd, $content, ';', $text_delimiter);
+            fputcsv($fd, $content, ';', $text_delimiter, '');
         }
         @fclose($fd);
         die;
@@ -1644,7 +1627,7 @@ class AdminControllerCore extends Controller
                     $back = self::$currentIndex . '&token=' . $this->token;
                 }
                 if (!Validate::isCleanHtml($back)) {
-                    die(Tools::displayError('Provided "back" parameter is invalid.'));
+                    throw new PrestaShopException('Provided "back" parameter is invalid.');
                 }
                 if (!$this->lite_display) {
                     $this->page_header_toolbar_btn['back'] = [
@@ -1717,7 +1700,7 @@ class AdminControllerCore extends Controller
                     $back = self::$currentIndex . '&token=' . $this->token;
                 }
                 if (!Validate::isCleanHtml($back)) {
-                    die(Tools::displayError('Provided "back" parameter is invalid.'));
+                    throw new PrestaShopException('Provided "back" parameter is invalid.');
                 }
                 if (!$this->lite_display) {
                     $this->toolbar_btn['cancel'] = [
@@ -1734,7 +1717,7 @@ class AdminControllerCore extends Controller
                     $back = self::$currentIndex . '&token=' . $this->token;
                 }
                 if (!Validate::isCleanHtml($back)) {
-                    die(Tools::displayError('Provided "back" parameter is invalid.'));
+                    throw new PrestaShopException('Provided "back" parameter is invalid.');
                 }
                 if (!$this->lite_display) {
                     $this->toolbar_btn['back'] = [
@@ -1869,7 +1852,7 @@ class AdminControllerCore extends Controller
         $this->display_header_javascript = false;
         $this->display_footer = false;
 
-        return $this->display();
+        $this->display();
     }
 
     protected function redirect()
@@ -2153,7 +2136,7 @@ class AdminControllerCore extends Controller
     private function getTabs($parentId = 0, $level = 0)
     {
         $tabs = Tab::getTabs($this->context->language->id, $parentId);
-        $current_id = Tab::getCurrentParentId();
+        $current_id = (int) Tab::getCurrentParentId();
 
         foreach ($tabs as $index => $tab) {
             if (!Tab::checkTabRights($tab['id_tab'])
@@ -2533,7 +2516,7 @@ class AdminControllerCore extends Controller
                 $back = self::$currentIndex . '&token=' . $this->token;
             }
             if (!Validate::isCleanHtml($back)) {
-                die(Tools::displayError('Provided "back" parameter is invalid.'));
+                throw new PrestaShopException('Provided "back" parameter is invalid.');
             }
 
             $helper->back_url = $back;
@@ -2812,7 +2795,6 @@ class AdminControllerCore extends Controller
         Employee::setLastConnectionDate($this->context->employee->id);
 
         $this->initProcess();
-        $this->initMultistoreHeader();
         $this->initBreadcrumbs();
         $this->initModal();
         $this->initToolbarFlags();
@@ -3743,10 +3725,9 @@ class AdminControllerCore extends Controller
         }
 
         /* Multilingual fields */
-        $class_vars = get_class_vars(get_class($object));
         $fields = [];
-        if (isset($class_vars['definition']['fields'])) {
-            $fields = $class_vars['definition']['fields'];
+        if (isset($object::$definition['fields'])) {
+            $fields = $object::$definition['fields'];
         }
 
         foreach ($fields as $field => $params) {

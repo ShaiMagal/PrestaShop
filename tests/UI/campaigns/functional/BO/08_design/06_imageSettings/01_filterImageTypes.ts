@@ -1,17 +1,13 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO Pages
-import imageSettingsPage from '@pages/BO/design/imageSettings';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boImageSettingsPage,
+  boLoginPage,
+  type BrowserContext,
   dataImageTypes,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -36,7 +32,13 @@ describe('BO - Design - Positions : Filter image types table', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Design > Image Settings\' page', async function () {
@@ -47,16 +49,16 @@ describe('BO - Design - Positions : Filter image types table', async () => {
       boDashboardPage.designParentLink,
       boDashboardPage.imageSettingsLink,
     );
-    await imageSettingsPage.closeSfToolBar(page);
+    await boImageSettingsPage.closeSfToolBar(page);
 
-    const pageTitle = await imageSettingsPage.getPageTitle(page);
-    expect(pageTitle).to.contains(imageSettingsPage.pageTitle);
+    const pageTitle = await boImageSettingsPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boImageSettingsPage.pageTitle);
   });
 
   it('should reset all filters and get number of image types in BO', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'resetFilterFirst', baseContext);
 
-    numberOfImageTypes = await imageSettingsPage.resetAndGetNumberOfLines(page);
+    numberOfImageTypes = await boImageSettingsPage.resetAndGetNumberOfLines(page);
     expect(numberOfImageTypes).to.be.above(0);
   });
 
@@ -149,22 +151,22 @@ describe('BO - Design - Positions : Filter image types table', async () => {
       it(`should filter by ${test.args.filterBy} '${test.args.filterValue}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', test.args.testIdentifier, baseContext);
 
-        await imageSettingsPage.filterTable(
+        await boImageSettingsPage.filterTable(
           page,
           test.args.filterType,
           test.args.filterBy,
           test.args.filterValue,
         );
 
-        const numberOfImageTypesAfterFilter = await imageSettingsPage.getNumberOfElementInGrid(page);
+        const numberOfImageTypesAfterFilter = await boImageSettingsPage.getNumberOfElementInGrid(page);
         expect(numberOfImageTypesAfterFilter).to.be.at.most(numberOfImageTypes);
 
         for (let row = 1; row <= numberOfImageTypesAfterFilter; row++) {
           if (test.args.filterType === 'select') {
-            const status = await imageSettingsPage.getImageTypeStatus(page, row, test.args.filterBy);
+            const status = await boImageSettingsPage.getImageTypeStatus(page, row, test.args.filterBy);
             expect(status).to.equal(test.args.filterValue === '1');
           } else {
-            const textColumn = await imageSettingsPage.getTextColumn(
+            const textColumn = await boImageSettingsPage.getTextColumn(
               page,
               row,
               test.args.filterBy,
@@ -177,7 +179,7 @@ describe('BO - Design - Positions : Filter image types table', async () => {
       it('should reset all filters', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `${test.args.testIdentifier}Reset`, baseContext);
 
-        const numberOfImageTypesAfterReset = await imageSettingsPage.resetAndGetNumberOfLines(page);
+        const numberOfImageTypesAfterReset = await boImageSettingsPage.resetAndGetNumberOfLines(page);
         expect(numberOfImageTypesAfterReset).to.equal(numberOfImageTypes);
       });
     });

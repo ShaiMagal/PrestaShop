@@ -102,7 +102,7 @@ class Reader implements ReaderInterface
             try {
                 $partialData = $this->getLocaleData($thisLocaleCode);
                 $finalData = $finalData->overrideWith($partialData);
-            } catch (LocalizationFileNotFoundException $e) {
+            } catch (LocalizationFileNotFoundException) {
                 // Sometimes a file can be missing.
                 // Example for Chinese : zh_CN.xml doesn't exist. There is only a zh.xml file.
                 // That's why we can't let this exception bubble up.

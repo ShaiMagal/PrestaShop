@@ -27,6 +27,7 @@
 namespace Tests\Integration\Behaviour\Features\Context;
 
 use Behat\Behat\Context\Context as BehatContext;
+use PrestaShop\PrestaShop\Core\ConfigurationInterface;
 use RuntimeException;
 
 /**
@@ -56,5 +57,26 @@ abstract class AbstractPrestaShopFeatureContext implements BehatContext
                 $firstFixtureNamesStr
             ));
         }
+    }
+
+    /**
+     * @return int
+     */
+    protected function getDefaultLangId(): int
+    {
+        return (int) $this->getConfiguration()->get('PS_LANG_DEFAULT');
+    }
+
+    /**
+     * @return int
+     */
+    protected function getDefaultShopId(): int
+    {
+        return (int) $this->getConfiguration()->get('PS_SHOP_DEFAULT');
+    }
+
+    protected function getConfiguration(): ConfigurationInterface
+    {
+        return CommonFeatureContext::getContainer()->get(ConfigurationInterface::class);
     }
 }

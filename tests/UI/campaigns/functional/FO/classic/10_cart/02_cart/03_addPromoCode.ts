@@ -1,20 +1,17 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import FO pages
-import {blockCartModal} from '@pages/FO/classic/modal/blockCart';
+import {expect} from 'chai';
 
 // Import commonTests
 import {createCartRuleTest, deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
-
 import {
+  type BrowserContext,
   FakerCartRule,
   foClassicCartPage,
   foClassicHomePage,
+  foClassicModalBlockCartPage,
   foClassicModalQuickViewPage,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -64,7 +61,7 @@ describe('FO - cart : Add promo code', async () => {
 
       await foClassicHomePage.quickViewProduct(page, 1);
       await foClassicModalQuickViewPage.addToCartByQuickView(page);
-      await blockCartModal.proceedToCheckout(page);
+      await foClassicModalBlockCartPage.proceedToCheckout(page);
 
       const pageTitle = await foClassicCartPage.getPageTitle(page);
       expect(pageTitle).to.eq(foClassicCartPage.pageTitle);
@@ -89,8 +86,8 @@ describe('FO - cart : Add promo code', async () => {
     it('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue', baseContext);
 
-      const totalBeforeDiscount = await foClassicCartPage.getDiscountValue(page);
-      expect(totalBeforeDiscount).to.eq(-newCartRuleData.discountAmount!.value);
+      const totalBeforeDiscount = await foClassicCartPage.getCartRuleValue(page);
+      expect(totalBeforeDiscount).to.equal(`-€${parseFloat(newCartRuleData.discountAmount!.value.toString()).toFixed(2)}`);
     });
 
     it('should set the same promo code and check the error message', async function () {

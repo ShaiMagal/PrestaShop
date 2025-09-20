@@ -1,14 +1,11 @@
-// Import utils
 import testContext from '@utils/testContext';
+import {expect} from 'chai';
 
-// Import common tests
 import {resetSmtpConfigTest, setupSmtpConfigTest} from '@commonTests/BO/advancedParameters/smtp';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
 
-// Import FO pages
-import blockCartModal from '@pages/FO/hummingbird/modal/blockCart';
-
 import {
+  type BrowserContext,
   dataCustomers,
   dataPaymentMethods,
   type FakerPaymentMethod,
@@ -16,15 +13,14 @@ import {
   foHummingbirdCheckoutPage,
   foHummingbirdCheckoutOrderConfirmationPage,
   foHummingbirdHomePage,
+  foHummingbirdModalBlockCartPage,
   foHummingbirdModalQuickViewPage,
   type MailDev,
   type MailDevEmail,
+  type Page,
   utilsMail,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
-
-import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
 
 const baseContext: string = 'functional_FO_hummingbird_checkout_payment_choosePaymentMethod';
 
@@ -90,7 +86,7 @@ describe('FO - Checkout - Payment : Choose a payment method', async () => {
         await testContext.addContextItem(this, 'testIdentifier', `addProductToCart${index}`, baseContext);
 
         await foHummingbirdModalQuickViewPage.addToCartByQuickView(page);
-        await blockCartModal.proceedToCheckout(page);
+        await foHummingbirdModalBlockCartPage.proceedToCheckout(page);
 
         const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
         expect(pageTitle).to.eq(foHummingbirdCartPage.pageTitle);

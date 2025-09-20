@@ -1,22 +1,18 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
 import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-
-// Import BO pages
-import loginCommon from '@commonTests/BO/loginBO';
-import createProductPage from '@pages/BO/catalog/products/add';
-
 import {expect} from 'chai';
-import type {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabShippingPage,
   boProductsCreateTabStocksPage,
+  type BrowserContext,
   FakerProduct,
+  type Page,
   foHummingbirdProductPage,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -53,7 +49,13 @@ describe('FO - Product page - Product page : Display specific delivery time', as
 
   describe('Create standard product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -92,37 +94,37 @@ describe('FO - Product page - Product page : Display specific delivery time', as
 
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create the product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createProduct', baseContext);
 
-      await createProductPage.closeSfToolBar(page);
+      await boProductsCreatePage.closeSfToolBar(page);
 
-      const createProductMessage = await createProductPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should choose the option \'Allow orders\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseAllowOrders', baseContext);
 
-      await createProductPage.goToTab(page, 'stock');
+      await boProductsCreatePage.goToTab(page, 'stock');
       await boProductsCreateTabStocksPage.setOptionWhenOutOfStock(page, 'Allow orders');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.equal(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should choose the option \'Specific delivery time\'', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseSpecificDeliveryTime', baseContext);
 
-      await createProductPage.goToTab(page, 'shipping');
+      await boProductsCreatePage.goToTab(page, 'shipping');
       await boProductsCreateTabShippingPage.setDeliveryTime(page, 'Specific delivery time');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.equal(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should set delivery time out-of-stock products', async function () {
@@ -130,8 +132,8 @@ describe('FO - Product page - Product page : Display specific delivery time', as
 
       await boProductsCreateTabShippingPage.setDeliveryTimeOutOfStockProducts(page, 'Hello');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.equal(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -139,7 +141,7 @@ describe('FO - Product page - Product page : Display specific delivery time', as
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct', baseContext);
 
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(newProductData.name);
@@ -159,28 +161,28 @@ describe('FO - Product page - Product page : Display specific delivery time', as
 
       page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should edit the product quantity', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'editProductQuantity', baseContext);
 
-      await createProductPage.goToTab(page, 'stock');
+      await boProductsCreatePage.goToTab(page, 'stock');
       await boProductsCreateTabStocksPage.setProductQuantity(page, 100);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.equal(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should set delivery time of in-stock products', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'setDeliveryTime2', baseContext);
 
-      await createProductPage.goToTab(page, 'shipping');
+      await boProductsCreatePage.goToTab(page, 'shipping');
       await boProductsCreateTabShippingPage.setDeliveryTimeInStockProducts(page, 'Delivered in less than a week');
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.equal(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -188,7 +190,7 @@ describe('FO - Product page - Product page : Display specific delivery time', as
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct2', baseContext);
 
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
 
       const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(newProductData.name);

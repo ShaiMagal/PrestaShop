@@ -162,7 +162,7 @@ class UpdateSchemaCommandTest extends TestCase
         $connection = $this
             ->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
-            ->setMethods(
+            ->onlyMethods(
                 [
                     'executeQuery',
                 ]
@@ -266,7 +266,7 @@ class UpdateSchemaCommandTest extends TestCase
         $result = $this
             ->getMockBuilder(Result::class)
             ->disableOriginalConstructor()
-            ->setMethods(
+            ->onlyMethods(
                 [
                     'fetchAllAssociative',
                 ]

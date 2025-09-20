@@ -76,37 +76,54 @@ class PrestaShopExtension extends Extension implements PrependExtensionInterface
 
     public function prepend(ContainerBuilder $container)
     {
+        $container->setParameter('prestashop.admin_cookie_lifetime', $this->getAdminCookieLifetime());
         $this->preprendApiConfig($container);
         $this->preprendSessionConfig($container);
     }
 
     protected function preprendSessionConfig(ContainerBuilder $container)
     {
+        $container->prependExtensionConfig('framework', [
+            'session' => [
+                'cookie_lifetime' => $this->getAdminCookieLifetime(),
+                'cookie_samesite' => $this->getCookieSameSite(),
+            ],
+        ]);
+    }
+
+    protected function getCookieSameSite(): string
+    {
         try {
             /** @var ConfigurationInterface $configuration */
             $configuration = new Configuration();
-            $cookieLifetimeBo = (int) $configuration->get('PS_COOKIE_LIFETIME_BO');
             $cookieSamesite = $configuration->get('PS_COOKIE_SAMESITE');
-            if (empty($cookieLifetimeBo) || $cookieLifetimeBo <= 0) {
-                $cookieLifetimeBo = CookieOptions::MAX_COOKIE_VALUE;
-            }
-
             $cookieSamesite = match ($cookieSamesite) {
                 CookieOptions::SAMESITE_NONE => Cookie::SAMESITE_NONE,
                 CookieOptions::SAMESITE_STRICT => Cookie::SAMESITE_STRICT,
                 default => Cookie::SAMESITE_LAX,
             };
-        } catch (Throwable $e) {
-            $cookieLifetimeBo = CookieOptions::MAX_COOKIE_VALUE;
+        } catch (Throwable) {
             $cookieSamesite = 'lax';
         }
 
-        $container->prependExtensionConfig('framework', [
-            'session' => [
-                'cookie_lifetime' => $cookieLifetimeBo * 3600,
-                'cookie_samesite' => $cookieSamesite,
-            ],
-        ]);
+        return $cookieSamesite;
+    }
+
+    protected function getAdminCookieLifetime(): int
+    {
+        try {
+            /** @var ConfigurationInterface $configuration */
+            $configuration = new Configuration();
+            $cookieLifetimeBo = (int) $configuration->get('PS_COOKIE_LIFETIME_BO');
+            if (empty($cookieLifetimeBo) || $cookieLifetimeBo <= 0) {
+                $cookieLifetimeBo = CookieOptions::MAX_COOKIE_VALUE;
+            }
+        } catch (Throwable) {
+            $cookieLifetimeBo = CookieOptions::MAX_COOKIE_VALUE;
+        }
+
+        // Configuration value (and default value) are expressed in HOURS, so we convert it into seconds
+        return $cookieLifetimeBo * 3600;
     }
 
     protected function preprendApiConfig(ContainerBuilder $container)
@@ -124,14 +141,17 @@ class PrestaShopExtension extends Extension implements PrependExtensionInterface
                 $paths[] = $moduleConfigPath;
             }
 
-            /**
-             * TODO: Understand why this crashes PrestaShop and redirects to Front Office - maybe duplicated/conflicts with ModulesDoctrineCompilerPass that could be removed in favor of this method
-             * // Load Doctrine entities that could be used as ApiPlatform DTO resources as well in the src/Entity folder
-             * $entitiesRessourcesPath = sprintf('%s/src/Entity', $modulePath);
-             * if (file_exists($entitiesRessourcesPath)) {
-             *   $paths[] = $entitiesRessourcesPath;
-             * }
-             */
+            // Load Doctrine entities that could be used as ApiPlatform DTO resources as well in the src/Entity folder
+            $entitiesRessourcesPath = sprintf('%s/src/Entity', $modulePath);
+            if (file_exists($entitiesRessourcesPath)) {
+                // APIPlatform is looping on included resources and doing a require_once on those resources in ReflectionClassRecursiveIterator::getReflectionClassesFromDirectories.
+                // This means that everything in those files is interpreted including the exit statement in some of those files ( especially in some index.php files used as an old way to make the directory read only ).
+                // Since we cannot override or decorate the reflection class itself we have no other choice but to delete those files.
+                if (file_exists($entitiesRessourcesPath . '/index.php')) {
+                    unlink($entitiesRessourcesPath . '/index.php');
+                }
+                $paths[] = $entitiesRessourcesPath;
+            }
 
             // Load ApiPlatform DTOs from the src/ApiPlatform/Resources folder
             $moduleRessourcesPath = sprintf('%s/src/ApiPlatform/Resources', $modulePath);

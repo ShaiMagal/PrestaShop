@@ -501,13 +501,8 @@ class FrontControllerCore extends Controller
      */
     protected function assignGeneralPurposeVariables()
     {
-        if (Validate::isLoadedObject($this->context->cart)) {
-            $cart = $this->context->cart;
-        } else {
-            $cart = new Cart();
-        }
-
         $templateVars = [];
+        $cart = $this->context->cart;
 
         Hook::exec(
             'actionFrontControllerSetVariablesBefore',
@@ -589,10 +584,6 @@ class FrontControllerCore extends Controller
     {
         $this->assignGeneralPurposeVariables();
         $this->process();
-
-        if (!isset($this->context->cart)) {
-            $this->context->cart = new Cart();
-        }
 
         $this->context->smarty->assign([
             'HOOK_HEADER' => Hook::exec('displayHeader'),
@@ -700,7 +691,7 @@ class FrontControllerCore extends Controller
     /**
      * Compiles and outputs full page content.
      *
-     * @return bool
+     * @return void
      *
      * @throws Exception
      * @throws SmartyException
@@ -716,8 +707,6 @@ class FrontControllerCore extends Controller
         ]);
 
         $this->smartyOutputContent($this->template);
-
-        return true;
     }
 
     protected function smartyOutputContent($content)
@@ -772,9 +761,7 @@ class FrontControllerCore extends Controller
         if ($this->maintenance == true || !(int) Configuration::get('PS_SHOP_ENABLE')) {
             $this->maintenance = true;
 
-            $is_admin = (int) (new Cookie('psAdmin'))->id_employee;
-            $maintenance_allow_admins = (bool) Configuration::get('PS_MAINTENANCE_ALLOW_ADMINS');
-            if ($is_admin && $maintenance_allow_admins) {
+            if (Tools::isAllowedToBypassMaintenance()) {
                 return;
             }
 
@@ -1045,8 +1032,6 @@ class FrontControllerCore extends Controller
 
     /**
      * Checks if token is valid.
-     *
-     * @since 1.5.0.1
      *
      * @return bool
      */
@@ -1328,19 +1313,11 @@ class FrontControllerCore extends Controller
             return false;
         }
 
-        // Initialize this data into cookie, FrontController will use it later
-        $customer->logged = true;
-        $this->context->customer = $customer;
-        $this->context->cookie->id_customer = (int) $customer->id;
-        $this->context->cookie->customer_lastname = $customer->lastname;
-        $this->context->cookie->customer_firstname = $customer->firstname;
-        $this->context->cookie->logged = true;
         $this->context->cookie->check_cgv = 1;
-        $this->context->cookie->is_guest = $customer->isGuest();
-        $this->context->cookie->passwd = $customer->passwd;
-        $this->context->cookie->email = $customer->email;
-        $this->context->cookie->id_guest = (int) $cart->id_guest;
         $this->context->cookie->id_cart = $id_cart;
+
+        // Restore customer session and authentication state (cookie + CustomerSession)
+        $this->context->updateCustomer($customer);
 
         // Return the value for backward compatibility
         return $id_cart;
@@ -1376,8 +1353,6 @@ class FrontControllerCore extends Controller
      * - /themes/default/override/layout-product-1.tpl
      * - /themes/default/override/layout-product.tpl
      * - /themes/default/layout.tpl.
-     *
-     * @since 1.5.0.13
      *
      * @return bool|string
      */
@@ -1599,7 +1574,7 @@ class FrontControllerCore extends Controller
 
     protected function getDisplayTaxesLabel()
     {
-        return (Module::isEnabled('ps_legalcompliance') && (bool) Configuration::get('AEUC_LABEL_TAX_INC_EXC')) || $this->context->country->display_tax_label;
+        return $this->context->country->display_tax_label;
     }
 
     /**
@@ -1719,7 +1694,7 @@ class FrontControllerCore extends Controller
             'logo' => self::configuredImageUrl('PS_LOGO', $psImageUrl),
             'logo_details' => $this->getShopLogo(),
             'stores_icon' => self::configuredImageUrl('PS_STORES_ICON', $psImageUrl),
-            'favicon' => self::configuredImageUrl('PS_STORES_ICON', $psImageUrl),
+            'favicon' => self::configuredImageUrl('PS_FAVICON', $psImageUrl),
             'favicon_update_time' => Configuration::get('PS_IMG_UPDATE_TIME'),
 
             'address' => [
@@ -1786,7 +1761,6 @@ class FrontControllerCore extends Controller
             'meta' => [
                 'title' => $meta_tags['meta_title'],
                 'description' => $meta_tags['meta_description'],
-                'keywords' => $meta_tags['meta_keywords'],
                 'robots' => 'index',
             ],
             'page_name' => $page_name,

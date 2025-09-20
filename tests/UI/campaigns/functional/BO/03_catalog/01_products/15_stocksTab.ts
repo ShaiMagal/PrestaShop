@@ -1,23 +1,19 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import common tests
 import {deleteProductTest} from '@commonTests/BO/catalog/product';
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import BO pages
-import createProductPage from '@pages/BO/catalog/products/add';
-import movementsPage from '@pages/BO/catalog/stocks/movements';
-
-import type {BrowserContext, Page} from 'playwright';
 import {expect} from 'chai';
+
 import {
   boDashboardPage,
+  boLoginPage,
   boProductsPage,
+  boProductsCreatePage,
   boProductsCreateTabStocksPage,
+  boStockMovementsPage,
+  type BrowserContext,
   dataEmployees,
   FakerProduct,
   foClassicProductPage,
+  type Page,
   utilsDate,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -55,7 +51,13 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
   // 1 - Create product
   describe('Create product', async () => {
     it('should login in BO', async function () {
-      await loginCommon.loginBO(this, page);
+      await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+      await boLoginPage.goTo(page, global.BO.URL);
+      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
 
     it('should go to \'Catalog > Products\' page', async function () {
@@ -86,15 +88,15 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       await boProductsPage.selectProductType(page, newProductData.type);
       await boProductsPage.clickOnAddNewProduct(page);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should create standard product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createStandardProduct', baseContext);
 
-      const createProductMessage = await createProductPage.setProduct(page, newProductData);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.setProduct(page, newProductData);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
   });
 
@@ -103,9 +105,9 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
     it('should go to the Stocks tab', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToStocksTab', baseContext);
 
-      await createProductPage.goToTab(page, 'stock');
+      await boProductsCreatePage.goToTab(page, 'stock');
 
-      const isTabActive = await createProductPage.isTabActive(page, 'stock');
+      const isTabActive = await boProductsCreatePage.isTabActive(page, 'stock');
       expect(isTabActive).to.eq(true);
     });
 
@@ -114,10 +116,10 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
 
       await boProductsCreateTabStocksPage.setQuantityDelta(page, productQuantity);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
 
-      const productHeaderSummary = await createProductPage.getProductHeaderSummary(page);
+      const productHeaderSummary = await boProductsCreatePage.getProductHeaderSummary(page);
       expect(productHeaderSummary.quantity).to.equal(`${productQuantity} in stock`);
     });
 
@@ -137,17 +139,17 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
 
       page = await boProductsCreateTabStocksPage.clickViewAllStockMovements(page);
 
-      const pageTitle = await movementsPage.getPageTitle(page);
-      expect(pageTitle).to.equal(movementsPage.pageTitle);
+      const pageTitle = await boStockMovementsPage.getPageTitle(page);
+      expect(pageTitle).to.equal(boStockMovementsPage.pageTitle);
     });
 
     it('should close the Stock Movements page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'closeStockMovementsPage', baseContext);
 
-      page = await movementsPage.closePage(browserContext, page, 0);
+      page = await boStockMovementsPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should fill Stocks values', async function () {
@@ -157,8 +159,8 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       await boProductsCreateTabStocksPage.setStockLocation(page, productStockLocation);
       await boProductsCreateTabStocksPage.setLowStockAlertByEmail(page, productLowStockAlertByEmail, productLowStockThreshold);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check Stocks values', async function () {
@@ -184,8 +186,8 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       await boProductsCreateTabStocksPage.setLabelWhenOutOfStock(page, productLabelWhenOutOfStock);
       await boProductsCreateTabStocksPage.setAvailabilityDate(page, todayDate);
 
-      const message = await createProductPage.saveProduct(page);
-      expect(message).to.eq(createProductPage.successfulUpdateMessage);
+      const message = await boProductsCreatePage.saveProduct(page);
+      expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should check When out of stock values', async function () {
@@ -205,7 +207,7 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct1', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle: string = await foClassicProductPage.getPageTitle(page);
@@ -231,8 +233,8 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       // Go back to BO
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should check the deny orders option', async function () {
@@ -241,10 +243,10 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       await boProductsCreateTabStocksPage.setQuantityDelta(page, productQuantity * -1);
       await boProductsCreateTabStocksPage.setOptionWhenOutOfStock(page, 'Deny orders');
 
-      const createProductMessage = await createProductPage.saveProduct(page);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
 
-      const productHeaderSummary = await createProductPage.getProductHeaderSummary(page);
+      const productHeaderSummary = await boProductsCreatePage.getProductHeaderSummary(page);
       expect(productHeaderSummary.quantity).to.equal('0 out of stock');
 
       const result = await boProductsCreateTabStocksPage.getStockMovement(page, 1);
@@ -259,7 +261,7 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct2', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle: string = await foClassicProductPage.getPageTitle(page);
@@ -273,7 +275,7 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       expect(isAddToCartButtonEnabled).to.be.equal(false);
 
       const productAvailability = await foClassicProductPage.getProductAvailabilityLabel(page);
-      expect(productAvailability).to.be.contains('Out-of-Stock');
+      expect(productAvailability).to.be.contains('OUT OF STOCK');
     });
 
     it('should go back to BO', async function () {
@@ -282,8 +284,8 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
       // Go back to BO
       page = await foClassicProductPage.closePage(browserContext, page, 0);
 
-      const pageTitle = await createProductPage.getPageTitle(page);
-      expect(pageTitle).to.contains(createProductPage.pageTitle);
+      const pageTitle = await boProductsCreatePage.getPageTitle(page);
+      expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
     });
 
     it('should check the allow orders option and set Label when out of stock', async function () {
@@ -291,15 +293,15 @@ describe('BO - Catalog - Products : Stocks tab', async () => {
 
       await boProductsCreateTabStocksPage.setOptionWhenOutOfStock(page, 'Allow orders');
 
-      const createProductMessage = await createProductPage.saveProduct(page);
-      expect(createProductMessage).to.equal(createProductPage.successfulUpdateMessage);
+      const createProductMessage = await boProductsCreatePage.saveProduct(page);
+      expect(createProductMessage).to.equal(boProductsCreatePage.successfulUpdateMessage);
     });
 
     it('should preview product', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'previewProduct3', baseContext);
 
       // Click on preview button
-      page = await createProductPage.previewProduct(page);
+      page = await boProductsCreatePage.previewProduct(page);
       await foClassicProductPage.changeLanguage(page, 'en');
 
       const pageTitle: string = await foClassicProductPage.getPageTitle(page);

@@ -11,3 +11,8 @@ services:
     alias: PrestaShop\PrestaShop\Core\Crypto\Hashing
 
   PrestaShop\PrestaShop\Core\Security\Hashing: ~
+
+  PrestaShop\PrestaShop\Core\Hook\HookModuleFilter:
+    public: true
+    arguments:
+      - !tagged core.hook_module_exec_filter

@@ -59,7 +59,7 @@ final class AddManufacturerHandler extends AbstractManufacturerHandler implement
                 throw new ManufacturerException(sprintf('Failed to add new manufacturer "%s"', $command->getName()));
             }
             $this->addShopAssociation($manufacturer, $command);
-        } catch (PrestaShopException $e) {
+        } catch (PrestaShopException) {
             throw new ManufacturerException(sprintf('Failed to add new manufacturer "%s"', $command->getName()));
         }
 
@@ -93,7 +93,6 @@ final class AddManufacturerHandler extends AbstractManufacturerHandler implement
         $manufacturer->description = $command->getLocalizedDescriptions();
         $manufacturer->meta_title = $command->getLocalizedMetaTitles();
         $manufacturer->meta_description = $command->getLocalizedMetaDescriptions();
-        $manufacturer->meta_keywords = $command->getLocalizedMetaKeywords();
         $manufacturer->active = $command->isEnabled();
     }
 }

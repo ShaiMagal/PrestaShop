@@ -1,19 +1,15 @@
-// Import utils
 import testContext from '@utils/testContext';
-
-// Import commonTests
-import loginCommon from '@commonTests/BO/loginBO';
-
-// Import pages
-import {moduleConfigurationPage} from '@pages/BO/modules/moduleConfiguration';
-
 import {expect} from 'chai';
-import {BrowserContext, Page} from 'playwright';
+
 import {
   boDashboardPage,
+  boLoginPage,
+  boModuleConfigurationPage,
   boModuleManagerPage,
   boModuleManagerAlertsPage,
+  type BrowserContext,
   dataModules,
+  type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
@@ -34,7 +30,13 @@ describe('BO - Modules - Alerts : Configure module', async () => {
   });
 
   it('should login in BO', async function () {
-    await loginCommon.loginBO(this, page);
+    await testContext.addContextItem(this, 'testIdentifier', 'loginBO', baseContext);
+
+    await boLoginPage.goTo(page, global.BO.URL);
+    await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
+
+    const pageTitle = await boDashboardPage.getPageTitle(page);
+    expect(pageTitle).to.contains(boDashboardPage.pageTitle);
   });
 
   it('should go to \'Modules > Module Manager\' page', async function () {
@@ -65,7 +67,7 @@ describe('BO - Modules - Alerts : Configure module', async () => {
 
     await boModuleManagerAlertsPage.goToConfigurationPage(page, dataModules.psCheckPayment.tag);
 
-    const pageSubtitle = await moduleConfigurationPage.getPageSubtitle(page);
+    const pageSubtitle = await boModuleConfigurationPage.getPageSubtitle(page);
     expect(pageSubtitle).to.contains(dataModules.psCheckPayment.name);
   });
 });
