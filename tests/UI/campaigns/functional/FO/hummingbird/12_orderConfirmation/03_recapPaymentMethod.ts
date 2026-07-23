@@ -1,8 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
-import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-
 import {
   boDashboardPage,
   boLoginPage,
@@ -26,22 +24,15 @@ import {
 const baseContext: string = 'functional_FO_hummingbird_orderConfirmation_recapPaymentMethod';
 
 /*
-Pre-condition:
-- Install the theme hummingbird
 Scenario:
 - Add 1 products to cart
 - Proceed to checkout and confirm the order
 - Check the recap of payment method
-Post-condition:
-- Uninstall the theme hummingbird
 */
 describe('FO - Order confirmation : Order details and totals - Recap of payment method', async () => {
   let browserContext: BrowserContext;
   let page: Page;
   let orderReference: string;
-
-  // Pre-condition : Install Hummingbird
-  enableHummingbird(`${baseContext}_preTest_0`);
 
   // before and after functions
   before(async function () {
@@ -175,7 +166,7 @@ describe('FO - Order confirmation : Order details and totals - Recap of payment 
       await testContext.addContextItem(this, 'testIdentifier', 'checkSubTotal', baseContext);
 
       const orderSubTotal = await foHummingbirdCheckoutOrderConfirmationPage.getOrderSubTotal(page);
-      expect(orderSubTotal).to.equal(`€${dataProducts.demo_6.combinations[0].price.toFixed(2)}`);
+      expect(orderSubTotal).to.equal(`€${dataProducts.demo_6.combinations[0].priceTI.toFixed(2)}`);
     });
 
     it('should check the shipping total', async function () {
@@ -189,7 +180,7 @@ describe('FO - Order confirmation : Order details and totals - Recap of payment 
       await testContext.addContextItem(this, 'testIdentifier', 'checkTotalTaxInc', baseContext);
 
       const orderTotalTaxInc = await foHummingbirdCheckoutOrderConfirmationPage.getOrderTotal(page);
-      expect(orderTotalTaxInc).to.equal(`€${dataProducts.demo_6.combinations[0].price.toFixed(2)}`);
+      expect(orderTotalTaxInc).to.equal(`€${dataProducts.demo_6.combinations[0].priceTI.toFixed(2)}`);
     });
 
     it('should check the order details', async function () {
@@ -205,7 +196,4 @@ describe('FO - Order confirmation : Order details and totals - Recap of payment 
       expect(shippingMethod).to.contains(`${dataCarriers.clickAndCollect.name} - ${dataCarriers.clickAndCollect.transitName}`);
     });
   });
-
-  // Post-condition : Uninstall Hummingbird
-  disableHummingbird(`${baseContext}_postTest`);
 });

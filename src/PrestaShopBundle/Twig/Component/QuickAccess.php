@@ -1,36 +1,21 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
 
 namespace PrestaShopBundle\Twig\Component;
 
+use PrestaShop\PrestaShop\Adapter\LegacyContext;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 use PrestaShop\PrestaShop\Core\QuickAccess\QuickAccessGenerator;
+use PrestaShopBundle\Security\Admin\UserTokenManager;
 use PrestaShopBundle\Twig\Layout\MenuBuilder;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 #[AsTwigComponent(template: '@PrestaShop/Admin/Component/Layout/quick_access.html.twig')]
@@ -65,6 +50,10 @@ class QuickAccess
         protected readonly RequestStack $requestStack,
         protected readonly MenuBuilder $menuBuilder,
         protected readonly QuickAccessGenerator $quickAccessGenerator,
+        protected readonly RouterInterface $router,
+        protected readonly UserTokenManager $userTokenManager,
+        protected readonly LegacyContext $legacyContext,
+        protected readonly FeatureFlagStateCheckerInterface $featureFlagChecker,
     ) {
     }
 
@@ -138,6 +127,49 @@ class QuickAccess
         }
 
         return $this->currentPageIcon;
+    }
+
+    public function getManageUrl(): string
+    {
+        if ($this->featureFlagChecker->isEnabled('quick_access')) {
+            return $this->router->generate(
+                'admin_quick_accesses_index',
+                [],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
+        return $this->legacyContext->getContext()->link->getAdminLink('AdminQuickAccesses');
+    }
+
+    public function getAjaxAddUrl(): string
+    {
+        if ($this->featureFlagChecker->isEnabled('quick_access')) {
+            return $this->router->generate(
+                'admin_quick_accesses_ajax_add',
+                ['_token' => $this->userTokenManager->getSymfonyToken()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
+        return $this->legacyContext->getContext()->link->getAdminLink(
+            'AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]
+        );
+    }
+
+    public function getAjaxDeleteUrl(): string
+    {
+        if ($this->featureFlagChecker->isEnabled('quick_access')) {
+            return $this->router->generate(
+                'admin_quick_accesses_ajax_delete',
+                ['_token' => $this->userTokenManager->getSymfonyToken()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
+        return $this->legacyContext->getContext()->link->getAdminLink(
+            'AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]
+        );
     }
 
     protected function fillCurrentUrlFields(): void

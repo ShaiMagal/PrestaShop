@@ -1,38 +1,24 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\Country\CommandHandler;
 
+use AddressFormat;
+use Cache;
 use Country;
 use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
+use PrestaShop\PrestaShop\Core\Domain\Country\AddressFormat\AddressFormatCheckerInterface;
 use PrestaShop\PrestaShop\Core\Domain\Country\Command\AddCountryCommand;
 use PrestaShop\PrestaShop\Core\Domain\Country\CommandHandler\AddCountryHandlerInterface;
+use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CannotAddCountryException;
+use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryConstraintException;
+use PrestaShop\PrestaShop\Core\Domain\Country\Exception\InvalidAddressFormatException;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 
 /**
@@ -41,14 +27,10 @@ use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 #[AsCommandHandler]
 class AddCountryHandler implements AddCountryHandlerInterface
 {
-    /**
-     * @var CountryRepository
-     */
-    private $countryRepository;
-
-    public function __construct(CountryRepository $countryRepository)
-    {
-        $this->countryRepository = $countryRepository;
+    public function __construct(
+        private readonly CountryRepository $countryRepository,
+        private readonly AddressFormatCheckerInterface $addressFormatChecker,
+    ) {
     }
 
     /**
@@ -56,11 +38,20 @@ class AddCountryHandler implements AddCountryHandlerInterface
      */
     public function handle(AddCountryCommand $command): CountryId
     {
+        $errors = $this->addressFormatChecker->validate($command->getAddressFormat());
+        if ([] !== $errors) {
+            throw new InvalidAddressFormatException(
+                $errors,
+                'Invalid address format',
+                CountryConstraintException::INVALID_ADDRESS_FORMAT
+            );
+        }
+
         $country = new Country();
 
         $country->name = $command->getLocalizedNames();
         $country->iso_code = $command->getIsoCode();
-        $country->call_prefix = $command->getCallPrefix();
+        $country->call_prefix = $command->getCallPrefix()->getValue();
         $country->need_zip_code = $command->needZipCode();
         $country->active = $command->isEnabled();
         $country->need_identification_number = $command->needIdNumber();
@@ -82,6 +73,28 @@ class AddCountryHandler implements AddCountryHandlerInterface
 
         $this->countryRepository->add($country);
 
-        return new CountryId((int) $country->id);
+        $countryId = (int) $country->id;
+        $this->saveAddressFormat($countryId, $command->getAddressFormat());
+
+        return new CountryId($countryId);
+    }
+
+    /**
+     * @throws CannotAddCountryException when the address format row cannot be persisted
+     */
+    private function saveAddressFormat(int $countryId, string $format): void
+    {
+        $addressFormatModel = new AddressFormat();
+        $addressFormatModel->id_country = $countryId;
+        $addressFormatModel->format = $format;
+
+        if (!$addressFormatModel->save()) {
+            throw new CannotAddCountryException(sprintf('Failed to save address format for country %d', $countryId));
+        }
+
+        // The legacy AddressFormat::getFormatDB caches per-country reads in a static
+        // process cache that save() does not invalidate. Clear it so subsequent reads
+        // (e.g. GetCountryForEditing immediately after this command) return the new value.
+        Cache::clean('AddressFormat::getFormatDB' . $countryId);
     }
 }

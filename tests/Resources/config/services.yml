@@ -36,6 +36,7 @@ services:
             - '@prestashop.core.hook.dispatcher'
             - '@translator'
             - '@=service("prestashop.adapter.legacy.configuration").get("_PS_MODE_DEMO_")'
+            - '@PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDataPersister'
 
     # Decoration handler because authorization checker does not work in test environment
     test.integration.utility.authorization_checker:
@@ -102,3 +103,25 @@ services:
       shared: false
       lazy: true
       factory: [ '@PrestaShop\PrestaShop\Core\Context\CurrencyContextBuilder', 'build' ]
+
+    # We need this one public to fetch data for behat tests
+    PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountTypeRepository:
+      public: true
+      arguments:
+        $connection: '@doctrine.dbal.default_connection'
+        $dbPrefix: '%database_prefix%'
+
+    # We need these public to fetch data for behat tests
+    PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository:
+      public: true
+      autowire: true
+      arguments:
+        $connection: '@doctrine.dbal.default_connection'
+        $dbPrefix: '%database_prefix%'
+
+    PrestaShop\PrestaShop\Adapter\Discount\Update\DiscountConditionsUpdater:
+      public: true
+      autowire: true
+      autoconfigure: true
+      arguments:
+        $dbPrefix: '%database_prefix%'

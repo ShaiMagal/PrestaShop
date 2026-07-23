@@ -22,10 +22,10 @@ import {
   FakerProduct,
   FakerTaxRule,
   FakerTaxRulesGroup,
-  foClassicCartPage,
-  foClassicCheckoutPage,
-  foClassicCheckoutOrderConfirmationPage,
-  foClassicProductPage,
+  foHummingbirdCartPage,
+  foHummingbirdCheckoutPage,
+  foHummingbirdCheckoutOrderConfirmationPage,
+  foHummingbirdProductPage,
   type Page,
   utilsFile,
   utilsPlaywright,
@@ -55,12 +55,12 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
   const firstTaxRuleToCreate: FakerTaxRule = new FakerTaxRule({
     country: 'France',
     behaviour: 'Combine',
-    name: 'TVA FR 20%',
+    name: 'TVA FR 20% (20.000%)',
   });
   const secondTaxRuleToCreate: FakerTaxRule = new FakerTaxRule({
     country: 'France',
     behaviour: 'Combine',
-    name: 'TVA FR 10%',
+    name: 'TVA FR 10% (10.000%)',
   });
   const productData: FakerProduct = new FakerProduct({
     type: 'standard',
@@ -157,23 +157,14 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'createFirstTaxRule', baseContext);
 
         const textResult = await boTaxRulesCreatePage.createEditTaxRules(page, firstTaxRuleToCreate);
-        expect(textResult).to.contains(boTaxRulesCreatePage.successfulUpdateMessage);
-      });
-
-      it('should go to \'Add new tax rule\' page', async function () {
-        await testContext.addContextItem(this, 'testIdentifier', 'clickToCreateSecondTaxRule', baseContext);
-
-        await boTaxRulesCreatePage.clickOnAddNewTaxRule(page);
-
-        const pageTitle = await boTaxRulesCreatePage.getPageTitle(page);
-        expect(pageTitle).to.contains(boTaxRulesCreatePage.pageTitleEdit);
+        expect(textResult).to.contains(boTaxRulesCreatePage.successfulCreationMessage);
       });
 
       it('should create new tax rule n°2', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'createSecondTaxRule', baseContext);
 
         const textResult = await boTaxRulesCreatePage.createEditTaxRules(page, secondTaxRuleToCreate);
-        expect(textResult).to.contains(boTaxRulesCreatePage.successfulUpdateMessage);
+        expect(textResult).to.contains(boTaxRulesCreatePage.successfulCreationMessage);
       });
     });
 
@@ -232,9 +223,9 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
 
         // Click on preview button
         page = await boProductsCreatePage.previewProduct(page);
-        await foClassicProductPage.changeLanguage(page, 'en');
+        await foHummingbirdProductPage.changeLanguage(page, 'en');
 
-        const pageTitle = await foClassicProductPage.getPageTitle(page);
+        const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
         expect(pageTitle).to.contains(productData.name);
       });
 
@@ -242,28 +233,28 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'addProductToCart', baseContext);
 
         // Add the created product to the cart
-        await foClassicProductPage.addProductToTheCart(page);
+        await foHummingbirdProductPage.addProductToTheCart(page);
 
-        const pageTitle = await foClassicCartPage.getPageTitle(page);
-        expect(pageTitle).to.equal(foClassicCartPage.pageTitle);
+        const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
+        expect(pageTitle).to.equal(foHummingbirdCartPage.pageTitle);
       });
 
       it('should proceed to checkout and sign in by default customer', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'proceedToCheckoutAndSignIn', baseContext);
 
         // Proceed to checkout the shopping cart
-        await foClassicCartPage.clickOnProceedToCheckout(page);
+        await foHummingbirdCartPage.clickOnProceedToCheckout(page);
 
         // Personal information step - Login
-        await foClassicCheckoutPage.clickOnSignIn(page);
-        await foClassicCheckoutPage.customerLogin(page, dataCustomers.johnDoe);
+        await foHummingbirdCheckoutPage.clickOnSignIn(page);
+        await foHummingbirdCheckoutPage.customerLogin(page, dataCustomers.johnDoe);
       });
 
       it('should go to delivery step', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goToDeliveryStep', baseContext);
 
         // Address step - Go to delivery step
-        const isStepAddressComplete = await foClassicCheckoutPage.goToDeliveryStep(page);
+        const isStepAddressComplete = await foHummingbirdCheckoutPage.goToDeliveryStep(page);
         expect(isStepAddressComplete, 'Step Address is not complete').to.eq(true);
       });
 
@@ -271,7 +262,7 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'goToPaymentStep', baseContext);
 
         // Delivery step - Go to payment step
-        const isStepDeliveryComplete = await foClassicCheckoutPage.goToPaymentStep(page);
+        const isStepDeliveryComplete = await foHummingbirdCheckoutPage.goToPaymentStep(page);
         expect(isStepDeliveryComplete, 'Step Address is not complete').to.eq(true);
       });
 
@@ -279,18 +270,18 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'confirmOrder', baseContext);
 
         // Payment step - Choose payment step
-        await foClassicCheckoutPage.choosePaymentAndOrder(page, dataPaymentMethods.wirePayment.moduleName);
+        await foHummingbirdCheckoutPage.choosePaymentAndOrder(page, dataPaymentMethods.wirePayment.moduleName);
 
         // Check the confirmation message
-        const cardTitle = await foClassicCheckoutOrderConfirmationPage.getOrderConfirmationCardTitle(page);
-        expect(cardTitle).to.contains(foClassicCheckoutOrderConfirmationPage.orderConfirmationCardTitle);
+        const cardTitle = await foHummingbirdCheckoutOrderConfirmationPage.getOrderConfirmationCardTitle(page);
+        expect(cardTitle).to.contains(foHummingbirdCheckoutOrderConfirmationPage.orderConfirmationCardTitle);
       });
 
       it('should go back to BO', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'goBackToBo', baseContext);
 
         // Close tab and init other page objects with new current tab
-        page = await foClassicCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
+        page = await foHummingbirdCheckoutOrderConfirmationPage.closePage(browserContext, page, 0);
 
         const pageTitle = await boProductsCreatePage.getPageTitle(page);
         expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
@@ -478,7 +469,7 @@ describe('BO - Orders - Invoices : Enable/Disable tax breakdown', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'bulkDeleteCarriers', baseContext);
 
       const deleteTextResult = await boTaxRulesPage.bulkDeleteTaxRules(page);
-      expect(deleteTextResult).to.be.contains(boTaxRulesPage.successfulMultiDeleteMessage);
+      expect(deleteTextResult).to.be.contains(boTaxRulesPage.successfulDeleteMessage);
     });
 
     it('should reset all filters', async function () {

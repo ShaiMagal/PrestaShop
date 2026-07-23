@@ -2,6 +2,11 @@ services:
   _defaults:
     public: true
 
+  _instanceof:
+    PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory:
+      bind:
+        $extraPropertiesGridQueryBuilderModifier: '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier'
+
   prestashop.core.grid.data_factory.log:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
     arguments:
@@ -40,6 +45,14 @@ services:
       - '@prestashop.core.hook.dispatcher'
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'webservice_key'
+
+  prestashop.core.grid.data_factory.extra_property_definition:
+    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
+    arguments:
+      - '@prestashop.core.grid.query_builder.extra_property_definition'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'extra_property_definition'
 
   prestashop.core.grid.data_provider.meta:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
@@ -334,14 +347,6 @@ services:
       - '@prestashop.adapter.legacy.configuration'
       - '@=service("prestashop.adapter.legacy.context").getContext().language.getLocale()'
 
-  prestashop.core.grid.data.factory.cart_rule:
-    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
-    arguments:
-      - '@prestashop.core.grid.query_builder.cart_rule'
-      - '@prestashop.core.hook.dispatcher'
-      - '@prestashop.core.grid.query.doctrine_query_parser'
-      - 'catalog_price_rule'
-
   prestashop.core.grid.data.factory.discount:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
     arguments:
@@ -349,6 +354,12 @@ services:
       - '@prestashop.core.hook.dispatcher'
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'discount'
+
+  prestashop.core.grid.data.factory.discount_decorator:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Data\Factory\DiscountGridDataFactoryDecorator'
+    arguments:
+      - '@prestashop.core.grid.data.factory.discount'
+      - '@translator'
 
   prestashop.core.grid.data.factory.catalog_price_rule:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
@@ -384,7 +395,7 @@ services:
     class: 'PrestaShop\PrestaShop\Core\Grid\Data\Factory\AttachmentGridDataFactoryDecorator'
     arguments:
       - '@prestashop.core.grid.data_factory.attachment'
-      - "@=service('prestashop.adapter.legacy.context').getContext().employee.id_lang"
+      - '@PrestaShop\PrestaShop\Core\Context\LanguageContext'
       - '@doctrine.dbal.default_connection'
       - '%database_prefix%'
       - '@PrestaShop\PrestaShop\Core\Util\File\FileSizeConverter'
@@ -418,12 +429,13 @@ services:
     arguments:
       - '@prestashop.core.grid.data.factory.attribute_group'
 
-  prestashop.core.grid.data_provider.merchandise_return:
+  prestashop.core.grid.data_provider.order_return:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
     arguments:
-      - '@prestashop.core.grid.query_builder.merchandise_return'
+      - '@prestashop.core.grid.query_builder.order_return'
       - '@prestashop.core.hook.dispatcher'
       - '@prestashop.core.grid.query.doctrine_query_parser'
+      # Stable GRID_ID persisted in ps_admin_filter — kept as 'merchandise_return' on purpose.
       - 'merchandise_return'
 
   prestashop.core.grid.data.factory.tax_rules_group:
@@ -699,12 +711,16 @@ services:
 
   prestashop.core.grid.data_factory.image_type:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
-    public: false
     arguments:
       - '@PrestaShop\PrestaShop\Core\Grid\Query\ImageTypeQueryBuilder'
       - '@prestashop.core.hook.dispatcher'
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'image_type'
+
+  PrestaShop\PrestaShop\Core\Grid\Data\Factory\ImageTypeGridDataFactory:
+    arguments:
+      - '@prestashop.core.grid.data_factory.image_type'
+      - '@translator'
 
   PrestaShop\PrestaShop\Core\Grid\Data\Factory\Shipment:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
@@ -724,7 +740,7 @@ services:
       - '@prestashop.adapter.legacy.configuration'
 
 
-  PrestaShop\PrestaShop\Core\Grid\Data\Factory\Tag:
+  PrestaShop\PrestaShop\Core\Grid\Data\Factory\TagGridDataFactory:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
     arguments:
       - '@PrestaShop\PrestaShop\Core\Grid\Query\TagQueryBuilder'
@@ -732,7 +748,10 @@ services:
       - '@prestashop.core.grid.query.doctrine_query_parser'
       - 'tag'
 
-  PrestaShop\PrestaShop\Core\Grid\Data\Factory\TagGridDataFactory:
-    autowire: true
+  prestashop.core.grid.data_factory.quick_access:
+    class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'
     arguments:
-      - '@PrestaShop\PrestaShop\Core\Grid\Data\Factory\Tag'
+      - '@PrestaShop\PrestaShop\Core\Grid\Query\QuickAccessQueryBuilder'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'quick_access'

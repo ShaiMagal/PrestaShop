@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 use PrestaShop\PrestaShop\Adapter\Manufacturer\ManufacturerProductSearchProvider;
 use PrestaShop\PrestaShop\Adapter\Presenter\Manufacturer\ManufacturerPresenter;
@@ -35,7 +15,6 @@ class ManufacturerControllerCore extends ProductListingFrontController
 
     /** @var Manufacturer|null */
     protected $manufacturer;
-    protected $label;
 
     /** @var ManufacturerPresenter */
     protected $manufacturerPresenter;
@@ -99,24 +78,12 @@ class ManufacturerControllerCore extends ProductListingFrontController
 
             if (Validate::isLoadedObject($this->manufacturer) && $this->manufacturer->active && $this->manufacturer->isAssociatedToShop()) {
                 $this->assignManufacturer();
-                $this->label = $this->trans(
-                    'List of products by brand %brand_name%',
-                    [
-                        '%brand_name%' => $this->manufacturer->name,
-                    ],
-                    'Shop.Theme.Catalog'
-                );
                 $this->doProductSearch(
                     'catalog/listing/manufacturer',
                     ['entity' => 'manufacturer', 'id' => $this->manufacturer->id]
                 );
             } else {
                 $this->assignAll();
-                $this->label = $this->trans(
-                    'List of all brands',
-                    [],
-                    'Shop.Theme.Catalog'
-                );
                 $this->setTemplate('catalog/manufacturers', ['entity' => 'manufacturers']);
             }
         } else {
@@ -234,7 +201,11 @@ class ManufacturerControllerCore extends ProductListingFrontController
 
     public function getListingLabel(): string
     {
-        return $this->label;
+        if (Validate::isLoadedObject($this->manufacturer) && $this->manufacturer->active && $this->manufacturer->isAssociatedToShop()) {
+            return $this->trans('List of products by brand %brand_name%', ['%brand_name%' => $this->manufacturer->name], 'Shop.Theme.Catalog');
+        } else {
+            return $this->trans('List of all brands', [], 'Shop.Theme.Catalog');
+        }
     }
 
     public function getBreadcrumbLinks(): array
@@ -256,6 +227,22 @@ class ManufacturerControllerCore extends ProductListingFrontController
     }
 
     /**
+     * Generates structured data this page, depending on if we are displaying a manufacturer or a list of manufacturers.
+     *
+     * @return array
+     */
+    public function getStructuredData(): array
+    {
+        // If we are displaying a manufacturer, we will use the product listing structured data
+        if (Validate::isLoadedObject($this->manufacturer) && $this->manufacturer->active && $this->manufacturer->isAssociatedToShop()) {
+            return parent::getStructuredData();
+        }
+
+        // Otherwise, we will display the basic data, the same as in FrontController
+        return FrontController::getStructuredData();
+    }
+
+    /**
      * Initializes a set of commonly used variables related to the current page, available for use
      * in the template. @see FrontController::assignGeneralPurposeVariables for more information.
      *
@@ -274,9 +261,9 @@ class ManufacturerControllerCore extends ProductListingFrontController
     }
 
     /**
-     * @return Manufacturer
+     * @return Manufacturer|null
      */
-    public function getManufacturer(): Manufacturer
+    public function getManufacturer(): ?Manufacturer
     {
         return $this->manufacturer;
     }

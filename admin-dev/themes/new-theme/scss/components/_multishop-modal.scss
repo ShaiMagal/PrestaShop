@@ -1,3 +1,7 @@
+/**
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
+ */
 // stylelint-disable-next-line
 $component-name: multishop-modal;
 
@@ -238,6 +242,7 @@ $component-name: multishop-modal;
     max-height: 500px;
     padding-right: var(--#{$cdk}size-16);
     margin: 0;
+    overflow: auto;
   }
 
   &-shop-view {

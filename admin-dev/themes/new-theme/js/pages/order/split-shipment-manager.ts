@@ -1,26 +1,6 @@
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 import Router from '@components/router';
 import OrderViewPageMap from './OrderViewPageMap';
@@ -145,7 +125,7 @@ export default class SplitShipmentManager {
   }
 
   private get modal(): HTMLDivElement {
-    const modal = document.querySelector(OrderViewPageMap.splitShipmentModal) as HTMLDivElement;
+    const modal = document.querySelector<HTMLDivElement>(OrderViewPageMap.splitShipmentModal);
 
     if (!modal) {
       throw new Error('Split shipment modal not found');
@@ -154,7 +134,7 @@ export default class SplitShipmentManager {
   }
 
   private get form(): HTMLFormElement {
-    const form = document.forms.namedItem(OrderViewPageMap.splitShipmentFormName) as HTMLFormElement;
+    const form = document.forms.namedItem(OrderViewPageMap.splitShipmentFormName);
 
     if (!form) {
       throw new Error('Split shipment form not found');
@@ -163,9 +143,7 @@ export default class SplitShipmentManager {
   }
 
   private get submitButton(): HTMLButtonElement {
-    const btn = document.querySelector<HTMLButtonElement>(
-      OrderViewPageMap.splitShipmentFormSubmitButton,
-    );
+    const btn = document.querySelector<HTMLButtonElement>(OrderViewPageMap.splitShipmentFormSubmitButton);
 
     if (!btn) {
       throw new Error('Submit button not found');
@@ -179,9 +157,7 @@ export default class SplitShipmentManager {
     this.form.removeEventListener('change', this.handleFormChange);
     this.form.addEventListener('change', this.handleFormChange);
 
-    const carrierSelect = this.form.querySelector(
-      OrderViewPageMap.splitShipmentCarrierSelector,
-    ) as HTMLSelectElement;
+    const carrierSelect = this.form.querySelector<HTMLSelectElement>(OrderViewPageMap.splitShipmentCarrierSelector);
     const formIsValid = this.form.dataset.isValid;
 
     this.toggleSubmitButton(!!carrierSelect?.value && !!formIsValid);

@@ -1,3 +1,7 @@
+/**
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
+ */
 ul.entities-list {
   list-style: none;
 }
@@ -58,6 +62,13 @@ ul.entities-list {
   .search-suggestion {
     img {
       width: 50px;
+    }
+
+    &.disabled {
+      color: $medium-gray;
+      pointer-events: none;
+      cursor: not-allowed;
+      background-color: #eceeef;
     }
   }
 }

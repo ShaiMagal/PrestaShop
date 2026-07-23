@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 namespace PrestaShop\PrestaShop\Adapter\Meta;
@@ -30,6 +10,7 @@ use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Adapter\Shop\Context;
 use PrestaShop\PrestaShop\Core\Configuration\AbstractMultistoreConfiguration;
 use PrestaShop\PrestaShop\Core\Feature\FeatureInterface;
+use PrestaShop\PrestaShop\Core\Language\LanguageInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -44,18 +25,25 @@ final class UrlSchemaDataConfiguration extends AbstractMultistoreConfiguration
     private $rules;
 
     /**
+     * @var LanguageInterface[]
+     */
+    private $languages;
+
+    /**
      * UrlSchemaDataConfiguration constructor.
      *
      * @param Configuration $configuration
      * @param Context $shopContext
      * @param FeatureInterface $multistoreFeature
      * @param array $rules
+     * @param array $languages
      */
-    public function __construct(Configuration $configuration, Context $shopContext, FeatureInterface $multistoreFeature, array $rules)
+    public function __construct(Configuration $configuration, Context $shopContext, FeatureInterface $multistoreFeature, array $rules, array $languages)
     {
         parent::__construct($configuration, $shopContext, $multistoreFeature);
 
         $this->rules = $rules;
+        $this->languages = $languages;
     }
 
     /**
@@ -67,8 +55,18 @@ final class UrlSchemaDataConfiguration extends AbstractMultistoreConfiguration
         $shopConstraint = $this->getShopConstraint();
 
         foreach ($this->rules as $routeId => $defaultRule) {
-            $result = $this->configuration->get($this->getConfigurationKey($routeId), null, $shopConstraint) ?: $defaultRule;
-            $configResult[$routeId] = $result;
+            // Get value from configuration
+            $currentValue = $this->configuration->get($this->getConfigurationKey($routeId), null, $shopConstraint);
+            if (is_array($currentValue)) {
+                $configResult[$routeId] = $currentValue;
+                continue;
+            } elseif (is_string($currentValue)) {
+                $configResult[$routeId] = array_fill_keys(array_column($this->languages, 'id_lang'), $currentValue);
+                continue;
+            } else {
+                $configResult[$routeId] = array_fill_keys(array_column($this->languages, 'id_lang'), $defaultRule);
+                continue;
+            }
         }
 
         return $configResult;
@@ -100,7 +98,7 @@ final class UrlSchemaDataConfiguration extends AbstractMultistoreConfiguration
         $resolver = new OptionsResolver();
         $resolver->setDefined($rulesIds);
         foreach ($rulesIds as $ruleId) {
-            $resolver->setAllowedTypes($ruleId, 'string');
+            $resolver->setAllowedTypes($ruleId, 'array');
         }
 
         return $resolver;

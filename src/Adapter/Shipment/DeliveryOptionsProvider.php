@@ -1,27 +1,8 @@
 <?php
+
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
@@ -32,6 +13,7 @@ use Context;
 use DeliveryOptionsFinderCore;
 use Hook;
 use Module;
+use PrestaShop\PrestaShop\Adapter\Presenter\Cart\CartPresenter;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -40,14 +22,19 @@ class DeliveryOptionsProvider extends DeliveryOptionsFinderCore
 {
     private $context;
 
+    /** @var CartPresenter */
+    private $cartPresenter;
+
     public function __construct(
         Context $context,
         TranslatorInterface $translator,
         ObjectPresenter $objectPresenter,
-        PriceFormatter $priceFormatter
+        PriceFormatter $priceFormatter,
+        CartPresenter $cartPresenter
     ) {
         parent::__construct($context, $translator, $objectPresenter, $priceFormatter);
         $this->context = $context;
+        $this->cartPresenter = $cartPresenter;
     }
 
     public function getDeliveryOptions()
@@ -72,6 +59,70 @@ class DeliveryOptionsProvider extends DeliveryOptionsFinderCore
         return $parentOutput;
     }
 
+    /**
+     * @return array
+     */
+    public function getProductsByCarrier()
+    {
+        $deliveryOptions = $this->context->cart->getDeliveryOptionList();
+        $currentAddressDeliveryOptions = $deliveryOptions[$this->context->cart->id_address_delivery];
+        $result = [];
+
+        foreach ($currentAddressDeliveryOptions as $deliveryOption) {
+            foreach ($deliveryOption['carrier_list'] as $carrierId => $carrier) {
+                $formatted = $this->formatCarrierWithProducts($carrier);
+
+                $result[$carrierId] = [
+                    'physical_products' => [],
+                    'virtual_products' => [],
+                ];
+
+                if (!empty($formatted['products'])) {
+                    $result[$carrierId]['physical_products'] = [
+                        'carrier' => $formatted['carrier'],
+                        'products' => array_values($formatted['products']),
+                    ];
+                }
+
+                if (!empty($formatted['virtual_products'])) {
+                    $result[$carrierId]['virtual_products'] = array_values($formatted['virtual_products']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    private function formatCarrierWithProducts(array $carrierData): array
+    {
+        $carrierProductIds = array_map(function ($product) {
+            return $product['id_product'];
+        }, $carrierData['product_list']);
+
+        $cartProducts = $this->cartPresenter->present($this->context->cart);
+        $physicalProducts = [];
+        $virtualProducts = [];
+
+        foreach ($cartProducts->getProducts() as $product) {
+            if (in_array($product['id_product'], $carrierProductIds)) {
+                if ($product->getVirtual() == false) {
+                    $physicalProducts[] = $product;
+                } else {
+                    $virtualProducts[] = $product;
+                }
+            }
+        }
+
+        return [
+            'carrier' => [
+                'name' => $carrierData['instance']->name,
+                'delay' => $carrierData['instance']->delay[$this->context->language->id] ?? $carrierData['instance']->delay,
+            ],
+            'virtual_products' => $virtualProducts,
+            'products' => $physicalProducts,
+        ];
+    }
+
     private function getCarriersDetails(array $deliveryOption): array
     {
         $carriers = $deliveryOption['carrier_list'];
@@ -89,9 +140,11 @@ class DeliveryOptionsProvider extends DeliveryOptionsFinderCore
             $names[] = $carrier['instance']->name;
             $delays[] = $carrier['instance']->delay[$this->context->language->id];
 
-            // if more than on carrier are in the same delivery options then concatenate
-            // all extracontent
-            $extraContent .= Hook::exec('displayCarrierExtraContent', ['carrier' => $carrier['instance']], Module::getModuleIdByName($carrier['instance']->id));
+            if ($carrier['instance']->is_module) {
+                if ($moduleId = Module::getModuleIdByName($carrier['instance']->external_module_name)) {
+                    $extraContent .= Hook::exec('displayCarrierExtraContent', ['carrier' => (array) $carrier['instance']], $moduleId);
+                }
+            }
         }
 
         return [

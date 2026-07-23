@@ -15,6 +15,7 @@ services:
       - '@prestashop.core.hook.dispatcher'
     calls:
       - [ setTranslator, [ '@translator' ] ]
+      - [ setExtraPropertiesGridDefinitionModifier, [ '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier' ] ]
 
   prestashop.core.grid.definition.factory.logs:
     class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\LogGridDefinitionFactory'
@@ -43,6 +44,17 @@ services:
   prestashop.core.grid.definition.factory.webservice_key:
     class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\WebserviceKeyDefinitionFactory'
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    public: true
+
+  prestashop.core.grid.definition.factory.email_body_template:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\EmailBodyTemplateDefinitionFactory'
+    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    public: true
+
+  prestashop.core.grid.definition.factory.extra_property_definition:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\ExtraPropertyDefinitionGridDefinitionFactory'
+    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    autowire: true
     public: true
 
   prestashop.core.grid.definition.factory.meta:
@@ -256,13 +268,6 @@ services:
       - '@prestashop.core.form.choice_provider.order_state_by_id'
     public: true
 
-  prestashop.core.grid.definition.factory.cart_rule:
-    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\CartRuleGridDefinitionFactory'
-    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
-    public: true
-    arguments:
-      - '@=service("prestashop.adapter.legacy.context").getContext().language.date_format_full'
-
   prestashop.core.grid.definition.factory.discount:
     class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\DiscountGridDefinitionFactory'
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
@@ -301,8 +306,8 @@ services:
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
     public: true
 
-  prestashop.core.grid.definition.factory.merchandise_return:
-    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\MerchandiseReturnGridDefinitionFactory'
+  prestashop.core.grid.definition.factory.order_return:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\OrderReturnGridDefinitionFactory'
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
     public: true
 
@@ -391,6 +396,8 @@ services:
       - '@form.factory'
       - '@PrestaShop\PrestaShop\Core\Grid\Action\Row\AccessibilityChecker\ProductSingleShopAssociatedAccessibilityChecker'
       - '@PrestaShop\PrestaShop\Core\Grid\Action\Row\AccessibilityChecker\ProductMultipleShopsAssociatedAccessibilityChecker'
+      - '@PrestaShop\PrestaShop\Adapter\Security\Access'
+      - '@prestashop.adapter.data_provider.employee'
     public: true
 
   prestashop.core.grid.definition.factory.product.shops:
@@ -422,9 +429,6 @@ services:
   prestashop.core.grid.definition.factory.state:
     class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\StateGridDefinitionFactory'
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
-    arguments:
-      - "@=service('router').generate('admin_common_reset_search', {'controller': 'state', 'action': 'index'})"
-      - "@=service('router').generate('admin_states_index')"
     public: true
 
   prestashop.core.grid.definition.factory.title:
@@ -501,6 +505,11 @@ services:
     public: true
     arguments:
       - '@prestashop.core.form.choice_provider.language_by_id'
+
+  PrestaShop\PrestaShop\Core\Grid\Definition\Factory\QuickAccessGridDefinitionFactory:
+    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    autowire: true
+    public: true
 
   # deprecated services
   # Alias for this abstract definition causes tests in vendor fail for some reason, so we stick to full definition instead

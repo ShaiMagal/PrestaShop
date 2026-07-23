@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
@@ -30,14 +10,20 @@ namespace PrestaShop\PrestaShop\Adapter\QuickAccess\Repository;
 
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\Domain\Language\ValueObject\LanguageId;
+use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Exception\CannotAddQuickAccessException;
+use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Exception\CannotDeleteQuickAccessException;
+use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Exception\CannotUpdateQuickAccessException;
+use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Exception\QuickAccessNotFoundException;
+use PrestaShop\PrestaShop\Core\Domain\QuickAccess\ValueObject\QuickAccessId;
 use PrestaShop\PrestaShop\Core\QuickAccess\QuickAccessRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Repository\AbstractObjectModelRepository;
+use QuickAccess;
 
 class QuickAccessRepository extends AbstractObjectModelRepository implements QuickAccessRepositoryInterface
 {
     public function __construct(
-        private Connection $connection,
-        private string $dbPrefix
+        private readonly Connection $connection,
+        private readonly string $dbPrefix
     ) {
     }
 
@@ -62,5 +48,52 @@ class QuickAccessRepository extends AbstractObjectModelRepository implements Qui
         ;
 
         return $qb->execute()->fetchAllAssociative();
+    }
+
+    public function get(QuickAccessId $quickAccessId): QuickAccess
+    {
+        /** @var QuickAccess $quickAccess */
+        $quickAccess = $this->getObjectModel(
+            $quickAccessId->getValue(),
+            QuickAccess::class,
+            QuickAccessNotFoundException::class
+        );
+
+        return $quickAccess;
+    }
+
+    public function add(QuickAccess $quickAccess): QuickAccess
+    {
+        $this->addObjectModel($quickAccess, CannotAddQuickAccessException::class);
+
+        return $quickAccess;
+    }
+
+    public function update(QuickAccess $quickAccess): void
+    {
+        $this->updateObjectModel($quickAccess, CannotUpdateQuickAccessException::class);
+    }
+
+    public function delete(QuickAccessId $quickAccessId): void
+    {
+        $this->deleteObjectModel($this->get($quickAccessId), CannotDeleteQuickAccessException::class);
+    }
+
+    /**
+     * Returns true if a quick access with the given link URL already exists.
+     * The DB has no UNIQUE KEY on `link`, so the duplicate check must be done explicitly.
+     */
+    public function hasLink(string $link): bool
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('q.id_quick_access')
+            ->from($this->dbPrefix . 'quick_access', 'q')
+            ->where('q.link = :link')
+            ->setParameter('link', $link)
+            ->setMaxResults(1)
+        ;
+
+        return (bool) $qb->execute()->fetchOne();
     }
 }

@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 /**
@@ -89,7 +69,7 @@ class AttributeGroupCore extends ObjectModel
         $this->is_color_group = $this->group_type == 'color';
 
         if ($this->position <= 0) {
-            $this->position = AttributeGroup::getHigherPosition() + 1;
+            $this->position = AttributeGroup::getHighestPosition() + 1;
         }
 
         $return = parent::add($autoDate, true);
@@ -399,13 +379,32 @@ class AttributeGroupCore extends ObjectModel
      * Get the highest AttributeGroup position.
      *
      * @return int $position Position
+     *
+     * @deprecated Since 9.2, use AttributeGroup::getHighestPosition() instead.
      */
     public static function getHigherPosition()
+    {
+        @trigger_error(
+            sprintf(
+                '%s is deprecated since version 9.2. Use %s instead.',
+                __METHOD__,
+                self::class . '::getHighestPosition()'
+            ),
+            E_USER_DEPRECATED
+        );
+
+        return self::getHighestPosition();
+    }
+
+    /**
+     * Get the highest AttributeGroup position.
+     */
+    public static function getHighestPosition(): int
     {
         $sql = 'SELECT MAX(`position`)
 				FROM `' . _DB_PREFIX_ . 'attribute_group`';
         $position = Db::getInstance()->getValue($sql);
 
-        return (is_numeric($position)) ? $position : -1;
+        return (is_numeric($position)) ? (int) $position : -1;
     }
 }

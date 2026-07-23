@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 /**
  * Class DbCore.
@@ -473,7 +453,7 @@ abstract class DbCore
         }
         $keys_stringified = implode(', ', $keys);
 
-        $sql = $insert_keyword . ' INTO `' . $table . '` (' . $keys_stringified . ') VALUES ' . implode(', ', $values_stringified);
+        $sql = $insert_keyword . ' INTO `' . bqSQL($table) . '` (' . $keys_stringified . ') VALUES ' . implode(', ', $values_stringified);
         if ($type == Db::ON_DUPLICATE_KEY) {
             $sql .= ' ON DUPLICATE KEY UPDATE ' . substr($duplicate_key_stringified, 0, -1);
         }
@@ -897,5 +877,26 @@ abstract class DbCore
     public function getLink()
     {
         return $this->link;
+    }
+
+    /**
+     * Aligns the MySQL session time zone with PHP's current time zone offset.
+     *
+     * Without this, SQL directives such as NOW() or CURRENT_TIMESTAMP evaluate
+     * in the MySQL server time zone (UTC by default) instead of the shop time
+     * zone configured in PHP, producing timestamps that disagree with PHP's
+     * date() (see issue #30828). A numeric offset (e.g. "+02:00") is used on
+     * purpose: it needs no MySQL time zone tables and is recomputed on each
+     * call, so DST is always correct at connection time.
+     */
+    public function setTimeZone(): void
+    {
+        $offset = (new DateTime())->format('P');
+        // Defensive: only ever inject a well-formed offset into the statement.
+        if (!preg_match('/^[+-]\d{2}:\d{2}$/', $offset)) {
+            return;
+        }
+
+        $this->_query("SET SESSION time_zone = '" . $offset . "'");
     }
 }

@@ -1,29 +1,10 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
+use PrestaShop\PrestaShop\Adapter\Order\Checkout\CheckoutProcessProviderResolver;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PrestaShop\PrestaShop\Adapter\Shipment\DeliveryOptionsProvider;
 use PrestaShop\PrestaShop\Core\Checkout\TermsAndConditions;
@@ -129,7 +110,8 @@ class OrderControllerCore extends FrontController
                 $this->context,
                 $this->getTranslator(),
                 $this->objectPresenter,
-                new PriceFormatter()
+                new PriceFormatter(),
+                $this->cart_presenter,
             );
         } else {
             $deliveryOptionsFinder = new DeliveryOptionsFinder(
@@ -246,7 +228,8 @@ class OrderControllerCore extends FrontController
 
         if ($this->context->cart->isAllProductsInStock() !== true
             || $this->context->cart->checkAllProductsAreStillAvailableInThisState() !== true
-            || $this->context->cart->checkAllProductsHaveMinimalQuantities() !== true) {
+            || $this->context->cart->checkAllProductsHaveMinimalQuantities() !== true
+            || $this->context->cart->checkCountriesAreEnabled() !== true) {
             $responseData['errors'] = true;
             $responseData['cartUrl'] = $this->context->link->getPageLink('cart', null, null, ['action' => 'show']);
         }
@@ -288,6 +271,11 @@ class OrderControllerCore extends FrontController
             $shouldRedirectToCart = true;
         }
 
+        // Additionally, check that the addresses are valid
+        if ($this->context->cart->checkCountriesAreEnabled() !== true) {
+            $shouldRedirectToCart = true;
+        }
+
         // If there was a problem, we redirect the user to cart, CartController deals with display of detailed errors
         // We don't redirect in case of ajax requests, so we can get our response
         if ($shouldRedirectToCart === true && !$this->ajax) {
@@ -312,6 +300,7 @@ class OrderControllerCore extends FrontController
 
         $this->context->smarty->assign([
             'checkout_process' => new RenderableProxy($this->checkoutProcess),
+            'checkout_steps' => $this->checkoutProcess->getCheckoutStepsForTemplate(),
             'display_transaction_updated_info' => Tools::getIsset('updatedTransaction'),
             'tos_cms' => $this->getDefaultTermsAndConditions(),
         ]);
@@ -390,6 +379,13 @@ class OrderControllerCore extends FrontController
      */
     protected function buildCheckoutProcess(CheckoutSession $session, $translator)
     {
+        /** @var CheckoutProcessProviderResolver $checkoutProcessProviderResolver */
+        $checkoutProcessProviderResolver = $this->get(CheckoutProcessProviderResolver::class);
+        $resolvedCheckoutProcess = $checkoutProcessProviderResolver->resolve($session, $translator);
+        if ($resolvedCheckoutProcess instanceof CheckoutProcess) {
+            return $resolvedCheckoutProcess;
+        }
+
         $checkoutProcess = new CheckoutProcess(
             $this->context,
             $session
@@ -439,7 +435,7 @@ class OrderControllerCore extends FrontController
                 new ConditionsToApproveFinder(
                     $this->context,
                     $translator
-                )
+                ),
             ));
 
         return $checkoutProcess;

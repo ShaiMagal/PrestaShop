@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Action\ActionsBarButton;
@@ -30,6 +10,7 @@ use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
 use PrestaShop\PrestaShop\Core\Domain\Cart\CartStatus;
 use PrestaShop\PrestaShop\Core\Exception\TypeException;
 use PrestaShop\PrestaShop\Core\Feature\TokenInUrls;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 use PrestaShop\PrestaShop\Core\Localization\Locale;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Number as NumberSpecification;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Price as PriceSpecification;
@@ -676,6 +657,7 @@ class AdminControllerCore extends Controller
             'breadcrumbs2' => $breadcrumbs2,
             'quick_access_current_link_name' => Tools::safeOutput($breadcrumbs2['tab']['name'] . ' - ' . $breadcrumbs2['action']['name']),
             'quick_access_current_link_icon' => $breadcrumbs2['container']['icon'],
+            'quick_access_current_link_short_name' => Tools::safeOutput($breadcrumbs2['tab']['name']),
         ]);
 
         /* BEGIN - Backward compatibility < 1.6.0.3 */
@@ -2019,8 +2001,30 @@ class AdminControllerCore extends Controller
         $is_multishop = Shop::isFeatureActive();
 
         // Quick access
+        $quick_access = [];
+        $legacyAjaxUrl = $this->context->link->getAdminLink('AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]);
+        $quick_access_ajax_add_url = $legacyAjaxUrl;
+        $quick_access_ajax_delete_url = $legacyAjaxUrl;
         if ((int) $this->context->employee->id) {
             $quick_access = QuickAccess::getQuickAccessesWithToken($this->context->language->id, (int) $this->context->employee->id);
+            /** @var FeatureFlagStateCheckerInterface $featureFlagChecker */
+            $featureFlagChecker = $this->get(FeatureFlagStateCheckerInterface::class);
+            if ($featureFlagChecker->isEnabled('quick_access')) {
+                try {
+                    $quick_access_ajax_add_url = $this->context->link->getAdminLink(
+                        'AdminQuickAccesses',
+                        true,
+                        ['route' => 'admin_quick_accesses_ajax_add']
+                    );
+                    $quick_access_ajax_delete_url = $this->context->link->getAdminLink(
+                        'AdminQuickAccesses',
+                        true,
+                        ['route' => 'admin_quick_accesses_ajax_delete']
+                    );
+                } catch (Exception $e) {
+                    // keep legacy fallback URLs
+                }
+            }
         }
 
         $tabs = $this->getTabs();
@@ -2051,6 +2055,8 @@ class AdminControllerCore extends Controller
                 'search_type' => Tools::getValue('bo_search_type'),
                 'bo_query' => Tools::safeOutput(Tools::getValue('bo_query')),
                 'quick_access' => empty($quick_access) ? [] : $quick_access,
+                'quick_access_ajax_add_url' => $quick_access_ajax_add_url,
+                'quick_access_ajax_delete_url' => $quick_access_ajax_delete_url,
                 'multi_shop' => Shop::isFeatureActive(),
                 'shop_list' => $helperShop->getRenderedShopList(),
                 'current_shop_name' => $helperShop->getCurrentShopName(),
@@ -2162,7 +2168,7 @@ class AdminControllerCore extends Controller
                 // If the route specified is not accessible we remove the tab (it can happen during module install process
                 // the route should be usable in next request/process once the cache has been cleared - on process shutdown).
                 // This is not ideal, but clearing the cache during a process and restart the whole kernel is quite a challenge.
-                $this->get('logger')->addWarning(
+                $this->get('logger')->warning(
                     sprintf('Route not found in one of the Tab %s', $tab['route_name'] ?? ''),
                     [
                         'message' => $e->getMessage(),
@@ -2691,7 +2697,12 @@ class AdminControllerCore extends Controller
                 $this->addJS(__PS_BASE_URI__ . $this->admin_webpath . '/themes/' . $this->bo_theme . '/js/help.js?v=' . _PS_VERSION_);
             }
 
-            if (!Tools::getValue('submitFormAjax')) {
+            if (!Tools::getValue('submitFormAjax')
+                && ((bool) Configuration::get('PS_SHOW_NEW_ORDERS') == true
+                    || (bool) Configuration::get('PS_SHOW_NEW_CUSTOMERS') == true
+                    || (bool) Configuration::get('PS_SHOW_NEW_MESSAGES') == true
+                )
+            ) {
                 $this->addJS(_PS_JS_DIR_ . 'admin/notifications.js?v=' . _PS_VERSION_);
             }
 
@@ -4380,7 +4391,7 @@ class AdminControllerCore extends Controller
                 'toolbar_extra_buttons_collection' => &$toolbarButtonsCollection,
             ]);
         } catch (Exception $exception) {
-            $this->get('logger')->addWarning(
+            $this->get('logger')->warning(
                 'There was an error retrieving toolbar buttons from Hooks. Toolbar buttons are probably not complete',
                 [
                     'message' => $exception->getMessage(),

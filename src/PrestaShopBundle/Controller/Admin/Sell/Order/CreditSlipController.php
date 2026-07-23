@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 namespace PrestaShopBundle\Controller\Admin\Sell\Order;
@@ -40,7 +20,7 @@ use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
 use PrestaShopBundle\Form\Admin\Sell\Order\CreditSlip\GeneratePdfByDateType;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -110,8 +90,17 @@ class CreditSlipController extends PrestaShopAdminController
     ) {
         try {
             $creditSlipId = new CreditSlipId($creditSlipId);
+            $generatedPdf = $creditSlipPdfGenerator->generatePDFForResponse([$creditSlipId]);
 
-            return new BinaryFileResponse($creditSlipPdfGenerator->generatePDF([$creditSlipId]));
+            $response = new Response($generatedPdf->getContent());
+            $disposition = HeaderUtils::makeDisposition(
+                HeaderUtils::DISPOSITION_ATTACHMENT,
+                $generatedPdf->getFileName()
+            );
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', $disposition);
+
+            return $response;
         } catch (CoreException $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
         }
@@ -141,8 +130,17 @@ class CreditSlipController extends PrestaShopAdminController
                     new DateTime($dateRange['from']),
                     new DateTime($dateRange['to'])
                 ));
+                $generatedPdf = $creditSlipPdfGenerator->generatePDFForResponse($slipIds);
 
-                return new BinaryFileResponse($creditSlipPdfGenerator->generatePDF($slipIds));
+                $response = new Response($generatedPdf->getContent());
+                $disposition = HeaderUtils::makeDisposition(
+                    HeaderUtils::DISPOSITION_ATTACHMENT,
+                    $generatedPdf->getFileName()
+                );
+                $response->headers->set('Content-Type', 'application/pdf');
+                $response->headers->set('Content-Disposition', $disposition);
+
+                return $response;
             } catch (CoreException $e) {
                 $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
             }

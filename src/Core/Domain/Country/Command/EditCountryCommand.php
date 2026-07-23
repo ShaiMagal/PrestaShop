@@ -1,114 +1,59 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Domain\Country\Command;
 
+use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CallPrefix;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryZipCodeFormat;
 
 /**
- * Adds new zone with provided data.
+ * Edits an existing country with the provided data.
+ *
+ * All non-id fields are optional: only the values explicitly set via setters
+ * are persisted by the handler — null means "don't change". Setters are kept
+ * (instead of property promotion) because the data handler builds the command
+ * progressively from the form payload.
  */
 class EditCountryCommand
 {
-    /**
-     * @var CountryId
-     */
-    private $countryId;
+    private CountryId $countryId;
 
-    /**
-     * @var string[]
-     */
-    private $localizedNames;
+    /** @var string[]|null */
+    private ?array $localizedNames = null;
 
-    /**
-     * @var string
-     */
-    private $isoCode;
+    private ?string $isoCode = null;
 
-    /**
-     * @var int
-     */
-    private $callPrefix;
+    private ?CallPrefix $callPrefix = null;
 
-    /**
-     * @var int
-     */
-    private $defaultCurrency;
+    private ?int $defaultCurrency = null;
 
-    /**
-     * @var int|null
-     */
-    private $zoneId;
+    private ?int $zoneId = null;
 
-    /**
-     * @var bool
-     */
-    private $needZipCode;
+    private ?bool $needZipCode = null;
 
-    /**
-     * @var ?CountryZipCodeFormat
-     */
-    private $zipCodeFormat;
+    private ?CountryZipCodeFormat $zipCodeFormat = null;
 
-    /**
-     * @var string
-     */
-    private $addressFormat;
+    private ?string $addressFormat = null;
 
-    /**
-     * @var bool
-     */
-    private $enabled;
+    private ?bool $enabled = null;
 
-    /**
-     * @var bool
-     */
-    private $containsStates;
+    private ?bool $containsStates = null;
 
-    /**
-     * @var bool
-     */
-    private $needIdNumber;
+    private ?bool $needIdNumber = null;
 
-    /**
-     * @var bool
-     */
-    private $displayTaxLabel;
+    private ?bool $displayTaxLabel = null;
 
-    /**
-     * @var int[]
-     */
-    private $shopAssociation;
+    /** @var int[]|null */
+    private ?array $shopAssociation = null;
 
-    public function __construct(
-        int $countryId
-    ) {
+    public function __construct(int $countryId)
+    {
         $this->countryId = new CountryId($countryId);
     }
 
@@ -118,17 +63,15 @@ class EditCountryCommand
     }
 
     /**
-     * @return string[]
+     * @return string[]|null
      */
-    public function getLocalizedNames(): array
+    public function getLocalizedNames(): ?array
     {
         return $this->localizedNames;
     }
 
     /**
      * @param string[] $localizedNames
-     *
-     * @return EditCountryCommand
      */
     public function setLocalizedNames(array $localizedNames): EditCountryCommand
     {
@@ -142,21 +85,21 @@ class EditCountryCommand
         return $this->isoCode;
     }
 
-    public function setIsoCode($isoCode)
+    public function setIsoCode(string $isoCode): EditCountryCommand
     {
         $this->isoCode = $isoCode;
 
         return $this;
     }
 
-    public function getCallPrefix(): ?int
+    public function getCallPrefix(): ?CallPrefix
     {
         return $this->callPrefix;
     }
 
     public function setCallPrefix(int $callPrefix): EditCountryCommand
     {
-        $this->callPrefix = $callPrefix;
+        $this->callPrefix = new CallPrefix($callPrefix);
 
         return $this;
     }
@@ -262,11 +205,6 @@ class EditCountryCommand
         return $this->displayTaxLabel;
     }
 
-    /**
-     * @param bool $displayTaxLabel
-     *
-     * @return EditCountryCommand
-     */
     public function setDisplayTaxLabel(bool $displayTaxLabel): EditCountryCommand
     {
         $this->displayTaxLabel = $displayTaxLabel;
@@ -275,7 +213,7 @@ class EditCountryCommand
     }
 
     /**
-     * @return ?int[]
+     * @return int[]|null
      */
     public function getShopAssociation(): ?array
     {
@@ -284,8 +222,6 @@ class EditCountryCommand
 
     /**
      * @param int[] $shopAssociation
-     *
-     * @return EditCountryCommand
      */
     public function setShopAssociation(array $shopAssociation): EditCountryCommand
     {

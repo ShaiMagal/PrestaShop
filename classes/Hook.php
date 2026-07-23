@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 use PrestaShop\PrestaShop\Adapter\ContainerBuilder;
@@ -174,7 +154,8 @@ class HookCore extends ObjectModel
     }
 
     /**
-     * Return true if the hook name starts with "display"
+     * Checks if a hook is a display or action one. This is used for filtering modules on module positions page,
+     * validating permissions and other things.
      *
      * @param string $hook_name The name of the hook to check
      *
@@ -184,12 +165,24 @@ class HookCore extends ObjectModel
     {
         $hook_name = strtolower(static::normalizeHookName($hook_name));
 
-        if ($hook_name === 'header' || $hook_name === 'displayheader') {
-            // this hook is to add resources to the <head> section of the page
-            // so it doesn't display anything by itself
+        // Exceptions that ARE display hooks
+        if (in_array($hook_name, [
+            'dashboarddata',
+            'dashboardzoneone',
+            'dashboardzonetwo',
+        ])) {
+            return true;
+        }
+
+        // Exceptions that ARE NOT display hooks
+        if (in_array($hook_name, [
+            'header',
+            'displayheader',
+        ])) {
             return false;
         }
 
+        // All other cases - we check if the hook name starts with "display" or not
         return strpos($hook_name, 'display') === 0;
     }
 
@@ -917,13 +910,7 @@ class HookCore extends ObjectModel
         $isRegistryEnabled = null !== $hookRegistry;
 
         if ($isRegistryEnabled) {
-            $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-            $hookRegistry->selectHook(
-                $hook_name,
-                $hook_args,
-                $backtrace[0]['file'],
-                $backtrace[0]['line']
-            );
+            $hookRegistry->hookDispatched($hook_name, $hook_args);
         }
 
         // $chain & $array_return are incompatible so if chained is set to true, we disable the array_return option
@@ -950,19 +937,11 @@ class HookCore extends ObjectModel
         // We retrieve a list of modules to be executed for the given hook.
         // If no modules associated to hook_name or recompatible hook name, we stop the function.
         if (!($module_list = Hook::getHookModuleExecList($hook_name))) {
-            if ($isRegistryEnabled) {
-                $hookRegistry->collect();
-            }
-
             return $array_return ? [] : '';
         }
 
         // Check if hook exists
         if (!($id_hook = Hook::getIdByName($hook_name, false))) {
-            if ($isRegistryEnabled) {
-                $hookRegistry->collect();
-            }
-
             return $array_return ? [] : null;
         }
 
@@ -1084,15 +1063,19 @@ class HookCore extends ObjectModel
                     'authentication' => 'auth',
                 ];
                 if (
-                    isset($matching_name[$controller])
+                    !is_null($controller)
+                    && isset($matching_name[$controller])
                     && in_array($matching_name[$controller], $exceptions)
                 ) {
                     continue;
                 }
 
-                // If we are in the backoffice, we check if the current employee has view rights for this module
-                if (
-                    Validate::isLoadedObject($context->employee)
+                /*
+                 * Next, we check employee permissions in backoffice - we check for 'view' permission on the given module.
+                 * We only do this for display hooks, other hooks are not concerned by this check and should be always executed.
+                 */
+                if (Hook::isDisplayHookName($registeredHookName)
+                    && Validate::isLoadedObject($context->employee)
                     && !Module::getPermissionStatic(
                         $hookRegistration['id_module'],
                         'view',
@@ -1110,10 +1093,6 @@ class HookCore extends ObjectModel
                 ))
             ) {
                 continue;
-            }
-
-            if ($isRegistryEnabled) {
-                $hookRegistry->hookedByModule($moduleInstance);
             }
 
             if (Hook::isHookCallableOn($moduleInstance, $registeredHookName)) {
@@ -1160,7 +1139,8 @@ class HookCore extends ObjectModel
                 if ($isRegistryEnabled) {
                     $hookRegistry->hookedByCallback(
                         $moduleInstance,
-                        $hook_args
+                        $hook_args,
+                        $hook_name
                     );
                 }
             } elseif (Hook::isDisplayHookName($registeredHookName)) {
@@ -1205,7 +1185,7 @@ class HookCore extends ObjectModel
                 }
 
                 if ($isRegistryEnabled) {
-                    $hookRegistry->hookedByWidget($moduleInstance, $hook_args);
+                    $hookRegistry->hookedByWidget($moduleInstance, $hook_args, $hook_name);
                 }
             }
         }
@@ -1222,11 +1202,6 @@ class HookCore extends ObjectModel
             if (isset($output['cart'])) {
                 unset($output['cart']);
             }
-        }
-
-        if ($isRegistryEnabled) {
-            $hookRegistry->hookWasCalled();
-            $hookRegistry->collect();
         }
 
         return $output;
@@ -1279,12 +1254,16 @@ class HookCore extends ObjectModel
      *
      * @throws PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException
      * @throws ServiceNotFoundException
-     * @throws PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException
      */
     private static function getHookModuleFilter(): HookModuleFilter
     {
         $serviceContainer = SymfonyContainer::getInstance();
 
+        // The fallback below only triggers when NO Symfony kernel container is booted yet — which happens during
+        // container compilation (LegacyHookSubscriber::getSubscribedEvents() is read by RegisterListenersPass before
+        // any kernel container exists), in BO, FO and CLI alike. In a normal request the kernel container is present,
+        // so the FO container is never used here. The hand-built front container is the only source of
+        // HookModuleFilter available at that bootstrap moment.
         if (is_null($serviceContainer)) {
             $serviceContainer = ContainerBuilder::getContainer(
                 'front',

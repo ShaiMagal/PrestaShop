@@ -1,31 +1,13 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 namespace PrestaShopBundle\Install;
 
+use Country;
+use Module;
 use PrestaShop\PrestaShop\Adapter\Entity\Db;
 use PrestaShop\PrestaShop\Adapter\Entity\DbQuery;
 use PrestaShop\PrestaShop\Adapter\Entity\Image;
@@ -621,6 +603,30 @@ class XmlLoader
      *
      * @throws PrestaShopDatabaseException
      */
+    public function createEntityModuleCountry($identifier, array $data, array $data_lang)
+    {
+        Country::addModuleRestrictions(
+            [],
+            [
+                ['id_country' => $data['id_country']],
+            ],
+            [
+                ['id_module' => Module::getModuleIdByName($data['id_module'])],
+            ]
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param string $identifier
+     * @param array $data
+     * @param array $data_lang
+     *
+     * @return $this
+     *
+     * @throws PrestaShopDatabaseException
+     */
     public function createEntityPack($identifier, array $data, array $data_lang)
     {
         Pack::addItem($data['id_product_pack'], $data['id_product_item'], $data['quantity']);
@@ -750,6 +756,11 @@ class XmlLoader
             foreach ($types as $type) {
                 $origin_file = $from_path . $identifier . '-' . $type['name'] . '.' . $extension;
                 $target_file = $dst_path . $entity_id . '-' . $type['name'] . '.' . $extension;
+                $error = 0;
+                $targetWidth = null;
+                $targetHeight = null;
+                $sourceWidth = null;
+                $sourceHeight = null;
 
                 // Test if dest folder is writable
                 if (!is_writable(dirname($target_file))) {
@@ -777,7 +788,16 @@ class XmlLoader
                     $from_path . $identifier . '.' . $extension,
                     $target_file,
                     $type['width'],
-                    $type['height']
+                    $type['height'],
+                    'jpg',
+                    false,
+                    $error,
+                    $targetWidth,
+                    $targetHeight,
+                    5,
+                    $sourceWidth,
+                    $sourceHeight,
+                    $type['image_fitment']
                 )) {
                     // Resize the image if no cache was prepared in fixtures
                     $this->setError(
@@ -850,6 +870,11 @@ class XmlLoader
         foreach ($types as $type) {
             $origin_file = $path . $identifier . '-' . $type['name'] . '.jpg';
             $target_file = $dst_path . '-' . $type['name'] . '.' . $image->image_format;
+            $error = 0;
+            $targetWidth = null;
+            $targetHeight = null;
+            $sourceWidth = null;
+            $sourceHeight = null;
 
             // Test if dest folder is writable
             if (!is_writable(dirname($target_file))) {
@@ -873,7 +898,21 @@ class XmlLoader
                     );
                 }
                 @chmod($target_file, FileSystem::DEFAULT_MODE_FILE);
-            } elseif (!ImageManager::resize($path . $identifier . '.jpg', $target_file, $type['width'], $type['height'])) {
+            } elseif (!ImageManager::resize(
+                $path . $identifier . '.jpg',
+                $target_file,
+                $type['width'],
+                $type['height'],
+                'jpg',
+                false,
+                $error,
+                $targetWidth,
+                $targetHeight,
+                5,
+                $sourceWidth,
+                $sourceHeight,
+                $type['image_fitment']
+            )) {
                 // Resize the image if no cache was prepared in fixtures
                 $this->setError(
                     $this->translator->trans(

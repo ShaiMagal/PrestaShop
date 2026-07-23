@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 use PrestaShop\PrestaShop\Adapter\Presenter\Supplier\SupplierPresenter;
 use PrestaShop\PrestaShop\Adapter\Supplier\SupplierProductSearchProvider;
@@ -35,7 +15,6 @@ class SupplierControllerCore extends ProductListingFrontController
 
     /** @var Supplier|null */
     protected $supplier;
-    protected $label;
 
     /** @var SupplierPresenter */
     protected $supplierPresenter;
@@ -99,24 +78,12 @@ class SupplierControllerCore extends ProductListingFrontController
 
             if (Validate::isLoadedObject($this->supplier) && $this->supplier->active && $this->supplier->isAssociatedToShop()) {
                 $this->assignSupplier();
-                $this->label = $this->trans(
-                    'List of products by supplier %supplier_name%',
-                    [
-                        '%supplier_name%' => $this->supplier->name,
-                    ],
-                    'Shop.Theme.Catalog'
-                );
                 $this->doProductSearch(
                     'catalog/listing/supplier',
                     ['entity' => 'supplier', 'id' => $this->supplier->id]
                 );
             } else {
                 $this->assignAll();
-                $this->label = $this->trans(
-                    'List of all suppliers',
-                    [],
-                    'Shop.Theme.Catalog'
-                );
                 $this->setTemplate('catalog/suppliers', ['entity' => 'suppliers']);
             }
         } else {
@@ -232,7 +199,11 @@ class SupplierControllerCore extends ProductListingFrontController
 
     public function getListingLabel(): string
     {
-        return $this->label;
+        if (Validate::isLoadedObject($this->supplier) && $this->supplier->active && $this->supplier->isAssociatedToShop()) {
+            return $this->trans('List of products by supplier %supplier_name%', ['%supplier_name%' => $this->supplier->name], 'Shop.Theme.Catalog');
+        } else {
+            return $this->trans('List of all suppliers', [], 'Shop.Theme.Catalog');
+        }
     }
 
     public function getBreadcrumbLinks(): array
@@ -254,6 +225,22 @@ class SupplierControllerCore extends ProductListingFrontController
     }
 
     /**
+     * Generates structured data this page, depending on if we are displaying a supplier or a list of suppliers.
+     *
+     * @return array
+     */
+    public function getStructuredData(): array
+    {
+        // If we are displaying a supplier, we will use the product listing structured data
+        if (Validate::isLoadedObject($this->supplier) && $this->supplier->active && $this->supplier->isAssociatedToShop()) {
+            return parent::getStructuredData();
+        }
+
+        // Otherwise, we will display the basic data, the same as in FrontController
+        return FrontController::getStructuredData();
+    }
+
+    /**
      * Initializes a set of commonly used variables related to the current page, available for use
      * in the template. @see FrontController::assignGeneralPurposeVariables for more information.
      *
@@ -272,9 +259,9 @@ class SupplierControllerCore extends ProductListingFrontController
     }
 
     /**
-     * @return Supplier
+     * @return Supplier|null
      */
-    public function getSupplier(): Supplier
+    public function getSupplier(): ?Supplier
     {
         return $this->supplier;
     }

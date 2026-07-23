@@ -1,38 +1,31 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Domain\ImageSettings\Command;
 
+use PrestaShop\PrestaShop\Core\Domain\ImageSettings\ValueObject\ImageFitment;
+
 /**
  * Adds new image type with provided data.
  */
 class AddImageTypeCommand
 {
+    /**
+     * @param string $name Name of the image type
+     * @param int $width Width of the image
+     * @param int $height Height of the image
+     * @param bool $products Whether the image type is used for products
+     * @param bool $categories Whether the image type is used for categories
+     * @param bool $manufacturers Whether the image type is used for manufacturers
+     * @param bool $suppliers Whether the image type is used for suppliers
+     * @param bool $stores Whether the image type is used for stores
+     * @param value-of<ImageFitment::AVAILABLE_VALUES> $imageFitment
+     */
     public function __construct(
         private readonly string $name,
         private readonly int $width,
@@ -41,8 +34,10 @@ class AddImageTypeCommand
         private readonly bool $categories,
         private readonly bool $manufacturers,
         private readonly bool $suppliers,
-        private readonly bool $stores
+        private readonly bool $stores,
+        private readonly string $imageFitment = ImageFitment::FIT
     ) {
+        ImageFitment::assertIsValid($imageFitment);
     }
 
     public function getName(): string
@@ -58,6 +53,16 @@ class AddImageTypeCommand
     public function getHeight(): int
     {
         return $this->height;
+    }
+
+    /**
+     * Gets the image fitment used when generating thumbnails.
+     *
+     * @return value-of<ImageFitment::AVAILABLE_VALUES>
+     */
+    public function getImageFitment(): string
+    {
+        return $this->imageFitment;
     }
 
     public function isProducts(): bool

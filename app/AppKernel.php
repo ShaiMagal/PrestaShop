@@ -1,34 +1,17 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
+use PrestaShop\PrestaShop\Adapter\Module\Repository\CachedModuleRepository;
 use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Exception\CoreException;
 use PrestaShop\PrestaShop\Core\Version;
 use PrestaShop\TranslationToolsBundle\TranslationToolsBundle;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Adapter\NullAdapter;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -43,7 +26,7 @@ abstract class AppKernel extends Kernel
     public const RELEASE_VERSION = Version::RELEASE_VERSION;
 
     /**
-     * @var ModuleRepository
+     * @var CachedModuleRepository
      */
     protected $moduleRepository = null;
 
@@ -163,21 +146,49 @@ abstract class AppKernel extends Kernel
         }
 
         $activeModules = $this->getModuleRepository()->getActiveModules();
+        $servicesFilesList = [
+            'services.php',
+            sprintf('services-%d.%d.yml', Version::MAJOR_VERSION, Version::MINOR_VERSION),
+            sprintf('services-%d.yml', Version::MAJOR_VERSION),
+            'services.yml',
+        ];
+
         // We only load services of active modules (not simply installed)
         foreach ($activeModules as $activeModulePath) {
             $modulePath = _PS_MODULE_DIR_ . $activeModulePath;
-            $configFiles = [
-                sprintf('%s/config/services.yml', $modulePath),
-                sprintf('%s/config/admin/services.yml', $modulePath),
-                // @todo Uncomment to Load this file once we'll have a unique container
-                // sprintf('%s/config/front/services.yml', $modulePath),
-            ];
 
-            foreach ($configFiles as $file) {
-                if (is_file($file)) {
-                    $loader->load($file);
+            foreach ($servicesFilesList as $servicesFile) {
+                $fullPath = sprintf('%s/config/%s', $modulePath, $servicesFile);
+
+                if (is_file($fullPath)) {
+                    $loader->load($fullPath);
+                    // Prevent loading less specific services files if one was found
+                    break;
                 }
             }
+
+            foreach ($servicesFilesList as $servicesFile) {
+                $fullPath = sprintf('%s/config/admin/%s', $modulePath, $servicesFile);
+
+                if (is_file($fullPath)) {
+                    $loader->load($fullPath);
+                    // Prevent loading less specific services files if one was found
+                    break;
+                }
+            }
+
+            /*
+            // @todo Uncomment to Load this file once we'll have a unique container
+            foreach ($servicesFilesList as $servicesFile) {
+                $fullPath = sprintf('%s/config/front/%s', $modulePath, $servicesFile);
+
+                if (is_file($fullPath)) {
+                    $loader->load($fullPath);
+                    // Prevent loading less specific services files if one was found
+                    break;
+                }
+            }
+            */
         }
 
         $installedModules = $this->getModuleRepository()->getInstalledModules();
@@ -300,10 +311,18 @@ abstract class AppKernel extends Kernel
         return realpath(__DIR__ . '/..');
     }
 
-    protected function getModuleRepository(): ModuleRepository
+    protected function getModuleRepository(): CachedModuleRepository
     {
         if ($this->moduleRepository === null) {
-            $this->moduleRepository = new ModuleRepository(_PS_ROOT_DIR_, _PS_MODULE_DIR_);
+            if ($this->getEnvironment() === 'test') {
+                $cache = new NullAdapter();
+            } else {
+                $cache = new FilesystemAdapter('modules', 0, $this->getCacheDir());
+            }
+            $this->moduleRepository = new CachedModuleRepository(
+                new ModuleRepository(_PS_ROOT_DIR_, _PS_MODULE_DIR_),
+                $cache
+            );
         }
 
         return $this->moduleRepository;

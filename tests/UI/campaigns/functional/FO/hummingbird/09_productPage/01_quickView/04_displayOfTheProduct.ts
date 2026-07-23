@@ -1,9 +1,6 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import common tests
-import {enableHummingbird, disableHummingbird} from '@commonTests/BO/design/hummingbird';
-
 import {expect} from 'chai';
 import {
   type BrowserContext,
@@ -18,14 +15,10 @@ import {
 const baseContext: string = 'functional_FO_hummingbird_productPage_quickView_displayOfTheProduct';
 
 /*
-Pre-condition:
-- Install hummingbird theme
 Scenario:
 - Go to FO
 - Quick view third product
 - Check quick view modal
-Post-condition:
-- Uninstall hummingbird theme
  */
 describe('FO - Product page - Quick view : Display of the product', async () => {
   let browserContext: BrowserContext;
@@ -35,10 +28,6 @@ describe('FO - Product page - Quick view : Display of the product', async () => 
     value: '60x90cm',
   };
 
-  // Pre-condition : Install Hummingbird
-  enableHummingbird(`${baseContext}_preTest`);
-
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -73,7 +62,7 @@ describe('FO - Product page - Quick view : Display of the product', async () => 
       const result = await foHummingbirdModalQuickViewPage.getProductDetailsFromQuickViewModal(page);
       await Promise.all([
         expect(result.name).to.equal(dataProducts.demo_6.name),
-        expect(result.price).to.equal(dataProducts.demo_6.combinations[0].price),
+        expect(result.price).to.equal(dataProducts.demo_6.combinations[0].priceTI),
         expect(result.taxShippingDeliveryLabel).to.equal('Tax included'),
         expect(result.shortDescription).to.equal(dataProducts.demo_6.summary),
         expect(result.coverImage).to.contains(dataProducts.demo_6.coverImage),
@@ -100,7 +89,4 @@ describe('FO - Product page - Quick view : Display of the product', async () => 
       expect(isEnabled, 'Add to cart button is disabled').to.equal(true);
     });
   });
-
-  // Post-condition : Uninstall Hummingbird
-  disableHummingbird(`${baseContext}_postTest`);
 });

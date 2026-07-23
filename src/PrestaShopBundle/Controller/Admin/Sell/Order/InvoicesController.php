@@ -1,36 +1,17 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 namespace PrestaShopBundle\Controller\Admin\Sell\Order;
 
+use PrestaShop\PrestaShop\Adapter\PDF\InvoicePdfGenerator;
 use PrestaShop\PrestaShop\Core\Form\FormHandlerInterface;
-use PrestaShop\PrestaShop\Core\PDF\PDFGeneratorInterface;
 use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -151,12 +132,18 @@ class InvoicesController extends PrestaShopAdminController
     #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message: 'Access denied.')]
     public function generatePdfByIdAction(
         int $invoiceId,
-        #[Autowire(service: 'prestashop.adapter.pdf.generator.single_invoice')] PDFGeneratorInterface $invoicePdfGenerator
-    ) {
-        $invoicePdfGenerator->generatePDF([$invoiceId]);
+        #[Autowire(service: 'prestashop.adapter.pdf.generator.single_invoice')] InvoicePdfGenerator $invoicePdfGenerator
+    ): Response {
+        $generatedPdf = $invoicePdfGenerator->generatePDFForResponse([$invoiceId]);
 
-        // When using legacy generator,
-        // we want to be sure that displaying PDF is the last thing this controller will do
-        die;
+        $response = new Response($generatedPdf->getContent());
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            $generatedPdf->getFileName()
+        );
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
     }
 }

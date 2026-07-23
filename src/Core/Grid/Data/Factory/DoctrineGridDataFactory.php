@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 namespace PrestaShop\PrestaShop\Core\Grid\Data\Factory;
@@ -29,6 +9,7 @@ namespace PrestaShop\PrestaShop\Core\Grid\Data\Factory;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\SqlFormatter\NullHighlighter;
 use Doctrine\SqlFormatter\SqlFormatter;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier;
 use PrestaShop\PrestaShop\Core\Grid\Data\GridData;
 use PrestaShop\PrestaShop\Core\Grid\Query\DoctrineQueryBuilderInterface;
 use PrestaShop\PrestaShop\Core\Grid\Query\QueryParserInterface;
@@ -47,12 +28,14 @@ class DoctrineGridDataFactory implements GridDataFactoryInterface
      * @param HookDispatcherInterface $hookDispatcher
      * @param QueryParserInterface $queryParser
      * @param string $gridId
+     * @param ExtraPropertiesGridQueryBuilderModifier|null $extraPropertiesGridQueryBuilderModifier
      */
     public function __construct(
         protected DoctrineQueryBuilderInterface $gridQueryBuilder,
         protected HookDispatcherInterface $hookDispatcher,
         protected QueryParserInterface $queryParser,
-        protected string $gridId
+        protected string $gridId,
+        protected ?ExtraPropertiesGridQueryBuilderModifier $extraPropertiesGridQueryBuilderModifier = null,
     ) {
     }
 
@@ -64,6 +47,15 @@ class DoctrineGridDataFactory implements GridDataFactoryInterface
         $searchQueryBuilder = $this->gridQueryBuilder->getSearchQueryBuilder($searchCriteria);
         $countQueryBuilder = $this->gridQueryBuilder->getCountQueryBuilder($searchCriteria);
 
+        if ($this->extraPropertiesGridQueryBuilderModifier) {
+            $this->extraPropertiesGridQueryBuilderModifier->apply(
+                $searchQueryBuilder,
+                $countQueryBuilder,
+                $searchCriteria,
+                $this->gridId
+            );
+        }
+
         $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($this->gridId) . 'GridQueryBuilderModifier', [
             'search_query_builder' => $searchQueryBuilder,
             'count_query_builder' => $countQueryBuilder,
@@ -72,6 +64,10 @@ class DoctrineGridDataFactory implements GridDataFactoryInterface
 
         $records = $searchQueryBuilder->executeQuery()->fetchAllAssociative();
         $recordsTotal = (int) $countQueryBuilder->executeQuery()->fetchOne();
+
+        if ($this->extraPropertiesGridQueryBuilderModifier) {
+            $records = $this->extraPropertiesGridQueryBuilderModifier->castExtraProperties($records, $this->gridId);
+        }
 
         $records = new RecordCollection($records);
 

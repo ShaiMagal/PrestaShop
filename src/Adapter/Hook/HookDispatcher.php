@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 namespace PrestaShop\PrestaShop\Adapter\Hook;
@@ -109,24 +89,10 @@ class HookDispatcher extends EventDispatcher implements HookDispatcherInterface
         if ($listeners = $this->getListeners(strtolower($eventName ?? ''))) {
             $this->doDispatch($listeners, $eventName, $event);
         } elseif ($this->isDebug && null !== $this->hookRegistry) {
-            // When a hook has no listeners it means it's not even in the database or no modules were attached, in the current case
-            // Hook::exec will never be called meaning no stats will be registered for this hook So we handle the registry data collection
-            // here so that we can still get some info in the Debug toolbar
-            $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5);
-
-            // Try to find the initial backtrace that was not called from the dispatcher services
-            $initialBackTrace = [];
-            for ($i = 0; $i < count($backtrace); ++$i) {
-                $initialBackTrace = $backtrace[$i];
-                $isCodeFromDispatcher = (bool) strpos($initialBackTrace['file'], 'HookDispatcher');
-                if (!$isCodeFromDispatcher) {
-                    break;
-                }
-            }
-
-            $this->hookRegistry->selectHook($eventName, $event->getHookParameters(), $initialBackTrace['file'] ?? 'unknown file', $initialBackTrace['line'] ?? 'unknown line');
-            $this->hookRegistry->hookWasNotRegistered();
-            $this->hookRegistry->collect();
+            // When a hook has no listeners it means it's not even in the database or no modules were attached.
+            // Hook::exec will never be called, so we record the dispatch directly here for the toolbar.
+            $this->hookRegistry->hookDispatched($eventName ?? '', $event->getHookParameters());
+            $this->hookRegistry->hookWasNotRegistered($eventName ?? '');
         }
 
         return $event;

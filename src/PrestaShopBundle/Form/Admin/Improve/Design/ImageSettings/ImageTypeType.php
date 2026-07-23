@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 declare(strict_types=1);
@@ -29,11 +9,14 @@ declare(strict_types=1);
 namespace PrestaShopBundle\Form\Admin\Improve\Design\ImageSettings;
 
 use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\TypedRegex;
+use PrestaShop\PrestaShop\Core\Domain\ImageSettings\ValueObject\ImageFitment;
 use PrestaShopBundle\Form\Admin\Type\SwitchType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Range;
 
@@ -100,6 +83,22 @@ class ImageTypeType extends TranslatorAwareType
                     ]),
                 ],
                 'help' => $this->trans('Maximum image height in pixels.', 'Admin.Design.Help'),
+            ])
+            ->add('image_fitment', ChoiceType::class, [
+                'label' => $this->trans('Image fitment', 'Admin.Design.Feature'),
+                'required' => true,
+                'choices' => [
+                    $this->trans('Fit the thumbnail and fill the rest with empty space', 'Admin.Design.Feature') => ImageFitment::FIT,
+                    $this->trans('Fill the thumbnail and crop the rest', 'Admin.Design.Feature') => ImageFitment::CROP,
+                    $this->trans('Keep the ratio of the original image', 'Admin.Design.Feature') => ImageFitment::BOUND,
+                ],
+                'constraints' => [
+                    new NotBlank(),
+                    new Choice([
+                        'choices' => ImageFitment::AVAILABLE_VALUES,
+                    ]),
+                ],
+                'help' => $this->trans('Defines how source images are resized into this image type. Fit keeps the configured thumbnail dimensions and fills empty space when ratios differ. Fill and crop keeps the configured thumbnail dimensions and crops overflowing image parts. Keep ratio uses the configured dimensions as maximum bounds, keeps the original ratio, does not upscale, and does not add empty space.', 'Admin.Design.Help'),
             ])
             ->add('products', SwitchType::class, [
                 'label' => $this->trans('Products', 'Admin.Global'),

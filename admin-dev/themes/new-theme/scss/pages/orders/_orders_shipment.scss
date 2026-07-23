@@ -1,3 +1,7 @@
+/**
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
+ */
 .shipment-form {
   &__tooltip-wrapper {
     display: flex;
@@ -187,8 +191,8 @@
   }
 }
 
-/* Skeleton Merge Shipment Modal */
-#mergeShipmentModal {
+#addOrderProductModal,
+#editOrderProductModal {
   // Default state
   .modal-body {
     display: none;
@@ -200,14 +204,19 @@
       display: block;
     }
 
-    .skeleton-shipment-modal {
+    .skeleton-add-product-form {
+      display: none;
+    }
+
+    .skeleton-edit-product-form {
       display: none;
     }
   }
 }
 
-/* Skeleton edit Shipment Modal */
-#editShipmentModal {
+#editShipmentModal,
+#fulfillShipmentModal,
+#mergeShipmentModal {
   // Default state
   .modal-body {
     display: none;

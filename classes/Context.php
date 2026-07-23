@@ -1,27 +1,7 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/OSL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://devdocs.prestashop.com/ for more information.
- *
- * @author    PrestaShop SA and Contributors <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
 use Detection\MobileDetect;
@@ -29,6 +9,7 @@ use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 use PrestaShop\PrestaShop\Core\Localization\CLDR\ComputingPrecision;
 use PrestaShop\PrestaShop\Core\Localization\LocaleInterface;
@@ -290,6 +271,38 @@ class ContextCore
     public function cloneContext()
     {
         return clone $this;
+    }
+
+    /**
+     * Returns a ShopConstraint for the current FO shop context.
+     *
+     * In front-office, a context is always associated with one specific shop.
+     * Useful as a typed alternative to passing $this->shop->id as a raw integer.
+     */
+    public function getShopConstraint(): ShopConstraint
+    {
+        return ShopConstraint::shop((int) $this->shop->id);
+    }
+
+    /**
+     * Returns true when the current request is a front-office one.
+     *
+     * Based on the context controller type ('front'/'modulefront'). When the controller
+     * is not (yet) available, falls back to the _PS_FRONT_DIR_ constant, which is only
+     * defined by the FO entry point.
+     *
+     * Used to decide whether extra properties must be filtered on displayFront
+     * (see ExtraPropertiesBag::createForEntity()).
+     *
+     * @return bool
+     */
+    public static function isFrontOfficeContext(): bool
+    {
+        $controllerType = static::getContext()->controller->controller_type ?? null;
+
+        return null !== $controllerType
+            ? in_array($controllerType, ['front', 'modulefront'], true)
+            : defined('_PS_FRONT_DIR_');
     }
 
     /**
